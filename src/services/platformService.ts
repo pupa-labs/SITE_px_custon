@@ -695,6 +695,119 @@ export function mapDbEventToEventItem(
 }
 
 /**
+ * Loads only the published events from Supabase and maps them to the UI model used by the app.
+ * This query does not depend on the 002 migration and reads only the public catalog schema from 001.
+ */
+export async function fetchPublishedEventsFromSupabase(): Promise<{
+  ok: boolean;
+  events: EventItem[];
+  errorMessage?: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const { data: eventRows, error: eventsError } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'published')
+    .order('event_date', { ascending: true });
+
+  if (eventsError) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao consultar eventos publicados: ${eventsError.message}`,
+    };
+  }
+
+  const eventIds = (eventRows ?? []).map((row) => row.id).filter(Boolean);
+  if (!eventIds.length) {
+    return { ok: true, events: [] };
+  }
+
+  const [categoriesResult, batchesResult] = await Promise.all([
+    supabase
+      .from('ticket_categories')
+      .select('*')
+      .in('event_id', eventIds)
+      .eq('active', true),
+    supabase
+      .from('ticket_batches')
+      .select('*')
+      .in('event_id', eventIds)
+      .eq('active', true),
+  ]);
+
+  if (categoriesResult.error) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao consultar categorias do catálogo: ${categoriesResult.error.message}`,
+    };
+  }
+
+  if (batchesResult.error) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao consultar lotes do catálogo: ${batchesResult.error.message}`,
+    };
+  }
+
+  const categoriesByEvent = new Map<string, DbTicketCategoryRow[]>();
+  for (const category of categoriesResult.data ?? []) {
+    const eventId = category.event_id;
+    const eventCategories = categoriesByEvent.get(eventId) ?? [];
+    eventCategories.push(category as DbTicketCategoryRow);
+    categoriesByEvent.set(eventId, eventCategories);
+  }
+
+  const batchesByEvent = new Map<string, DbTicketBatchRow[]>();
+  for (const batch of batchesResult.data ?? []) {
+    const eventId = batch.event_id;
+    const eventBatches = batchesByEvent.get(eventId) ?? [];
+    eventBatches.push(batch as DbTicketBatchRow);
+    batchesByEvent.set(eventId, eventBatches);
+  }
+
+  const now = Date.now();
+
+  const mappedEvents = (eventRows ?? []).map((row) => {
+    const validCategories = categoriesByEvent.get(row.id) ?? [];
+    const allBatches = batchesByEvent.get(row.id) ?? [];
+
+    const saleReadyBatches = allBatches.filter((batch) => {
+      if (batch.starts_at && new Date(batch.starts_at).getTime() > now) {
+        return false;
+      }
+      if (batch.ends_at && new Date(batch.ends_at).getTime() < now) {
+        return false;
+      }
+      return true;
+    });
+
+    const mapped = mapDbEventToEventItem(row as DbEventRow, validCategories, saleReadyBatches);
+    const validPrices = saleReadyBatches
+      .map((batch) => Number(batch.price))
+      .filter((value) => Number.isFinite(value));
+
+    mapped.startingPrice = validPrices.length ? Math.min(...validPrices) : 0;
+    mapped.lots = mapped.lots.filter((lot) => lot.active);
+    return mapped;
+  });
+
+  return {
+    ok: true,
+    events: mappedEvents,
+  };
+}
+
+/**
  * Calls the transactional PostgreSQL function `public.reserve_ticket_order`
  * defined in `supabase/migrations/002_rpc_contracts_permissions_idempotency.sql`.
  * - Requires an active authenticated user session (`supabase.auth.getUser()`).
