@@ -378,14 +378,18 @@ export function normalizeCheckinRpcResponse(raw: unknown): {
 /**
  * Evaluates idempotency and security rules for `confirm_order_payment` (mirrors migration 002).
  * - Requires backend `service_role` caller.
- * - Requires official gateway status `'approved'`.
+ * - Requires prior official Mercado Pago API verification (`paymentVerifiedFromOfficialMpApi === true`).
+ * - Requires official gateway status `'approved'`, non-null `verifiedGatewayAmount` matching `orderTotalAmount`,
+ *   `verifiedCurrency === 'BRL'`, and `externalReference` matching `orderId` or `orderCode`.
  * - Rejects reuse of an `mp_payment_id` already bound to another order.
- * - If order is already `'paid'`, only succeeds as an idempotent replay (0 new tickets emitted)
+ * - If order is already `'paid'`, only succeeds as an idempotent replay (0 new tickets emitted, 0 stock increment)
  *   when `incomingMpPaymentId` matches `existingMpPaymentId` and `existingTicketsCount === orderQuantity`.
  */
 export function evaluatePaymentConfirmationIdempotency(params: {
   callerRole: 'service_role' | 'authenticated' | 'anon';
+  paymentVerifiedFromOfficialMpApi: boolean;
   orderId: string;
+  orderCode: string;
   orderQuantity: number;
   orderTotalAmount: number;
   currentOrderStatus: OrderStatus;
@@ -394,12 +398,15 @@ export function evaluatePaymentConfirmationIdempotency(params: {
   existingTicketsCount: number;
   incomingMpPaymentId: string;
   incomingMpPaymentStatus: PaymentStatus;
-  verifiedGatewayAmount?: number;
+  verifiedGatewayAmount: number | null | undefined;
+  verifiedCurrency: string | null | undefined;
+  externalReference: string | null | undefined;
   paymentIdUsedByOtherOrder?: boolean;
 }): {
   allowed: boolean;
   idempotentReplay: boolean;
   ticketsToIssue: number;
+  soldQuantityDelta: number;
   errorMessage?: string;
 } {
   if (params.callerRole !== 'service_role') {
@@ -407,7 +414,19 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
-      errorMessage: 'Operação restrita ao backend oficial de pagamentos (service_role).',
+      soldQuantityDelta: 0,
+      errorMessage: 'Operação restrita exclusivamente ao backend oficial de pagamentos (service_role).',
+    };
+  }
+
+  if (!params.paymentVerifiedFromOfficialMpApi) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      soldQuantityDelta: 0,
+      errorMessage:
+        'Proibido confirmar pagamento sem consulta e validação prévia na API oficial do Mercado Pago.',
     };
   }
 
@@ -417,6 +436,7 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
+      soldQuantityDelta: 0,
       errorMessage: 'Identificador oficial de pagamento do Mercado Pago é obrigatório.',
     };
   }
@@ -426,7 +446,47 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
-      errorMessage: `Pagamento não pode ser confirmado: status oficial no gateway é "${params.incomingMpPaymentStatus}", esperado "approved".`,
+      soldQuantityDelta: 0,
+      errorMessage: `Pagamento não aprovado na validação oficial do Mercado Pago (status recebido: "${params.incomingMpPaymentStatus}").`,
+    };
+  }
+
+  if (
+    params.verifiedGatewayAmount === null ||
+    params.verifiedGatewayAmount === undefined ||
+    Number.isNaN(params.verifiedGatewayAmount) ||
+    params.verifiedGatewayAmount <= 0
+  ) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      soldQuantityDelta: 0,
+      errorMessage:
+        'Valor verificado na API do Mercado Pago (p_verified_amount) é obrigatório e não pode ser nulo.',
+    };
+  }
+
+  const cleanCurrency = (params.verifiedCurrency ?? '').trim().toUpperCase();
+  if (cleanCurrency !== 'BRL') {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      soldQuantityDelta: 0,
+      errorMessage: `Moeda do pagamento inválida ("${cleanCurrency}"). Esperado "BRL".`,
+    };
+  }
+
+  const cleanExtRef = (params.externalReference ?? '').trim();
+  if (!cleanExtRef || (cleanExtRef !== params.orderId && cleanExtRef !== params.orderCode)) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      soldQuantityDelta: 0,
+      errorMessage:
+        'Divergência de titularidade do pagamento: external_reference não corresponde ao pedido.',
     };
   }
 
@@ -435,19 +495,20 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
-      errorMessage: `Conflito de pagamento: o identificador "${cleanPaymentId}" já está associado a outro pedido.`,
+      soldQuantityDelta: 0,
+      errorMessage: `Conflito de pagamento: o identificador "${cleanPaymentId}" já pertence a outro pedido.`,
     };
   }
 
   if (
-    typeof params.verifiedGatewayAmount === 'number' &&
     Number(params.verifiedGatewayAmount.toFixed(2)) !== Number(params.orderTotalAmount.toFixed(2))
   ) {
     return {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
-      errorMessage: 'Valor confirmado no pagamento diverge do total oficial do pedido.',
+      soldQuantityDelta: 0,
+      errorMessage: 'Valor pago no Mercado Pago diverge do valor total oficial do pedido.',
     };
   }
 
@@ -457,7 +518,8 @@ export function evaluatePaymentConfirmationIdempotency(params: {
         allowed: false,
         idempotentReplay: false,
         ticketsToIssue: 0,
-        errorMessage: `Conflito de idempotência: o pedido já consta como pago com outro mp_payment_id (${params.existingMpPaymentId ?? 'NULL'}).`,
+        soldQuantityDelta: 0,
+        errorMessage: `Conflito de idempotência: este pedido já foi pago com outro mp_payment_id (${params.existingMpPaymentId ?? 'NULL'}).`,
       };
     }
 
@@ -466,7 +528,18 @@ export function evaluatePaymentConfirmationIdempotency(params: {
         allowed: false,
         idempotentReplay: false,
         ticketsToIssue: 0,
+        soldQuantityDelta: 0,
         errorMessage: 'Estado inconsistente do pedido: order_status=paid sem payment_status=approved.',
+      };
+    }
+
+    if (params.existingTicketsCount !== params.orderQuantity) {
+      return {
+        allowed: false,
+        idempotentReplay: false,
+        ticketsToIssue: 0,
+        soldQuantityDelta: 0,
+        errorMessage: 'Inconsistência de integridade: quantidade de ingressos emitidos diverge do pedido.',
       };
     }
 
@@ -474,6 +547,7 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: true,
       idempotentReplay: true,
       ticketsToIssue: 0,
+      soldQuantityDelta: 0,
     };
   }
 
@@ -485,6 +559,7 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
+      soldQuantityDelta: 0,
       errorMessage: `Pedido em estado inválido para confirmação (${params.currentOrderStatus}).`,
     };
   }
@@ -494,7 +569,9 @@ export function evaluatePaymentConfirmationIdempotency(params: {
       allowed: false,
       idempotentReplay: false,
       ticketsToIssue: 0,
-      errorMessage: 'Inconsistência detectada: já existem ingressos emitidos para este pedido antes da confirmação.',
+      soldQuantityDelta: 0,
+      errorMessage:
+        'Inconsistência detectada: já existem ingressos vinculados a um pedido ainda não pago.',
     };
   }
 
@@ -502,6 +579,107 @@ export function evaluatePaymentConfirmationIdempotency(params: {
     allowed: true,
     idempotentReplay: false,
     ticketsToIssue: params.orderQuantity,
+    soldQuantityDelta: params.orderQuantity,
+  };
+}
+
+/**
+ * Deterministic backfill & pre-index validation for existing tickets (mirrors section 2 of migration 002).
+ * Ensures every ticket gets a unique `itemSequence` within `1..orderQuantity` for its `orderId`,
+ * and aborts if any ticket is orphaned, exceeds `orderQuantity`, or has conflicting sequences.
+ */
+export function backfillTicketItemSequences(
+  orders: Array<{ id: string; orderCode: string; quantity: number }>,
+  tickets: Array<{
+    id: string;
+    orderId: string;
+    code: string;
+    issuedAt: string;
+    createdAt: string;
+    itemSequence: number | null;
+  }>
+): {
+  ok: boolean;
+  backfilledTickets?: Array<{ id: string; orderId: string; itemSequence: number }>;
+  errorMessage?: string;
+} {
+  const orderMap = new Map(orders.map((o) => [o.id, o]));
+  const ticketsByOrder = new Map<string, typeof tickets>();
+
+  for (const t of tickets) {
+    if (!orderMap.has(t.orderId)) {
+      return {
+        ok: false,
+        errorMessage: `Migração abortada por segurança: o ingresso ${t.id} (código ${t.code}) referencia um order_id inexistente (${t.orderId}).`,
+      };
+    }
+    const list = ticketsByOrder.get(t.orderId) ?? [];
+    list.push(t);
+    ticketsByOrder.set(t.orderId, list);
+  }
+
+  const result: Array<{ id: string; orderId: string; itemSequence: number }> = [];
+
+  for (const [orderId, orderTickets] of ticketsByOrder.entries()) {
+    const order = orderMap.get(orderId)!;
+
+    if (orderTickets.length > order.quantity) {
+      return {
+        ok: false,
+        errorMessage: `Migração abortada por segurança: o pedido ${order.orderCode} (${order.id}) possui ${orderTickets.length} ingressos emitidos, acima da quantidade contratada (${order.quantity}).`,
+      };
+    }
+
+    const seenSequences = new Set<number>();
+    for (const t of orderTickets) {
+      if (t.itemSequence !== null) {
+        if (t.itemSequence < 1 || t.itemSequence > order.quantity) {
+          return {
+            ok: false,
+            errorMessage: `Migração abortada: o ingresso ${t.id} do pedido ${orderId} possui item_sequence=${t.itemSequence} fora do intervalo válido (1..${order.quantity}).`,
+          };
+        }
+        if (seenSequences.has(t.itemSequence)) {
+          return {
+            ok: false,
+            errorMessage: `Migração abortada: o pedido ${orderId} já possui item_sequence=${t.itemSequence} duplicado.`,
+          };
+        }
+        seenSequences.add(t.itemSequence);
+      }
+    }
+
+    const availableSlots: number[] = [];
+    for (let seq = 1; seq <= order.quantity; seq++) {
+      if (!seenSequences.has(seq)) {
+        availableSlots.push(seq);
+      }
+    }
+
+    const nullTickets = orderTickets
+      .filter((t) => t.itemSequence === null)
+      .sort((a, b) => {
+        if (a.issuedAt !== b.issuedAt) return a.issuedAt.localeCompare(b.issuedAt);
+        if (a.createdAt !== b.createdAt) return a.createdAt.localeCompare(b.createdAt);
+        if (a.code !== b.code) return a.code.localeCompare(b.code);
+        return a.id.localeCompare(b.id);
+      });
+
+    for (const t of orderTickets) {
+      if (t.itemSequence !== null) {
+        result.push({ id: t.id, orderId: t.orderId, itemSequence: t.itemSequence });
+      }
+    }
+
+    nullTickets.forEach((t, idx) => {
+      const assignedSeq = availableSlots[idx];
+      result.push({ id: t.id, orderId: t.orderId, itemSequence: assignedSeq });
+    });
+  }
+
+  return {
+    ok: true,
+    backfilledTickets: result.sort((a, b) => a.itemSequence - b.itemSequence),
   };
 }
 

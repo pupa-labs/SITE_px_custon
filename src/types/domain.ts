@@ -282,7 +282,7 @@ export interface DbTicketRow {
   code: string;
   qr_payload: string;
   order_id: string;
-  item_sequence: number | null;
+  item_sequence: number;
   user_id: string;
   event_id: string;
   category_id: string;
@@ -328,8 +328,10 @@ export interface ReserveOrderRpcPayload {
 export interface ConfirmOrderPaymentRpcArgs {
   p_order_id: string;
   p_mp_payment_id: string;
-  p_mp_payment_status?: PaymentStatus;
-  p_verified_amount?: number;
+  p_mp_payment_status: PaymentStatus;
+  p_verified_amount: number;
+  p_currency: 'BRL';
+  p_external_reference: string;
 }
 
 export interface ConfirmOrderPaymentRpcPayload {

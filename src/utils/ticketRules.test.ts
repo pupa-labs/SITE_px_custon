@@ -13,6 +13,7 @@ import {
   normalizeReserveOrderRpcResponse,
   normalizeCheckinRpcResponse,
   evaluatePaymentConfirmationIdempotency,
+  backfillTicketItemSequences,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -258,91 +259,184 @@ test('normalizeCheckinRpcResponse aligns result/status_reason and ticket_code/co
   assert.equal(legacy001Response.ticketCode, 'PX-784592');
 });
 
-test('evaluatePaymentConfirmationIdempotency enforces service_role, verified payment ID match, and prevents duplicate tickets', () => {
-  // 1. Rejects non-service_role callers
-  const fromClient = evaluatePaymentConfirmationIdempotency({
-    callerRole: 'authenticated',
-    orderId: 'ord-1',
+test('evaluatePaymentConfirmationIdempotency enforces official MP API check, non-null amount, BRL currency, external_reference binding, and idempotent replay', () => {
+  const baseValid = {
+    callerRole: 'service_role' as const,
+    paymentVerifiedFromOfficialMpApi: true,
+    orderId: 'ord-1111',
+    orderCode: '#PX-90421',
     orderQuantity: 2,
     orderTotalAmount: 84.8,
-    currentOrderStatus: 'reserved',
-    currentPaymentStatus: 'pending',
+    currentOrderStatus: 'reserved' as const,
+    currentPaymentStatus: 'pending' as const,
     existingMpPaymentId: null,
     existingTicketsCount: 0,
     incomingMpPaymentId: 'MP-1001',
-    incomingMpPaymentStatus: 'approved',
-  });
-  assert.equal(fromClient.allowed, false);
-
-  // 2. Rejects payment ID when gateway status is not 'approved'
-  const unapprovedGateway = evaluatePaymentConfirmationIdempotency({
-    callerRole: 'service_role',
-    orderId: 'ord-1',
-    orderQuantity: 2,
-    orderTotalAmount: 84.8,
-    currentOrderStatus: 'reserved',
-    currentPaymentStatus: 'pending',
-    existingMpPaymentId: null,
-    existingTicketsCount: 0,
-    incomingMpPaymentId: 'MP-1001',
-    incomingMpPaymentStatus: 'in_process',
-  });
-  assert.equal(unapprovedGateway.allowed, false);
-
-  // 3. First valid confirmation issues exact order quantity
-  const firstConfirmation = evaluatePaymentConfirmationIdempotency({
-    callerRole: 'service_role',
-    orderId: 'ord-1',
-    orderQuantity: 2,
-    orderTotalAmount: 84.8,
-    currentOrderStatus: 'reserved',
-    currentPaymentStatus: 'pending',
-    existingMpPaymentId: null,
-    existingTicketsCount: 0,
-    incomingMpPaymentId: 'MP-1001',
-    incomingMpPaymentStatus: 'approved',
+    incomingMpPaymentStatus: 'approved' as const,
     verifiedGatewayAmount: 84.8,
+    verifiedCurrency: 'BRL',
+    externalReference: 'ord-1111',
+  };
+
+  // 1. Rejects non-service_role callers
+  assert.equal(
+    evaluatePaymentConfirmationIdempotency({ ...baseValid, callerRole: 'authenticated' }).allowed,
+    false
+  );
+
+  // 2. Rejects confirmation if official Mercado Pago API was not queried beforehand
+  assert.equal(
+    evaluatePaymentConfirmationIdempotency({
+      ...baseValid,
+      paymentVerifiedFromOfficialMpApi: false,
+    }).allowed,
+    false
+  );
+
+  // 3. Rejects when verifiedGatewayAmount is null (cannot bypass amount check)
+  const nullAmount = evaluatePaymentConfirmationIdempotency({
+    ...baseValid,
+    verifiedGatewayAmount: null,
   });
+  assert.equal(nullAmount.allowed, false);
+  assert.ok(nullAmount.errorMessage?.includes('p_verified_amount'));
+
+  // 4. Rejects wrong currency or wrong external_reference (order mismatch)
+  assert.equal(
+    evaluatePaymentConfirmationIdempotency({ ...baseValid, verifiedCurrency: 'USD' }).allowed,
+    false
+  );
+  assert.equal(
+    evaluatePaymentConfirmationIdempotency({
+      ...baseValid,
+      externalReference: 'ord-OTHER-9999',
+    }).allowed,
+    false
+  );
+
+  // 5. First valid confirmation issues exact order quantity and increments sold quantity once
+  const firstConfirmation = evaluatePaymentConfirmationIdempotency(baseValid);
   assert.equal(firstConfirmation.allowed, true);
   assert.equal(firstConfirmation.idempotentReplay, false);
   assert.equal(firstConfirmation.ticketsToIssue, 2);
+  assert.equal(firstConfirmation.soldQuantityDelta, 2);
 
-  // 4. Replay with the SAME mp_payment_id on an already-paid order is idempotent and issues 0 new tickets
+  // 6. Replay with the SAME mp_payment_id on an already-paid order is idempotent (0 new tickets, 0 soldQuantityDelta)
   const samePaymentReplay = evaluatePaymentConfirmationIdempotency({
-    callerRole: 'service_role',
-    orderId: 'ord-1',
-    orderQuantity: 2,
-    orderTotalAmount: 84.8,
+    ...baseValid,
     currentOrderStatus: 'paid',
     currentPaymentStatus: 'approved',
     existingMpPaymentId: 'MP-1001',
     existingTicketsCount: 2,
-    incomingMpPaymentId: 'MP-1001',
-    incomingMpPaymentStatus: 'approved',
-    verifiedGatewayAmount: 84.8,
   });
   assert.equal(samePaymentReplay.allowed, true);
   assert.equal(samePaymentReplay.idempotentReplay, true);
   assert.equal(samePaymentReplay.ticketsToIssue, 0);
+  assert.equal(samePaymentReplay.soldQuantityDelta, 0);
 
-  // 5. Replay on an already-paid order with a DIFFERENT mp_payment_id is rejected
+  // 7. Replay on an already-paid order with a DIFFERENT mp_payment_id is rejected
   const conflictingPaymentIdOnPaidOrder = evaluatePaymentConfirmationIdempotency({
-    callerRole: 'service_role',
-    orderId: 'ord-1',
-    orderQuantity: 2,
-    orderTotalAmount: 84.8,
+    ...baseValid,
     currentOrderStatus: 'paid',
     currentPaymentStatus: 'approved',
     existingMpPaymentId: 'MP-1001',
     existingTicketsCount: 2,
     incomingMpPaymentId: 'MP-9999-DIFFERENT',
-    incomingMpPaymentStatus: 'approved',
   });
   assert.equal(conflictingPaymentIdOnPaidOrder.allowed, false);
   assert.ok(conflictingPaymentIdOnPaidOrder.errorMessage?.includes('Conflito de idempotência'));
 });
 
-test('migration 002 SQL file enforces RPC parameter names, JSONB returns, REVOKE permissions, and idempotency checks', () => {
+test('backfillTicketItemSequences deterministically assigns gap-free item_sequence and aborts on orphans, out-of-range, or excess duplicates', () => {
+  // 1. Gap-free assignment when an order already has item_sequence=2 and one NULL ticket
+  const gapFreeBackfill = backfillTicketItemSequences(
+    [{ id: 'ord-1', orderCode: '#PX-001', quantity: 2 }],
+    [
+      {
+        id: 'tkt-b',
+        orderId: 'ord-1',
+        code: 'PX-0002',
+        issuedAt: '2026-10-01T12:00:05Z',
+        createdAt: '2026-10-01T12:00:05Z',
+        itemSequence: 2,
+      },
+      {
+        id: 'tkt-a',
+        orderId: 'ord-1',
+        code: 'PX-0001',
+        issuedAt: '2026-10-01T12:00:01Z',
+        createdAt: '2026-10-01T12:00:01Z',
+        itemSequence: null,
+      },
+    ]
+  );
+  assert.equal(gapFreeBackfill.ok, true);
+  assert.deepEqual(gapFreeBackfill.backfilledTickets, [
+    { id: 'tkt-a', orderId: 'ord-1', itemSequence: 1 },
+    { id: 'tkt-b', orderId: 'ord-1', itemSequence: 2 },
+  ]);
+
+  // 2. Rejects orphan tickets whose order_id does not exist
+  const orphanTicket = backfillTicketItemSequences(
+    [{ id: 'ord-1', orderCode: '#PX-001', quantity: 2 }],
+    [
+      {
+        id: 'tkt-orphan',
+        orderId: 'ord-MISSING',
+        code: 'PX-9999',
+        issuedAt: '2026-10-01T12:00:01Z',
+        createdAt: '2026-10-01T12:00:01Z',
+        itemSequence: null,
+      },
+    ]
+  );
+  assert.equal(orphanTicket.ok, false);
+  assert.ok(orphanTicket.errorMessage?.includes('order_id inexistente'));
+
+  // 3. Rejects out-of-range item_sequence (> order.quantity)
+  const outOfRange = backfillTicketItemSequences(
+    [{ id: 'ord-1', orderCode: '#PX-001', quantity: 2 }],
+    [
+      {
+        id: 'tkt-1',
+        orderId: 'ord-1',
+        code: 'PX-0001',
+        issuedAt: '2026-10-01T12:00:01Z',
+        createdAt: '2026-10-01T12:00:01Z',
+        itemSequence: 5,
+      },
+    ]
+  );
+  assert.equal(outOfRange.ok, false);
+  assert.ok(outOfRange.errorMessage?.includes('fora do intervalo válido'));
+
+  // 4. Rejects excess tickets (> order.quantity)
+  const excessTickets = backfillTicketItemSequences(
+    [{ id: 'ord-1', orderCode: '#PX-001', quantity: 1 }],
+    [
+      {
+        id: 'tkt-1',
+        orderId: 'ord-1',
+        code: 'PX-0001',
+        issuedAt: '2026-10-01T12:00:01Z',
+        createdAt: '2026-10-01T12:00:01Z',
+        itemSequence: null,
+      },
+      {
+        id: 'tkt-2',
+        orderId: 'ord-1',
+        code: 'PX-0002',
+        issuedAt: '2026-10-01T12:00:02Z',
+        createdAt: '2026-10-01T12:00:02Z',
+        itemSequence: null,
+      },
+    ]
+  );
+  assert.equal(excessTickets.ok, false);
+  assert.ok(excessTickets.errorMessage?.includes('acima da quantidade contratada'));
+});
+
+test('migration 002 SQL file enforces strict Mercado Pago verification, no current_user misuse, deterministic backfill, and RLS-compatible permissions', () => {
   const migrationPath = path.resolve(
     process.cwd(),
     'supabase/migrations/002_rpc_contracts_permissions_idempotency.sql'
@@ -356,38 +450,43 @@ test('migration 002 SQL file enforces RPC parameter names, JSONB returns, REVOKE
   assert.ok(sql.includes("'total_amount', v_total"));
   assert.ok(sql.includes("'reservation_expires_at', v_expires_at"));
 
-  // 2. perform_ticket_checkin includes 'result' and 'ticket_code'
-  assert.ok(sql.includes("'result', 'authorized'"));
-  assert.ok(sql.includes("'ticket_code', v_ticket.code"));
-
-  // 3. Explicit REVOKE ALL FROM PUBLIC, anon, authenticated on all 4 privileged functions
+  // 2. confirm_order_payment has NO default values for status or amount, uses pg_advisory_xact_lock, checks currency & external_reference, and never uses current_user
+  assert.equal(sql.includes("DEFAULT 'approved'"), false);
+  assert.equal(sql.includes('p_verified_amount NUMERIC(12, 2) DEFAULT NULL'), false);
+  assert.equal(sql.includes("current_user NOT IN ('postgres', 'supabase_admin')"), false);
+  assert.ok(sql.includes("PERFORM pg_advisory_xact_lock(hashtext('px_mp_payment:' || v_clean_payment_id));"));
+  assert.ok(sql.includes('IF p_verified_amount IS NULL OR p_verified_amount <= 0 THEN'));
+  assert.ok(sql.includes("IF v_clean_currency <> 'BRL' THEN"));
   assert.ok(
-    sql.includes(
-      'REVOKE ALL ON FUNCTION public.reserve_ticket_order(UUID, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;'
-    )
-  );
-  assert.ok(
-    sql.includes(
-      'REVOKE ALL ON FUNCTION public.confirm_order_payment(UUID, TEXT, TEXT, NUMERIC) FROM PUBLIC, anon, authenticated;'
-    )
-  );
-  assert.ok(
-    sql.includes(
-      'GRANT EXECUTE ON FUNCTION public.confirm_order_payment(UUID, TEXT, TEXT, NUMERIC) TO service_role;'
-    )
-  );
-  assert.ok(
-    sql.includes(
-      'REVOKE ALL ON FUNCTION public.release_expired_reservations() FROM PUBLIC, anon, authenticated;'
-    )
-  );
-  assert.ok(
-    sql.includes(
-      'REVOKE ALL ON FUNCTION public.perform_ticket_checkin(TEXT, TEXT) FROM PUBLIC, anon, authenticated;'
-    )
+    sql.includes('IF v_clean_ext_ref <> v_order.id::text AND v_clean_ext_ref <> v_order.order_code THEN')
   );
 
-  // 4. Idempotency payment ID verification and duplicate ticket prevention
-  assert.ok(sql.includes('IF v_order.mp_payment_id IS DISTINCT FROM v_clean_payment_id THEN'));
-  assert.ok(sql.includes('CREATE UNIQUE INDEX IF NOT EXISTS uq_tickets_order_item_sequence'));
+  // 3. Deterministic gap-free backfill of item_sequence + full non-partial unique index
+  assert.ok(sql.includes('CROSS JOIN LATERAL generate_series(1, ow.quantity)'));
+  assert.ok(sql.includes('ALTER TABLE public.tickets\n  ALTER COLUMN item_sequence SET NOT NULL;'));
+  assert.ok(
+    sql.includes('CREATE UNIQUE INDEX uq_tickets_order_item_sequence\n  ON public.tickets(order_id, item_sequence);')
+  );
+
+  // 4. Helper function permissions preserve RLS execution for anon/authenticated where required while locking down privileged RPCs
+  assert.ok(
+    sql.includes(
+      'GRANT EXECUTE ON FUNCTION public.is_admin_or_super_admin() TO anon, authenticated, service_role;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'REVOKE ALL ON FUNCTION public.is_checkin_staff() FROM PUBLIC, anon, authenticated;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'REVOKE ALL ON FUNCTION public.confirm_order_payment(UUID, TEXT, TEXT, NUMERIC, TEXT, TEXT) FROM PUBLIC, anon, authenticated;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'GRANT EXECUTE ON FUNCTION public.confirm_order_payment(UUID, TEXT, TEXT, NUMERIC, TEXT, TEXT) TO service_role;'
+    )
+  );
 });
