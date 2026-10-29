@@ -10,7 +10,10 @@ import type {
   DbEventRow,
   DbTicketBatchRow,
   DbTicketCategoryRow,
+  DbOrderRow,
   PaymentMethodType,
+  OrderStatus,
+  PaymentStatus,
 } from '../types/domain';
 import {
   supabase,
@@ -18,6 +21,12 @@ import {
   verifySupabaseConnection,
   type SupabaseConnectionStatus,
 } from '../lib/supabase';
+import {
+  CONVENIENCE_FEE_RATE,
+  buildReserveOrderRpcArgs,
+  normalizeReserveOrderRpcResponse,
+  normalizeCheckinRpcResponse,
+} from '../utils/ticketRules';
 
 export {
   supabase,
@@ -611,7 +620,7 @@ export function mapDbEventToEventItem(
   categories: DbTicketCategoryRow[] = [],
   batches: DbTicketBatchRow[] = []
 ): EventItem {
-  const startDate = new Date(row.starts_at);
+  const startDate = new Date(row.event_date);
   const isValidDate = !Number.isNaN(startDate.getTime());
 
   const dayNumber = isValidDate ? String(startDate.getUTCDate()).padStart(2, '0') : '01';
@@ -625,7 +634,7 @@ export function mapDbEventToEventItem(
   }
 
   const mappedLots: TicketLot[] = batches.map((batch) => {
-    const parentCategory = categoryById.get(batch.ticket_category_id);
+    const parentCategory = categoryById.get(batch.category_id);
     const available = Math.max(
       0,
       batch.total_quantity - batch.reserved_quantity - batch.sold_quantity
@@ -633,20 +642,20 @@ export function mapDbEventToEventItem(
     return {
       id: batch.id,
       eventId: batch.event_id,
-      ticketCategoryId: batch.ticket_category_id,
+      ticketCategoryId: batch.category_id,
       name: batch.name,
       categoryLabel: parentCategory?.name ?? 'Ingresso',
       batchNumber: batch.batch_number,
       description: batch.description ?? parentCategory?.description ?? '',
       price: Number(batch.price),
-      serviceFeeRate: Number(batch.service_fee_rate),
+      serviceFeeRate: CONVENIENCE_FEE_RATE,
       totalQuantity: batch.total_quantity,
       reservedQuantity: batch.reserved_quantity,
       soldQuantity: batch.sold_quantity,
       availableQuantity: available,
-      maxPerOrder: batch.max_per_order,
+      maxPerOrder: parentCategory?.max_per_order ?? 10,
       thumbnailUrl: batch.thumbnail_url || row.card_image_url,
-      active: batch.is_active,
+      active: batch.active,
     };
   });
 
@@ -668,8 +677,8 @@ export function mapDbEventToEventItem(
     dayNumber,
     monthShort: PT_BR_MONTH_SHORT[monthIndex] ?? 'JAN',
     year,
-    timeRange: row.time_range_label,
-    city: `${row.city} - ${row.state_uf}`,
+    timeRange: row.time_range,
+    city: row.city,
     venueName: row.venue_name,
     startingPrice: Number(row.starting_price),
     bannerUrl: row.banner_url,
@@ -687,9 +696,11 @@ export function mapDbEventToEventItem(
 
 /**
  * Calls the transactional PostgreSQL function `public.reserve_ticket_order`
- * defined in `supabase/migrations/001_initial_schema.sql`.
- * Ensures concurrency-safe stock reservation (`SELECT ... FOR UPDATE`) and creates
- * the order in `reserved` state with `payment_status = 'pending'`.
+ * defined in `supabase/migrations/002_rpc_contracts_permissions_idempotency.sql`.
+ * - Requires an active authenticated user session (`supabase.auth.getUser()`).
+ * - Never sends client-side prices; all prices and totals are calculated in PostgreSQL.
+ * - Parses the returned JSONB (`order_id`, `order_code`, `unit_price`, `subtotal`,
+ *   `convenience_fee`, `total_amount`, `reservation_expires_at`).
  */
 export async function reserveOrderInSupabase(params: {
   ticketBatchId: string;
@@ -703,7 +714,12 @@ export async function reserveOrderInSupabase(params: {
   ok: boolean;
   orderId?: string;
   orderCode?: string;
+  unitPrice?: number;
+  subtotal?: number;
+  convenienceFee?: number;
   totalAmount?: number;
+  orderStatus?: OrderStatus;
+  paymentStatus?: PaymentStatus;
   reservationExpiresAt?: string;
   errorMessage?: string;
 }> {
@@ -714,15 +730,33 @@ export async function reserveOrderInSupabase(params: {
     };
   }
 
-  const { data, error } = await supabase.rpc('reserve_ticket_order', {
-    p_ticket_batch_id: params.ticketBatchId,
-    p_quantity: params.quantity,
-    p_buyer_name: params.buyerName,
-    p_buyer_cpf: params.buyerCpf,
-    p_buyer_email: params.buyerEmail,
-    p_buyer_phone: params.buyerPhone,
-    p_payment_method: params.paymentMethod,
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      errorMessage: 'Autenticação obrigatória para reservar ingressos.',
+    };
+  }
+
+  const built = buildReserveOrderRpcArgs({
+    authenticatedUserId: authData.user.id,
+    ticketBatchId: params.ticketBatchId,
+    quantity: params.quantity,
+    buyerName: params.buyerName,
+    buyerCpf: params.buyerCpf,
+    buyerEmail: params.buyerEmail,
+    buyerPhone: params.buyerPhone,
+    paymentMethod: params.paymentMethod,
   });
+
+  if (!built.ok) {
+    return {
+      ok: false,
+      errorMessage: built.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc('reserve_ticket_order', built.args);
 
   if (error) {
     return {
@@ -731,33 +765,60 @@ export async function reserveOrderInSupabase(params: {
     };
   }
 
-  const payload = data as {
-    order_id: string;
-    order_code: string;
-    total_amount: number;
-    reservation_expires_at: string;
-  } | null;
+  return normalizeReserveOrderRpcResponse(data);
+}
 
-  if (!payload) {
+/**
+ * Fetches orders belonging exclusively to the currently authenticated user.
+ * Enforces both client-side `.eq('user_id', user.id)` and PostgreSQL RLS (`auth.uid() = user_id`).
+ */
+export async function fetchOwnOrdersFromSupabase(): Promise<{
+  ok: boolean;
+  orders: DbOrderRow[];
+  errorMessage?: string;
+}> {
+  if (!supabase) {
     return {
       ok: false,
-      errorMessage: 'Resposta vazia ao reservar pedido no banco.',
+      orders: [],
+      errorMessage: 'Cliente Supabase não configurado.',
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      orders: [],
+      errorMessage: 'Sessão autenticada obrigatória para consultar pedidos.',
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*')
+    .eq('user_id', authData.user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return {
+      ok: false,
+      orders: [],
+      errorMessage: error.message,
     };
   }
 
   return {
     ok: true,
-    orderId: payload.order_id,
-    orderCode: payload.order_code,
-    totalAmount: Number(payload.total_amount),
-    reservationExpiresAt: payload.reservation_expires_at,
+    orders: (data as DbOrderRow[]) ?? [],
   };
 }
 
 /**
  * Calls the transactional PostgreSQL function `public.perform_ticket_checkin`
- * defined in `supabase/migrations/001_initial_schema.sql`.
- * Requires authenticated operator/admin session validated via RLS & SECURITY DEFINER.
+ * defined in `supabase/migrations/002_rpc_contracts_permissions_idempotency.sql`.
+ * - Rejects anonymous callers before hitting the network (`supabase.auth.getUser()`).
+ * - Normalizes both `result`/`status_reason` and `ticket_code`/`code`.
  */
 export async function performCheckinInSupabase(params: {
   codeOrPayload: string;
@@ -767,8 +828,10 @@ export async function performCheckinInSupabase(params: {
   authorized: boolean;
   result: 'authorized' | 'already_used' | 'invalid' | 'unpaid';
   message: string;
+  ticketId?: string;
   ticketCode?: string;
   holderName?: string;
+  usedAt?: string;
 }> {
   if (!supabase) {
     return {
@@ -776,6 +839,16 @@ export async function performCheckinInSupabase(params: {
       authorized: false,
       result: 'invalid',
       message: 'Cliente Supabase não configurado.',
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      authorized: false,
+      result: 'invalid',
+      message: 'Acesso negado: autenticação de operador obrigatória para realizar check-in.',
     };
   }
 
@@ -793,21 +866,5 @@ export async function performCheckinInSupabase(params: {
     };
   }
 
-  const payload = data as {
-    authorized: boolean;
-    result: 'authorized' | 'already_used' | 'invalid' | 'unpaid';
-    message: string;
-    ticket_code?: string;
-    holder_name?: string;
-  };
-
-  return {
-    ok: true,
-    authorized: Boolean(payload?.authorized),
-    result: payload?.result ?? 'invalid',
-    message: payload?.message ?? 'Retorno inesperado do servidor.',
-    ticketCode: payload?.ticket_code,
-    holderName: payload?.holder_name,
-  };
+  return normalizeCheckinRpcResponse(data);
 }
-

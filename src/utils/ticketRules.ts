@@ -1,4 +1,13 @@
-import type { Ticket, CheckinRecord, OrderStatus, PaymentStatus } from '../types/domain';
+import type {
+  Ticket,
+  CheckinRecord,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethodType,
+  ReserveOrderRpcArgs,
+  ReserveOrderRpcPayload,
+  CheckinRpcPayload,
+} from '../types/domain';
 
 export const CONVENIENCE_FEE_RATE = 0.06; // 6% convenience fee (e.g., R$ 80,00 -> R$ 4,80)
 
@@ -185,6 +194,318 @@ export function canTransitionOrderToPaid(params: {
 }
 
 /**
+ * Builds the exact parameter object for `public.reserve_ticket_order` (migration 002).
+ * Enforces an authenticated user session and strips any client-side price fields so
+ * prices and totals are calculated strictly in PostgreSQL.
+ */
+export function buildReserveOrderRpcArgs(params: {
+  authenticatedUserId?: string | null;
+  ticketBatchId: string;
+  quantity: number;
+  buyerName: string;
+  buyerCpf: string;
+  buyerEmail: string;
+  buyerPhone: string;
+  paymentMethod: PaymentMethodType;
+}): { ok: true; args: ReserveOrderRpcArgs } | { ok: false; errorMessage: string } {
+  if (!params.authenticatedUserId || params.authenticatedUserId.trim().length === 0) {
+    return {
+      ok: false,
+      errorMessage: 'Autenticação obrigatória para reservar ingressos.',
+    };
+  }
+
+  const batchId = params.ticketBatchId.trim();
+  if (!batchId) {
+    return {
+      ok: false,
+      errorMessage: 'Lote de ingresso (p_ticket_batch_id) é obrigatório.',
+    };
+  }
+
+  if (!Number.isInteger(params.quantity) || params.quantity <= 0) {
+    return {
+      ok: false,
+      errorMessage: 'Quantidade solicitada inválida.',
+    };
+  }
+
+  const buyerValidation = validateBuyerData({
+    fullName: params.buyerName,
+    cpf: params.buyerCpf,
+    email: params.buyerEmail,
+    phone: params.buyerPhone,
+  });
+
+  if (!buyerValidation.valid) {
+    const firstError =
+      buyerValidation.errors.fullName ||
+      buyerValidation.errors.cpf ||
+      buyerValidation.errors.email ||
+      buyerValidation.errors.phone ||
+      'Dados do comprador inválidos.';
+    return {
+      ok: false,
+      errorMessage: firstError,
+    };
+  }
+
+  return {
+    ok: true,
+    args: {
+      p_ticket_batch_id: batchId,
+      p_quantity: params.quantity,
+      p_payment_method: params.paymentMethod,
+      p_buyer_name: params.buyerName.trim(),
+      p_buyer_cpf: params.buyerCpf.replace(/\D/g, ''),
+      p_buyer_email: params.buyerEmail.trim(),
+      p_buyer_phone: params.buyerPhone.trim(),
+    },
+  };
+}
+
+/**
+ * Validates and normalizes the JSONB response returned by `public.reserve_ticket_order`.
+ */
+export function normalizeReserveOrderRpcResponse(raw: unknown): {
+  ok: boolean;
+  orderId?: string;
+  orderCode?: string;
+  unitPrice?: number;
+  subtotal?: number;
+  convenienceFee?: number;
+  totalAmount?: number;
+  orderStatus?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  reservationExpiresAt?: string;
+  errorMessage?: string;
+} {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      ok: false,
+      errorMessage: 'Formato de resposta inválido ao reservar pedido no banco.',
+    };
+  }
+
+  const payload = raw as Partial<ReserveOrderRpcPayload>;
+  if (
+    typeof payload.order_id !== 'string' ||
+    !payload.order_id ||
+    typeof payload.order_code !== 'string' ||
+    !payload.order_code ||
+    typeof payload.reservation_expires_at !== 'string' ||
+    !payload.reservation_expires_at
+  ) {
+    return {
+      ok: false,
+      errorMessage: 'Resposta incompleta de reserve_ticket_order.',
+    };
+  }
+
+  const unitPrice = Number(payload.unit_price ?? 0);
+  const subtotal = Number(payload.subtotal ?? 0);
+  const convenienceFee = Number(payload.convenience_fee ?? 0);
+  const totalAmount = Number(payload.total_amount);
+
+  if (Number.isNaN(totalAmount) || totalAmount < 0) {
+    return {
+      ok: false,
+      errorMessage: 'Valor total retornado pelo banco é inválido.',
+    };
+  }
+
+  return {
+    ok: true,
+    orderId: payload.order_id,
+    orderCode: payload.order_code,
+    unitPrice,
+    subtotal,
+    convenienceFee,
+    totalAmount,
+    orderStatus: payload.order_status ?? 'reserved',
+    paymentStatus: payload.payment_status ?? 'pending',
+    reservationExpiresAt: payload.reservation_expires_at,
+  };
+}
+
+/**
+ * Normalizes the JSONB response from `public.perform_ticket_checkin`.
+ * Supports both `result`/`ticket_code` (migration 002) and `status_reason`/`code` (migration 001).
+ */
+export function normalizeCheckinRpcResponse(raw: unknown): {
+  ok: boolean;
+  authorized: boolean;
+  result: 'authorized' | 'already_used' | 'invalid' | 'unpaid';
+  message: string;
+  ticketId?: string;
+  ticketCode?: string;
+  holderName?: string;
+  usedAt?: string;
+} {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      ok: false,
+      authorized: false,
+      result: 'invalid',
+      message: 'Retorno vazio ou inválido da função de check-in.',
+    };
+  }
+
+  const payload = raw as Partial<CheckinRpcPayload>;
+  const resolvedResult = payload.result ?? payload.status_reason ?? 'invalid';
+  const validResults = new Set(['authorized', 'already_used', 'invalid', 'unpaid']);
+  const safeResult = validResults.has(resolvedResult)
+    ? (resolvedResult as 'authorized' | 'already_used' | 'invalid' | 'unpaid')
+    : 'invalid';
+
+  const resolvedTicketCode = payload.ticket_code ?? payload.code;
+
+  return {
+    ok: true,
+    authorized: Boolean(payload.authorized && safeResult === 'authorized'),
+    result: safeResult,
+    message:
+      typeof payload.message === 'string' && payload.message.trim().length > 0
+        ? payload.message
+        : 'Retorno de check-in processado.',
+    ticketId: payload.ticket_id,
+    ticketCode: resolvedTicketCode,
+    holderName: payload.holder_name,
+    usedAt: payload.used_at,
+  };
+}
+
+/**
+ * Evaluates idempotency and security rules for `confirm_order_payment` (mirrors migration 002).
+ * - Requires backend `service_role` caller.
+ * - Requires official gateway status `'approved'`.
+ * - Rejects reuse of an `mp_payment_id` already bound to another order.
+ * - If order is already `'paid'`, only succeeds as an idempotent replay (0 new tickets emitted)
+ *   when `incomingMpPaymentId` matches `existingMpPaymentId` and `existingTicketsCount === orderQuantity`.
+ */
+export function evaluatePaymentConfirmationIdempotency(params: {
+  callerRole: 'service_role' | 'authenticated' | 'anon';
+  orderId: string;
+  orderQuantity: number;
+  orderTotalAmount: number;
+  currentOrderStatus: OrderStatus;
+  currentPaymentStatus: PaymentStatus;
+  existingMpPaymentId: string | null;
+  existingTicketsCount: number;
+  incomingMpPaymentId: string;
+  incomingMpPaymentStatus: PaymentStatus;
+  verifiedGatewayAmount?: number;
+  paymentIdUsedByOtherOrder?: boolean;
+}): {
+  allowed: boolean;
+  idempotentReplay: boolean;
+  ticketsToIssue: number;
+  errorMessage?: string;
+} {
+  if (params.callerRole !== 'service_role') {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: 'Operação restrita ao backend oficial de pagamentos (service_role).',
+    };
+  }
+
+  const cleanPaymentId = params.incomingMpPaymentId.trim();
+  if (!cleanPaymentId) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: 'Identificador oficial de pagamento do Mercado Pago é obrigatório.',
+    };
+  }
+
+  if (params.incomingMpPaymentStatus !== 'approved') {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: `Pagamento não pode ser confirmado: status oficial no gateway é "${params.incomingMpPaymentStatus}", esperado "approved".`,
+    };
+  }
+
+  if (params.paymentIdUsedByOtherOrder) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: `Conflito de pagamento: o identificador "${cleanPaymentId}" já está associado a outro pedido.`,
+    };
+  }
+
+  if (
+    typeof params.verifiedGatewayAmount === 'number' &&
+    Number(params.verifiedGatewayAmount.toFixed(2)) !== Number(params.orderTotalAmount.toFixed(2))
+  ) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: 'Valor confirmado no pagamento diverge do total oficial do pedido.',
+    };
+  }
+
+  if (params.currentOrderStatus === 'paid') {
+    if (params.existingMpPaymentId !== cleanPaymentId) {
+      return {
+        allowed: false,
+        idempotentReplay: false,
+        ticketsToIssue: 0,
+        errorMessage: `Conflito de idempotência: o pedido já consta como pago com outro mp_payment_id (${params.existingMpPaymentId ?? 'NULL'}).`,
+      };
+    }
+
+    if (params.currentPaymentStatus !== 'approved') {
+      return {
+        allowed: false,
+        idempotentReplay: false,
+        ticketsToIssue: 0,
+        errorMessage: 'Estado inconsistente do pedido: order_status=paid sem payment_status=approved.',
+      };
+    }
+
+    return {
+      allowed: true,
+      idempotentReplay: true,
+      ticketsToIssue: 0,
+    };
+  }
+
+  if (
+    params.currentOrderStatus !== 'reserved' &&
+    params.currentOrderStatus !== 'pending_payment'
+  ) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: `Pedido em estado inválido para confirmação (${params.currentOrderStatus}).`,
+    };
+  }
+
+  if (params.existingTicketsCount > 0) {
+    return {
+      allowed: false,
+      idempotentReplay: false,
+      ticketsToIssue: 0,
+      errorMessage: 'Inconsistência detectada: já existem ingressos emitidos para este pedido antes da confirmação.',
+    };
+  }
+
+  return {
+    allowed: true,
+    idempotentReplay: false,
+    ticketsToIssue: params.orderQuantity,
+  };
+}
+
+/**
  * Transactional Check-in Verification Rules (PX CONTROL)
  * Ensures tickets are authentic, paid, belong to the active event, and cannot be reused.
  */
@@ -300,4 +621,3 @@ export function verifyAndProcessCheckin(
     },
   };
 }
-

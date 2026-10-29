@@ -34,20 +34,40 @@ A migração cria **6 tabelas principais** no schema `public` com chaves primár
 
 ---
 
-## 2. Como Aplicar a Migração pelo SQL Editor do Supabase
+## 2. Como Aplicar as Migrações pelo SQL Editor do Supabase
+
+As migrações devem ser executadas em ordem numérica no **SQL Editor** do Supabase:
 
 1. Acesse o painel do seu projeto em [https://supabase.com/dashboard](https://supabase.com/dashboard).
-2. No menu lateral esquerdo, clique em **SQL Editor**.
-3. Clique em **New query**.
-4. Copie todo o conteúdo do arquivo **`supabase/migrations/001_initial_schema.sql`** deste projeto e cole no editor.
-5. Clique em **Run** (ou pressione `Ctrl + Enter` / `Cmd + Enter`).
-6. Aguarde a mensagem **`Success. No rows returned`**, que confirma que a transação `BEGIN ... COMMIT` foi executada sem erros.
+2. No menu lateral esquerdo, clique em **SQL Editor** → **New query**.
+3. **Passo 1 (caso ainda não tenha aplicado a 001)**:
+   - Copie todo o conteúdo de **`supabase/migrations/001_initial_schema.sql`**, cole no editor e clique em **Run**.
+4. **Passo 2 (aplicar a correção de contratos, permissões e idempotência)**:
+   - Crie uma nova query, copie todo o conteúdo de **`supabase/migrations/002_rpc_contracts_permissions_idempotency.sql`**, cole no editor e clique em **Run**.
+   - Aguarde a confirmação **`Success. No rows returned`**.
+
+### O que a migração `002_rpc_contracts_permissions_idempotency.sql` corrige e adiciona:
+- **`public.reserve_ticket_order`**:
+  - Alinha o nome do parâmetro `p_ticket_batch_id` com o código TypeScript e com a coluna `orders.ticket_batch_id`.
+  - Retorna `JSONB` completo (`order_id`, `order_code`, `unit_price`, `subtotal`, `convenience_fee`, `total_amount`, `order_status`, `payment_status`, `reservation_expires_at`) calculado exclusivamente pelo PostgreSQL a partir do preço oficial do lote.
+  - Remove a política de `INSERT` direto na tabela `orders`, garantindo que nenhum pedido seja criado fora da função transacional autenticada.
+- **`public.perform_ticket_checkin`**:
+  - Retorna simultaneamente `result` e `ticket_code` (além de `status_reason` e `code` para retrocompatibilidade), alinhado ao serviço TypeScript.
+  - Exige sessão autenticada (`auth.uid() IS NOT NULL`) e perfil autorizado (`checkin_operator`, `admin` ou `SUPER_ADMIN`).
+- **Permissões SQL (`REVOKE` / `GRANT`)**:
+  - Revoga explicitamente `EXECUTE` de `PUBLIC` e `anon` nas 4 funções privilegiadas (`reserve_ticket_order`, `confirm_order_payment`, `release_expired_reservations`, `perform_ticket_checkin`) e nas funções auxiliares (`is_admin_or_super_admin`, `is_checkin_staff`).
+  - Mantém `confirm_order_payment` exclusiva para `service_role` (backend confiável).
+- **Idempotência de Pagamento (`public.confirm_order_payment`)**:
+  - Se o pedido já estiver `paid`, verifica se `p_mp_payment_id` é idêntico ao `mp_payment_id` salvo no pedido; se for diferente, lança erro de conflito.
+  - Impede que um mesmo `mp_payment_id` seja usado em pedidos diferentes.
+  - Exige `p_mp_payment_status = 'approved'` e valida o valor pago quando informado.
+  - Adiciona coluna `item_sequence` e índice único `uq_tickets_order_item_sequence (order_id, item_sequence)` em `public.tickets`, garantindo que chamadas repetidas nunca emitam ingressos duplicados.
 
 ---
 
-## 3. Como Verificar se as Tabelas, Constraints e Políticas RLS Foram Criadas
+## 3. Como Verificar se as Tabelas, Constraints, Políticas RLS e Permissões Foram Criadas
 
-Após executar a migração, cole e execute as consultas abaixo em uma nova aba do **SQL Editor** para auditar a instalação:
+Após executar as migrações `001` e `002`, execute as consultas abaixo no **SQL Editor**:
 
 ### 3.1. Verificar as 6 tabelas e confirmação de RLS ativo (`rowsecurity = true`)
 
@@ -83,28 +103,33 @@ FROM pg_policies
 WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
 ```
-*Resultado esperado*: Listagem das políticas restritivas (`profiles_select_own_or_admin`, `events_select_published_or_admin`, `orders_select_own_or_admin`, `tickets_select_own_or_staff`, etc.).
+*Resultado esperado*: Listagem das políticas restritivas (`profiles_select_own_or_admin`, `events_select_published_or_admin`, `orders_select_own_or_admin`, `tickets_select_own_or_staff`, etc.), sem permissão de inserção direta irrestrita em `orders`.
 
-### 3.3. Verificar as Funções Transacionais (RPCs de Estoque, Pagamento e Check-in)
+### 3.3. Verificar Assinaturas e Permissões (`EXECUTE`) das Funções Privilegiadas
 
 ```sql
 SELECT
-  routine_name,
-  security_type,
-  data_type AS return_type
-FROM information_schema.routines
-WHERE routine_schema = 'public'
-  AND routine_name IN (
-    'is_admin_or_super_admin',
-    'is_checkin_staff',
+  p.proname AS function_name,
+  pg_get_function_identity_arguments(p.oid) AS arguments,
+  pg_get_function_result(p.oid) AS return_type,
+  has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_can_execute,
+  has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authenticated_can_execute,
+  has_function_privilege('service_role', p.oid, 'EXECUTE') AS service_role_can_execute
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname IN (
     'reserve_ticket_order',
     'confirm_order_payment',
     'release_expired_reservations',
     'perform_ticket_checkin'
   )
-ORDER BY routine_name;
+ORDER BY p.proname;
 ```
-*Resultado esperado*: 6 funções listadas com `security_type = 'DEFINER'`.
+*Resultado esperado*:
+- `anon_can_execute = false` em **todas** as 4 funções.
+- `confirm_order_payment`: `authenticated_can_execute = false` e `service_role_can_execute = true`.
+- `reserve_ticket_order`, `perform_ticket_checkin` e `release_expired_reservations`: `authenticated_can_execute = true` (com validação interna de `auth.uid()` e papel administrativo/operador).
 
 ---
 
@@ -126,4 +151,4 @@ Depois de aplicar o SQL no Supabase:
 1. Abra a aplicação **PX CUSTON**.
 2. Acesse **PX CONTROL → Configurações**.
 3. No card **"Diagnóstico Seguro de Conexão — Supabase"**, clique em **"Testar Conexão Supabase"**.
-4. O indicador **"Estrutura SQL (001_initial_schema)"** exibirá se as 6 tabelas já foram detectadas no banco ou se a aplicação manual da migração ainda está pendente.
+

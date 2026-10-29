@@ -177,7 +177,7 @@ export interface AuditLogEntry {
 }
 
 /**
- * PostgreSQL Row Types (matching supabase/migrations/001_initial_schema.sql)
+ * PostgreSQL Row Types (matching supabase/migrations/001_initial_schema.sql & 002)
  * Monetary columns are NUMERIC(12, 2) in PostgreSQL (returned as number or numeric string by PostgREST).
  */
 export interface DbProfileRow {
@@ -188,7 +188,6 @@ export interface DbProfileRow {
   phone: string | null;
   city: string | null;
   role: 'customer' | 'checkin_operator' | 'admin' | 'SUPER_ADMIN';
-  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -200,22 +199,20 @@ export interface DbEventRow {
   subtitle: string | null;
   category_slug: string;
   category_name: string;
-  description: string;
-  highlights: string[];
-  venue_name: string;
+  event_date: string;
+  time_range: string;
   city: string;
-  state_uf: string;
-  starts_at: string;
-  ends_at: string | null;
-  time_range_label: string;
+  venue_name: string;
+  starting_price: number | string;
   banner_url: string;
   card_image_url: string;
   gallery_urls: string[];
-  starting_price: number | string;
-  capacity: number;
-  tickets_sold: number;
+  description: string;
+  highlights: string[];
   status: 'draft' | 'published' | 'ended' | 'cancelled';
   featured: boolean;
+  capacity: number;
+  tickets_sold: number;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -224,12 +221,12 @@ export interface DbEventRow {
 export interface DbTicketCategoryRow {
   id: string;
   event_id: string;
-  slug: string;
   name: string;
+  slug: string;
   description: string | null;
-  benefits: string[];
-  display_order: number;
-  is_active: boolean;
+  max_per_order: number;
+  sort_order: number;
+  active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -237,20 +234,18 @@ export interface DbTicketCategoryRow {
 export interface DbTicketBatchRow {
   id: string;
   event_id: string;
-  ticket_category_id: string;
-  batch_number: number;
+  category_id: string;
   name: string;
+  batch_number: number;
   description: string | null;
   price: number | string;
-  service_fee_rate: number | string;
   total_quantity: number;
   reserved_quantity: number;
   sold_quantity: number;
-  max_per_order: number;
-  sales_starts_at: string | null;
-  sales_ends_at: string | null;
   thumbnail_url: string | null;
-  is_active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -262,20 +257,20 @@ export interface DbOrderRow {
   event_id: string;
   ticket_batch_id: string;
   quantity: number;
-  unit_price: number | string;
-  subtotal: number | string;
-  convenience_fee: number | string;
-  total_amount: number | string;
   buyer_name: string;
   buyer_cpf: string;
   buyer_email: string;
   buyer_phone: string;
+  unit_price: number | string;
+  subtotal: number | string;
+  convenience_fee: number | string;
+  total_amount: number | string;
   payment_method: PaymentMethodType;
   order_status: OrderStatus;
   payment_status: PaymentStatus;
-  reservation_expires_at: string;
   mp_preference_id: string | null;
   mp_payment_id: string | null;
+  reservation_expires_at: string | null;
   paid_at: string | null;
   cancelled_at: string | null;
   created_at: string;
@@ -287,20 +282,78 @@ export interface DbTicketRow {
   code: string;
   qr_payload: string;
   order_id: string;
+  item_sequence: number | null;
   user_id: string;
   event_id: string;
-  ticket_category_id: string;
-  ticket_batch_id: string;
+  category_id: string;
+  batch_id: string;
   holder_name: string;
   holder_cpf: string;
   price_paid: number | string;
   status: TicketStatus;
+  mp_payment_id: string | null;
   issued_at: string;
   used_at: string | null;
   used_by_operator_id: string | null;
-  used_by_operator_name: string | null;
   checkin_device_id: string | null;
   created_at: string;
   updated_at: string;
 }
 
+/**
+ * RPC Contracts (matching supabase/migrations/002_rpc_contracts_permissions_idempotency.sql)
+ */
+export interface ReserveOrderRpcArgs {
+  p_ticket_batch_id: string;
+  p_quantity: number;
+  p_payment_method: PaymentMethodType;
+  p_buyer_name: string;
+  p_buyer_cpf: string;
+  p_buyer_email: string;
+  p_buyer_phone: string;
+}
+
+export interface ReserveOrderRpcPayload {
+  order_id: string;
+  order_code: string;
+  unit_price: number | string;
+  subtotal: number | string;
+  convenience_fee: number | string;
+  total_amount: number | string;
+  order_status: OrderStatus;
+  payment_status: PaymentStatus;
+  reservation_expires_at: string;
+}
+
+export interface ConfirmOrderPaymentRpcArgs {
+  p_order_id: string;
+  p_mp_payment_id: string;
+  p_mp_payment_status?: PaymentStatus;
+  p_verified_amount?: number;
+}
+
+export interface ConfirmOrderPaymentRpcPayload {
+  order_id: string;
+  order_code: string;
+  mp_payment_id: string;
+  tickets_issued: number;
+  idempotent_replay: boolean;
+}
+
+export interface CheckinRpcArgs {
+  p_code_or_payload: string;
+  p_device_id?: string;
+}
+
+export interface CheckinRpcPayload {
+  authorized: boolean;
+  result?: 'authorized' | 'already_used' | 'invalid' | 'unpaid';
+  status_reason?: 'authorized' | 'already_used' | 'invalid' | 'unpaid';
+  ticket_id?: string;
+  ticket_code?: string;
+  code?: string;
+  holder_name?: string;
+  used_at?: string;
+  status?: TicketStatus;
+  message: string;
+}

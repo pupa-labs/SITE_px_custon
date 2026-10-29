@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   calculateOrderTotals,
   formatBRL,
@@ -7,6 +9,10 @@ import {
   verifyAndProcessCheckin,
   validateBatchStockAvailability,
   canTransitionOrderToPaid,
+  buildReserveOrderRpcArgs,
+  normalizeReserveOrderRpcResponse,
+  normalizeCheckinRpcResponse,
+  evaluatePaymentConfirmationIdempotency,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -155,3 +161,233 @@ test('canTransitionOrderToPaid blocks marking order as paid before official paym
   assert.equal(approvedValid.allowed, true);
 });
 
+test('buildReserveOrderRpcArgs aligns p_ticket_batch_id parameter, requires authenticated user, and never sends client prices', () => {
+  const unauthenticated = buildReserveOrderRpcArgs({
+    authenticatedUserId: null,
+    ticketBatchId: '11111111-2222-3333-4444-555555555555',
+    quantity: 2,
+    buyerName: 'João da Silva',
+    buyerCpf: '123.456.789-00',
+    buyerEmail: 'joao@email.com',
+    buyerPhone: '(11) 98765-4321',
+    paymentMethod: 'pix',
+  });
+  assert.equal(unauthenticated.ok, false);
+
+  const authenticated = buildReserveOrderRpcArgs({
+    authenticatedUserId: 'aaaa1111-bbbb-2222-cccc-333333333333',
+    ticketBatchId: '11111111-2222-3333-4444-555555555555',
+    quantity: 2,
+    buyerName: 'João da Silva',
+    buyerCpf: '123.456.789-00',
+    buyerEmail: 'joao@email.com',
+    buyerPhone: '(11) 98765-4321',
+    paymentMethod: 'pix',
+  });
+  assert.equal(authenticated.ok, true);
+  if (authenticated.ok) {
+    assert.deepEqual(Object.keys(authenticated.args).sort(), [
+      'p_buyer_cpf',
+      'p_buyer_email',
+      'p_buyer_name',
+      'p_buyer_phone',
+      'p_payment_method',
+      'p_quantity',
+      'p_ticket_batch_id',
+    ]);
+    assert.equal(authenticated.args.p_ticket_batch_id, '11111111-2222-3333-4444-555555555555');
+    assert.equal(authenticated.args.p_buyer_cpf, '12345678900');
+    assert.equal('price' in authenticated.args, false);
+    assert.equal('total_amount' in authenticated.args, false);
+  }
+});
+
+test('normalizeReserveOrderRpcResponse validates JSONB payload from reserve_ticket_order and rejects raw UUID', () => {
+  const legacyRawUuid = normalizeReserveOrderRpcResponse('99999999-8888-7777-6666-555555555555');
+  assert.equal(legacyRawUuid.ok, false);
+
+  const validJsonb = normalizeReserveOrderRpcResponse({
+    order_id: '99999999-8888-7777-6666-555555555555',
+    order_code: '#PX-1A2B3C4D',
+    unit_price: '40.00',
+    subtotal: '80.00',
+    convenience_fee: '4.80',
+    total_amount: '84.80',
+    order_status: 'reserved',
+    payment_status: 'pending',
+    reservation_expires_at: '2026-10-29T10:30:00Z',
+  });
+  assert.equal(validJsonb.ok, true);
+  assert.equal(validJsonb.orderId, '99999999-8888-7777-6666-555555555555');
+  assert.equal(validJsonb.orderCode, '#PX-1A2B3C4D');
+  assert.equal(validJsonb.unitPrice, 40);
+  assert.equal(validJsonb.subtotal, 80);
+  assert.equal(validJsonb.convenienceFee, 4.8);
+  assert.equal(validJsonb.totalAmount, 84.8);
+  assert.equal(validJsonb.orderStatus, 'reserved');
+  assert.equal(validJsonb.paymentStatus, 'pending');
+  assert.equal(validJsonb.reservationExpiresAt, '2026-10-29T10:30:00Z');
+});
+
+test('normalizeCheckinRpcResponse aligns result/status_reason and ticket_code/code fields', () => {
+  const migration002Response = normalizeCheckinRpcResponse({
+    authorized: true,
+    result: 'authorized',
+    status_reason: 'authorized',
+    ticket_id: 'tkt-uuid-1',
+    ticket_code: 'PX-784592',
+    code: 'PX-784592',
+    holder_name: 'João da Silva',
+    message: 'Entrada autorizada!',
+  });
+  assert.equal(migration002Response.ok, true);
+  assert.equal(migration002Response.authorized, true);
+  assert.equal(migration002Response.result, 'authorized');
+  assert.equal(migration002Response.ticketCode, 'PX-784592');
+  assert.equal(migration002Response.holderName, 'João da Silva');
+
+  const legacy001Response = normalizeCheckinRpcResponse({
+    authorized: false,
+    status_reason: 'already_used',
+    code: 'PX-784592',
+    message: 'Ingresso já utilizado anteriormente. Reutilização bloqueada.',
+  });
+  assert.equal(legacy001Response.ok, true);
+  assert.equal(legacy001Response.authorized, false);
+  assert.equal(legacy001Response.result, 'already_used');
+  assert.equal(legacy001Response.ticketCode, 'PX-784592');
+});
+
+test('evaluatePaymentConfirmationIdempotency enforces service_role, verified payment ID match, and prevents duplicate tickets', () => {
+  // 1. Rejects non-service_role callers
+  const fromClient = evaluatePaymentConfirmationIdempotency({
+    callerRole: 'authenticated',
+    orderId: 'ord-1',
+    orderQuantity: 2,
+    orderTotalAmount: 84.8,
+    currentOrderStatus: 'reserved',
+    currentPaymentStatus: 'pending',
+    existingMpPaymentId: null,
+    existingTicketsCount: 0,
+    incomingMpPaymentId: 'MP-1001',
+    incomingMpPaymentStatus: 'approved',
+  });
+  assert.equal(fromClient.allowed, false);
+
+  // 2. Rejects payment ID when gateway status is not 'approved'
+  const unapprovedGateway = evaluatePaymentConfirmationIdempotency({
+    callerRole: 'service_role',
+    orderId: 'ord-1',
+    orderQuantity: 2,
+    orderTotalAmount: 84.8,
+    currentOrderStatus: 'reserved',
+    currentPaymentStatus: 'pending',
+    existingMpPaymentId: null,
+    existingTicketsCount: 0,
+    incomingMpPaymentId: 'MP-1001',
+    incomingMpPaymentStatus: 'in_process',
+  });
+  assert.equal(unapprovedGateway.allowed, false);
+
+  // 3. First valid confirmation issues exact order quantity
+  const firstConfirmation = evaluatePaymentConfirmationIdempotency({
+    callerRole: 'service_role',
+    orderId: 'ord-1',
+    orderQuantity: 2,
+    orderTotalAmount: 84.8,
+    currentOrderStatus: 'reserved',
+    currentPaymentStatus: 'pending',
+    existingMpPaymentId: null,
+    existingTicketsCount: 0,
+    incomingMpPaymentId: 'MP-1001',
+    incomingMpPaymentStatus: 'approved',
+    verifiedGatewayAmount: 84.8,
+  });
+  assert.equal(firstConfirmation.allowed, true);
+  assert.equal(firstConfirmation.idempotentReplay, false);
+  assert.equal(firstConfirmation.ticketsToIssue, 2);
+
+  // 4. Replay with the SAME mp_payment_id on an already-paid order is idempotent and issues 0 new tickets
+  const samePaymentReplay = evaluatePaymentConfirmationIdempotency({
+    callerRole: 'service_role',
+    orderId: 'ord-1',
+    orderQuantity: 2,
+    orderTotalAmount: 84.8,
+    currentOrderStatus: 'paid',
+    currentPaymentStatus: 'approved',
+    existingMpPaymentId: 'MP-1001',
+    existingTicketsCount: 2,
+    incomingMpPaymentId: 'MP-1001',
+    incomingMpPaymentStatus: 'approved',
+    verifiedGatewayAmount: 84.8,
+  });
+  assert.equal(samePaymentReplay.allowed, true);
+  assert.equal(samePaymentReplay.idempotentReplay, true);
+  assert.equal(samePaymentReplay.ticketsToIssue, 0);
+
+  // 5. Replay on an already-paid order with a DIFFERENT mp_payment_id is rejected
+  const conflictingPaymentIdOnPaidOrder = evaluatePaymentConfirmationIdempotency({
+    callerRole: 'service_role',
+    orderId: 'ord-1',
+    orderQuantity: 2,
+    orderTotalAmount: 84.8,
+    currentOrderStatus: 'paid',
+    currentPaymentStatus: 'approved',
+    existingMpPaymentId: 'MP-1001',
+    existingTicketsCount: 2,
+    incomingMpPaymentId: 'MP-9999-DIFFERENT',
+    incomingMpPaymentStatus: 'approved',
+  });
+  assert.equal(conflictingPaymentIdOnPaidOrder.allowed, false);
+  assert.ok(conflictingPaymentIdOnPaidOrder.errorMessage?.includes('Conflito de idempotência'));
+});
+
+test('migration 002 SQL file enforces RPC parameter names, JSONB returns, REVOKE permissions, and idempotency checks', () => {
+  const migrationPath = path.resolve(
+    process.cwd(),
+    'supabase/migrations/002_rpc_contracts_permissions_idempotency.sql'
+  );
+  const sql = fs.readFileSync(migrationPath, 'utf8');
+
+  // 1. reserve_ticket_order uses p_ticket_batch_id and returns JSONB with required fields
+  assert.ok(sql.includes('p_ticket_batch_id UUID'));
+  assert.ok(sql.includes("'order_id', v_order_id"));
+  assert.ok(sql.includes("'order_code', v_order_code"));
+  assert.ok(sql.includes("'total_amount', v_total"));
+  assert.ok(sql.includes("'reservation_expires_at', v_expires_at"));
+
+  // 2. perform_ticket_checkin includes 'result' and 'ticket_code'
+  assert.ok(sql.includes("'result', 'authorized'"));
+  assert.ok(sql.includes("'ticket_code', v_ticket.code"));
+
+  // 3. Explicit REVOKE ALL FROM PUBLIC, anon, authenticated on all 4 privileged functions
+  assert.ok(
+    sql.includes(
+      'REVOKE ALL ON FUNCTION public.reserve_ticket_order(UUID, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT) FROM PUBLIC, anon, authenticated;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'REVOKE ALL ON FUNCTION public.confirm_order_payment(UUID, TEXT, TEXT, NUMERIC) FROM PUBLIC, anon, authenticated;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'GRANT EXECUTE ON FUNCTION public.confirm_order_payment(UUID, TEXT, TEXT, NUMERIC) TO service_role;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'REVOKE ALL ON FUNCTION public.release_expired_reservations() FROM PUBLIC, anon, authenticated;'
+    )
+  );
+  assert.ok(
+    sql.includes(
+      'REVOKE ALL ON FUNCTION public.perform_ticket_checkin(TEXT, TEXT) FROM PUBLIC, anon, authenticated;'
+    )
+  );
+
+  // 4. Idempotency payment ID verification and duplicate ticket prevention
+  assert.ok(sql.includes('IF v_order.mp_payment_id IS DISTINCT FROM v_clean_payment_id THEN'));
+  assert.ok(sql.includes('CREATE UNIQUE INDEX IF NOT EXISTS uq_tickets_order_item_sequence'));
+});
