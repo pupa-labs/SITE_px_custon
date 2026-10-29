@@ -1,0 +1,6 @@
+{
+  "name": "PX CUSTON — Ingressos & Eventos Automotivos",
+  "description": "Plataforma oficial da PX CUSTON para venda de ingressos, gestão de eventos automotivos brasileiros e check-in online via QR Code.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

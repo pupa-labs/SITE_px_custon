@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#070709"/>
+  <path d="M128 136c-38 40-52 115-24 185 16 40 44 65 72 65 18 0 32-12 36-32" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round"/>
+  <text x="165" y="290" font-family="Arial Black, Impact, sans-serif" font-size="148" font-weight="900" fill="#ffffff">P</text>
+  <path d="M270 190 L355 190 L285 335 L245 335 Z" fill="#E50914"/>
+  <path d="M160 310 L325 310 L345 275 L362 335 L382 280 L398 330 L415 310 L452 310" fill="none" stroke="#E50914" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="275" y="388" font-family="Arial Black, Impact, sans-serif" font-size="44" font-weight="900" fill="#ffffff" letter-spacing="3">CUSTON</text>
+</svg>
