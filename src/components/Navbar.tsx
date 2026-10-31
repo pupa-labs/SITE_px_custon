@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import type { Profile } from '../types/domain';
+import { resolveProfileNavigationTarget } from '../utils/ticketRules';
 import { BrandLogo } from './BrandLogo';
 
 export type AppView =
@@ -24,10 +25,11 @@ export type AppView =
   | 'about'
   | 'contact';
 
-export type ClientSubTab = 'tickets' | 'orders' | 'login' | 'register' | 'recover';
+export type ClientSubTab = 'tickets' | 'orders' | 'profile' | 'login' | 'register' | 'recover';
 
 interface NavbarProps {
   activeView: AppView;
+  activeClientSubTab?: ClientSubTab;
   onNavigate: (view: AppView, subTab?: ClientSubTab) => void;
   cartCount: number;
   searchQuery: string;
@@ -41,6 +43,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   activeView,
+  activeClientSubTab = 'tickets',
   onNavigate,
   cartCount,
   searchQuery,
@@ -53,6 +56,19 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const profileTargetSubTab = resolveProfileNavigationTarget(isAuthenticated);
+
+  const isProfileSubTabActive =
+    activeView === 'client-area' &&
+    (activeClientSubTab === 'profile' ||
+      activeClientSubTab === 'login' ||
+      activeClientSubTab === 'register' ||
+      activeClientSubTab === 'recover');
+
+  const isTicketsSubTabActive =
+    activeView === 'client-area' &&
+    (activeClientSubTab === 'tickets' || activeClientSubTab === 'orders');
 
   const displayUserName =
     currentUserProfile?.fullName?.split(' ')[0] ||
@@ -88,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             {navItems.map((item) => {
               const isActive =
-                activeView === item.id ||
+                (item.id === 'client-area' ? isTicketsSubTabActive : activeView === item.id) ||
                 (item.id === 'events' && activeView === 'event-detail');
               return (
                 <button
@@ -173,9 +189,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => onNavigate('client-area', 'tickets')}
-                  className="px-3 sm:px-3.5 py-2 min-h-[40px] rounded-lg bg-[#13151C] hover:bg-[#1B1E28] border border-[#2A2E3D] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                  title={authenticatedEmail ?? 'Conta autenticada'}
+                  onClick={() => onNavigate('client-area', 'profile')}
+                  className={`px-3 sm:px-3.5 py-2 min-h-[40px] rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    isProfileSubTabActive
+                      ? 'bg-[#1B1E28] border-[#E50914] text-white'
+                      : 'bg-[#13151C] hover:bg-[#1B1E28] border-[#2A2E3D] text-white'
+                  }`}
+                  title={authenticatedEmail ?? 'Meu Perfil'}
                 >
                   <User className="w-3.5 h-3.5 text-[#E50914]" />
                   <span className="max-w-[110px] truncate">{displayUserName}</span>
@@ -245,6 +265,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => {
+                onNavigate('client-area', profileTargetSubTab);
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-200 hover:bg-[#171922] hover:text-white flex items-center gap-2"
+            >
+              <User className="w-4 h-4 text-[#E50914]" />
+              <span>{isAuthenticated ? 'Meu Perfil' : 'Perfil / Entrar ou Criar Conta'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 onNavigate('admin');
                 setMobileMenuOpen(false);
               }}
@@ -270,7 +301,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         )}
       </header>
 
-      {/* Mobile Bottom Navigation Bar (Matches mobile reference mockup: Início, Eventos, Ingressos, Perfil) */}
+      {/* Mobile Bottom Navigation Bar (Início, Eventos, Ingressos, Perfil, PX Control) */}
       <nav
         aria-label="Navegação Inferior Mobile"
         className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0A0B0E]/95 backdrop-blur-md border-t border-[#1F222D] grid grid-cols-5 items-center h-14 px-1"
@@ -303,7 +334,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           type="button"
           onClick={() => onNavigate('client-area', 'tickets')}
           className={`flex flex-col items-center justify-center min-h-[44px] ${
-            activeView === 'client-area' ? 'text-[#E50914]' : 'text-neutral-400 hover:text-white'
+            isTicketsSubTabActive ? 'text-[#E50914]' : 'text-neutral-400 hover:text-white'
           }`}
         >
           <TicketIcon className="w-4 h-4" />
@@ -312,8 +343,11 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         <button
           type="button"
-          onClick={() => onNavigate('client-area', 'orders')}
-          className="flex flex-col items-center justify-center min-h-[44px] text-neutral-400 hover:text-white"
+          onClick={() => onNavigate('client-area', profileTargetSubTab)}
+          aria-label="Abrir Perfil"
+          className={`flex flex-col items-center justify-center min-h-[44px] ${
+            isProfileSubTabActive ? 'text-[#E50914]' : 'text-neutral-400 hover:text-white'
+          }`}
         >
           <User className="w-4 h-4" />
           <span className="text-[10px] font-medium mt-0.5 whitespace-nowrap">Perfil</span>
@@ -333,3 +367,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </>
   );
 };
+

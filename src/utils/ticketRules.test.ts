@@ -38,6 +38,12 @@ import {
   evaluateLatePaymentConciliation,
   evaluateProfileUpdateIntegrity,
   RECOVERABLE_TICKET_UNIQUE_CONSTRAINTS,
+  DEMO_TICKET_CODES,
+  DEMO_ORDER_CODES,
+  isKnownDemoTicketCode,
+  resolveProfileNavigationTarget,
+  calculateActiveCartCount,
+  validateProfileSelfUpdateInput,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -2544,4 +2550,134 @@ test('Correções 1-5: ticket_categories protection, category-batch-event valida
   );
   assert.ok(batchErrMsg.includes('migration 002'));
 });
+
+test('resolveProfileNavigationTarget, calculateActiveCartCount, validateProfileSelfUpdateInput, and isKnownDemoTicketCode enforce Perfil navigation, cart count isolation, and demo code rejection', () => {
+  // 1. Perfil navigation target resolution
+  assert.equal(resolveProfileNavigationTarget(false), 'login');
+  assert.equal(resolveProfileNavigationTarget(true), 'profile');
+
+  // 2. Active cart count calculation (must be 0 when no published event or active lot is selected)
+  assert.equal(
+    calculateActiveCartCount({
+      hasPublishedEvent: false,
+      hasActiveLot: false,
+      checkoutQty: 2,
+    }),
+    0
+  );
+  assert.equal(
+    calculateActiveCartCount({
+      hasPublishedEvent: true,
+      hasActiveLot: false,
+      checkoutQty: 2,
+    }),
+    0
+  );
+  assert.equal(
+    calculateActiveCartCount({
+      hasPublishedEvent: true,
+      hasActiveLot: true,
+      checkoutQty: 0,
+    }),
+    0
+  );
+  assert.equal(
+    calculateActiveCartCount({
+      hasPublishedEvent: true,
+      hasActiveLot: true,
+      checkoutQty: 3,
+    }),
+    3
+  );
+
+  // 3. Demo ticket codes and QR payloads are detected and blocked
+  assert.deepEqual(DEMO_TICKET_CODES, ['PX-784592', 'PX-784593', 'PX-619204']);
+  assert.deepEqual(DEMO_ORDER_CODES, ['#PX-90421', '#PX-88310']);
+  assert.equal(isKnownDemoTicketCode('PX-784592'), true);
+  assert.equal(isKnownDemoTicketCode('px-784593'), true);
+  assert.equal(isKnownDemoTicketCode('PXCUSTON|PX-619204|EVT-03|VERIFIED'), true);
+  assert.equal(isKnownDemoTicketCode('PX-REAL9991'), false);
+  assert.equal(isKnownDemoTicketCode(''), false);
+
+  // 4. Profile self-update validation
+  const validProfileInput = validateProfileSelfUpdateInput({
+    fullName: 'Carlos Eduardo',
+    phone: '(11) 98888-7777',
+    city: 'São Paulo - SP',
+  });
+  assert.equal(validProfileInput.ok, true);
+  if (validProfileInput.ok) {
+    assert.equal(validProfileInput.sanitized.full_name, 'Carlos Eduardo');
+    assert.equal(validProfileInput.sanitized.phone, '(11) 98888-7777');
+    assert.equal(validProfileInput.sanitized.city, 'São Paulo - SP');
+  }
+
+  const invalidNameInput = validateProfileSelfUpdateInput({
+    fullName: 'Ca',
+    phone: '(11) 98888-7777',
+    city: 'São Paulo - SP',
+  });
+  assert.equal(invalidNameInput.ok, false);
+  if (!invalidNameInput.ok) {
+    assert.ok(invalidNameInput.errorMessage.includes('nome completo'));
+  }
+
+  const invalidPhoneInput = validateProfileSelfUpdateInput({
+    fullName: 'Carlos Eduardo',
+    phone: '123',
+    city: 'São Paulo - SP',
+  });
+  assert.equal(invalidPhoneInput.ok, false);
+  if (!invalidPhoneInput.ok) {
+    assert.ok(invalidPhoneInput.errorMessage.includes('telefone válido'));
+  }
+});
+
+test('production UI source files isolate all demo orders, tickets, QR codes, check-in inputs, and cart counts', () => {
+  const appSource = fs.readFileSync(path.resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+  const navbarSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'src/components/Navbar.tsx'),
+    'utf8'
+  );
+  const clientAreaSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'src/components/ClientAreaView.tsx'),
+    'utf8'
+  );
+  const checkoutSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'src/components/CheckoutView.tsx'),
+    'utf8'
+  );
+  const adminPanelSource = fs.readFileSync(
+    path.resolve(process.cwd(), 'src/components/AdminPanelView.tsx'),
+    'utf8'
+  );
+
+  // 1. App.tsx must not import or initialize INITIAL_TICKETS, INITIAL_ORDERS, INITIAL_CHECKINS, INITIAL_CUSTOMERS, INITIAL_AUDIT_LOGS, or checkoutQty = 2
+  assert.equal(appSource.includes('INITIAL_TICKETS'), false);
+  assert.equal(appSource.includes('INITIAL_ORDERS'), false);
+  assert.equal(appSource.includes('INITIAL_CHECKINS'), false);
+  assert.equal(appSource.includes('INITIAL_CUSTOMERS'), false);
+  assert.equal(appSource.includes('INITIAL_AUDIT_LOGS'), false);
+  assert.equal(appSource.includes('useState<number>(2)'), false);
+  assert.ok(appSource.includes('useState<number>(0)'));
+
+  // 2. Navbar.tsx must route Perfil via resolveProfileNavigationTarget and highlight active profile sub-tab
+  assert.ok(navbarSource.includes('resolveProfileNavigationTarget(isAuthenticated)'));
+  assert.ok(navbarSource.includes('isProfileSubTabActive'));
+
+  // 3. ClientAreaView.tsx must include the 'profile' tab and gate tickets/orders behind authentication
+  assert.ok(clientAreaSource.includes("activeSubTab === 'profile'"));
+  assert.ok(clientAreaSource.includes('updateOwnProfileInSupabase'));
+
+  // 4. CheckoutView.tsx must not pre-fill fake buyer data ('João da Silva', '123.456.789-00', 'joao@email.com')
+  assert.equal(checkoutSource.includes("useState('João da Silva')"), false);
+  assert.equal(checkoutSource.includes("useState('123.456.789-00')"), false);
+  assert.equal(checkoutSource.includes("useState('joao@email.com')"), false);
+  assert.equal(checkoutSource.includes("userId: 'usr-joao'"), false);
+
+  // 5. AdminPanelView.tsx must not pre-fill 'PX-784592' or initial check-in result and must block demo codes
+  assert.equal(adminPanelSource.includes("useState('PX-784592')"), false);
+  assert.ok(adminPanelSource.includes('isKnownDemoTicketCode'));
+});
+
 

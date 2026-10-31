@@ -11,6 +11,7 @@ import type {
   DbTicketBatchRow,
   DbTicketCategoryRow,
   DbOrderRow,
+  DbTicketRow,
   DbProfileRow,
   PaymentMethodType,
   OrderStatus,
@@ -40,6 +41,8 @@ import {
   mapUiEventStatusToDb,
   translateEventDatabaseError,
   translateBatchOrCategoryDatabaseError,
+  validateProfileSelfUpdateInput,
+  isKnownDemoTicketCode,
 } from '../utils/ticketRules';
 
 export {
@@ -1043,8 +1046,246 @@ export async function fetchOwnOrdersFromSupabase(): Promise<{
 }
 
 /**
+ * Fetches and maps the authenticated user's real orders from `public.orders` (enriched with
+ * event metadata and batch names when available).
+ * Never returns demo or mock orders.
+ */
+export async function fetchOwnOrdersMappedFromSupabase(): Promise<{
+  ok: boolean;
+  orders: Order[];
+  errorMessage?: string;
+}> {
+  const rawResult = await fetchOwnOrdersFromSupabase();
+  if (!rawResult.ok) {
+    return {
+      ok: false,
+      orders: [],
+      errorMessage: rawResult.errorMessage,
+    };
+  }
+
+  const orderRows = rawResult.orders;
+  if (orderRows.length === 0) {
+    return {
+      ok: true,
+      orders: [],
+    };
+  }
+
+  const eventIds = Array.from(new Set(orderRows.map((o) => o.event_id).filter(Boolean)));
+  const batchIds = Array.from(new Set(orderRows.map((o) => o.ticket_batch_id).filter(Boolean)));
+
+  const eventById = new Map<string, DbEventRow>();
+  const batchById = new Map<string, DbTicketBatchRow>();
+
+  if (supabase && eventIds.length > 0) {
+    const { data: evData } = await supabase
+      .from('events')
+      .select('*')
+      .in('id', eventIds);
+    for (const ev of (evData as DbEventRow[]) ?? []) {
+      eventById.set(ev.id, ev);
+    }
+  }
+
+  if (supabase && batchIds.length > 0) {
+    const { data: btData } = await supabase
+      .from('ticket_batches')
+      .select('*')
+      .in('id', batchIds);
+    for (const bt of (btData as DbTicketBatchRow[]) ?? []) {
+      batchById.set(bt.id, bt);
+    }
+  }
+
+  const mappedOrders: Order[] = orderRows.map((row) => {
+    const ev = eventById.get(row.event_id);
+    const bt = batchById.get(row.ticket_batch_id);
+    const evDateObj = ev?.event_date ? new Date(ev.event_date) : null;
+    const formattedEvDate =
+      evDateObj && !Number.isNaN(evDateObj.getTime())
+        ? `${String(evDateObj.getUTCDate()).padStart(2, '0')}/${String(
+            evDateObj.getUTCMonth() + 1
+          ).padStart(2, '0')}/${evDateObj.getUTCFullYear()}`
+        : '—';
+    const createdObj = row.created_at ? new Date(row.created_at) : null;
+    const formattedCreatedAt =
+      createdObj && !Number.isNaN(createdObj.getTime())
+        ? createdObj.toLocaleString('pt-BR')
+        : row.created_at || '—';
+
+    return {
+      id: row.id,
+      orderCode: row.order_code,
+      userId: row.user_id,
+      buyerName: row.buyer_name,
+      buyerCpf: row.buyer_cpf,
+      buyerEmail: row.buyer_email,
+      buyerPhone: row.buyer_phone,
+      eventId: row.event_id,
+      eventTitle: ev?.title ?? 'Evento PX CUSTON',
+      eventDate: formattedEvDate,
+      eventLocation: ev?.city ?? '—',
+      items: [
+        {
+          id: `${row.id}-item-1`,
+          lotId: row.ticket_batch_id,
+          lotName: bt?.name ?? 'Ingresso PX CUSTON',
+          unitPrice: Number(row.unit_price),
+          quantity: Number(row.quantity),
+          subtotal: Number(row.subtotal),
+        },
+      ],
+      subtotal: Number(row.subtotal),
+      convenienceFee: Number(row.convenience_fee),
+      totalAmount: Number(row.total_amount),
+      paymentMethod: row.payment_method,
+      status: row.order_status,
+      paymentStatus: row.payment_status,
+      reservationExpiresAt: row.reservation_expires_at ?? undefined,
+      mpPreferenceId: row.mp_preference_id ?? undefined,
+      mpPaymentId: row.mp_payment_id ?? undefined,
+      createdAt: formattedCreatedAt,
+    };
+  });
+
+  return {
+    ok: true,
+    orders: mappedOrders,
+  };
+}
+
+/**
+ * Fetches and maps the authenticated user's real tickets from `public.tickets`.
+ * Enforces both client-side `.eq('user_id', user.id)` and PostgreSQL RLS (`auth.uid() = user_id`).
+ * Never returns demo or mock tickets.
+ */
+export async function fetchOwnTicketsFromSupabase(): Promise<{
+  ok: boolean;
+  tickets: Ticket[];
+  errorMessage?: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      tickets: [],
+      errorMessage: 'Cliente Supabase não configurado.',
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      tickets: [],
+      errorMessage: 'Sessão autenticada obrigatória para consultar ingressos.',
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('*')
+    .eq('user_id', authData.user.id)
+    .order('issued_at', { ascending: false });
+
+  if (error) {
+    return {
+      ok: false,
+      tickets: [],
+      errorMessage: error.message,
+    };
+  }
+
+  const ticketRows = (data as DbTicketRow[]) ?? [];
+  if (ticketRows.length === 0) {
+    return {
+      ok: true,
+      tickets: [],
+    };
+  }
+
+  const eventIds = Array.from(new Set(ticketRows.map((t) => t.event_id).filter(Boolean)));
+  const batchIds = Array.from(new Set(ticketRows.map((t) => t.batch_id).filter(Boolean)));
+
+  const eventById = new Map<string, DbEventRow>();
+  const batchById = new Map<string, DbTicketBatchRow>();
+
+  if (eventIds.length > 0) {
+    const { data: evData } = await supabase
+      .from('events')
+      .select('*')
+      .in('id', eventIds);
+    for (const ev of (evData as DbEventRow[]) ?? []) {
+      eventById.set(ev.id, ev);
+    }
+  }
+
+  if (batchIds.length > 0) {
+    const { data: btData } = await supabase
+      .from('ticket_batches')
+      .select('*')
+      .in('id', batchIds);
+    for (const bt of (btData as DbTicketBatchRow[]) ?? []) {
+      batchById.set(bt.id, bt);
+    }
+  }
+
+  const mappedTickets: Ticket[] = ticketRows.map((row) => {
+    const ev = eventById.get(row.event_id);
+    const bt = batchById.get(row.batch_id);
+    const evDateObj = ev?.event_date ? new Date(ev.event_date) : null;
+    const formattedEvDate =
+      evDateObj && !Number.isNaN(evDateObj.getTime())
+        ? `${String(evDateObj.getUTCDate()).padStart(2, '0')}/${String(
+            evDateObj.getUTCMonth() + 1
+          ).padStart(2, '0')}/${evDateObj.getUTCFullYear()}`
+        : '—';
+    const issuedObj = row.issued_at ? new Date(row.issued_at) : null;
+    const formattedIssuedAt =
+      issuedObj && !Number.isNaN(issuedObj.getTime())
+        ? issuedObj.toLocaleString('pt-BR')
+        : row.issued_at || '—';
+    const usedObj = row.used_at ? new Date(row.used_at) : null;
+    const formattedUsedAt =
+      usedObj && !Number.isNaN(usedObj.getTime())
+        ? usedObj.toLocaleString('pt-BR')
+        : row.used_at ?? undefined;
+
+    return {
+      id: row.id,
+      code: row.code,
+      qrPayload: row.qr_payload,
+      orderId: row.order_id,
+      paymentId: row.mp_payment_id ?? '',
+      userId: row.user_id,
+      holderName: row.holder_name,
+      holderCpf: row.holder_cpf,
+      eventId: row.event_id,
+      eventTitle: ev?.title ?? 'Evento PX CUSTON',
+      eventDate: formattedEvDate,
+      eventLocation: ev?.city ?? '—',
+      eventImageUrl: ev?.card_image_url ?? '/assets/events/ev-rebaixados.jpg',
+      ticketTypeId: row.batch_id,
+      ticketCategoryId: row.category_id,
+      ticketTypeName: bt?.name ?? 'Ingresso PX CUSTON',
+      pricePaid: Number(row.price_paid),
+      status: row.status,
+      usedAt: formattedUsedAt,
+      usedByOperator: row.used_by_operator_id ?? undefined,
+      issuedAt: formattedIssuedAt,
+    };
+  });
+
+  return {
+    ok: true,
+    tickets: mappedTickets,
+  };
+}
+
+/**
  * Calls the transactional PostgreSQL function `public.perform_ticket_checkin`
  * defined in `supabase/migrations/002_rpc_contracts_permissions_idempotency.sql`.
+ * - Rejects known development/demo codes (`PX-784592`, `PX-784593`, `PX-619204`) immediately.
  * - Rejects anonymous callers before hitting the network (`supabase.auth.getUser()`).
  * - Normalizes both `result`/`status_reason` and `ticket_code`/`code`.
  */
@@ -1061,6 +1302,16 @@ export async function performCheckinInSupabase(params: {
   holderName?: string;
   usedAt?: string;
 }> {
+  if (isKnownDemoTicketCode(params.codeOrPayload)) {
+    return {
+      ok: false,
+      authorized: false,
+      result: 'invalid',
+      message:
+        'Código de demonstração bloqueado: ingressos fictícios de desenvolvimento não são aceitos no check-in.',
+    };
+  }
+
   if (!supabase) {
     return {
       ok: false,
@@ -1407,6 +1658,77 @@ export async function signOutFromSupabase(): Promise<{
   }
 
   return { ok: true };
+}
+
+/**
+ * Updates the currently authenticated user's own profile in `public.profiles`.
+ * - Respects RLS policy `profiles_update_own_or_admin` (`auth.uid() = id`).
+ * - Strictly updates only allowed non-privileged fields (`full_name`, `phone`, `city`),
+ *   never touching `id`, `role`, `cpf`, `email`, or `created_at`.
+ */
+export async function updateOwnProfileInSupabase(input: {
+  fullName: string;
+  phone?: string | null;
+  city?: string | null;
+}): Promise<{
+  ok: boolean;
+  profile: Profile | null;
+  message: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      profile: null,
+      message: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      profile: null,
+      message: 'Sua sessão expirou ou você não está autenticado. Faça login novamente.',
+    };
+  }
+
+  const validated = validateProfileSelfUpdateInput(input);
+  if (!validated.ok) {
+    return {
+      ok: false,
+      profile: null,
+      message: validated.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(validated.sanitized)
+    .eq('id', authData.user.id)
+    .select('id, full_name, cpf, email, phone, city, role, created_at, updated_at')
+    .maybeSingle();
+
+  if (error) {
+    return {
+      ok: false,
+      profile: null,
+      message: `Não foi possível atualizar seu perfil: ${error.message}`,
+    };
+  }
+
+  if (!data) {
+    return {
+      ok: false,
+      profile: null,
+      message: 'Perfil não encontrado em public.profiles para atualização.',
+    };
+  }
+
+  return {
+    ok: true,
+    profile: mapDbProfileRowToProfile(data as DbProfileRow),
+    message: 'Dados do perfil atualizados com sucesso!',
+  };
 }
 
 /**

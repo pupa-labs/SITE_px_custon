@@ -7,11 +7,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   supabase,
   INITIAL_CATEGORIES,
-  INITIAL_TICKETS,
-  INITIAL_ORDERS,
-  INITIAL_CHECKINS,
-  INITIAL_CUSTOMERS,
-  INITIAL_AUDIT_LOGS,
   fetchPublishedEventsFromSupabase,
   fetchAdminEventsFromSupabase,
   createEventInSupabase,
@@ -20,6 +15,8 @@ import {
   deleteEventInSupabase,
   computeCategoriesWithEventCounts,
   fetchAuthenticatedUserProfileFromSupabase,
+  fetchOwnTicketsFromSupabase,
+  fetchOwnOrdersMappedFromSupabase,
   signOutFromSupabase,
 } from './services/platformService';
 import type {
@@ -43,7 +40,7 @@ import { Footer } from './components/Footer';
 import { BrandLogo, ResilientImage } from './components/BrandLogo';
 import { useOnlineStatus } from './hooks/usePWAInstall';
 import { MapPin, ShieldCheck, Mail, Phone, WifiOff, RefreshCw, AlertCircle } from 'lucide-react';
-import { formatBRL, evaluateAdminAccess } from './utils/ticketRules';
+import { formatBRL, evaluateAdminAccess, calculateActiveCartCount } from './utils/ticketRules';
 
 export default function App() {
   const [activeView, setActiveView] = useState<AppView>('home');
@@ -65,15 +62,17 @@ export default function App() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [serverAdminConfirmed, setServerAdminConfirmed] = useState<boolean | null>(null);
 
-  // Selected Event & Checkout state
+  // Selected Event & Checkout state (zero active cart items until a published event & lot are explicitly chosen)
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [selectedLotId, setSelectedLotId] = useState<string>('');
-  const [checkoutQty, setCheckoutQty] = useState<number>(2);
+  const [checkoutQty, setCheckoutQty] = useState<number>(0);
 
-  // Client & Admin records state
-  const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
-  const [orders, setOrders] = useState<Order[]>(INITIAL_ORDERS);
-  const [checkins, setCheckins] = useState<CheckinRecord[]>(INITIAL_CHECKINS);
+  // Client & Admin records state (strictly real records; never initialized with demo/mock arrays)
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [checkins, setCheckins] = useState<CheckinRecord[]>([]);
+  const [isLoadingUserData, setIsLoadingUserData] = useState<boolean>(false);
+  const [userDataError, setUserDataError] = useState<string | null>(null);
   const [contactSent, setContactSent] = useState(false);
 
   const isOnline = useOnlineStatus();
@@ -97,6 +96,57 @@ export default function App() {
     setProfileError(check.errorMessage);
     setServerAdminConfirmed(check.serverAdminConfirmed);
   }, []);
+
+  const loadAuthenticatedUserData = useCallback(async () => {
+    if (!authenticatedUserId) {
+      setTickets([]);
+      setOrders([]);
+      setUserDataError(null);
+      setIsLoadingUserData(false);
+      return;
+    }
+
+    setIsLoadingUserData(true);
+    setUserDataError(null);
+    try {
+      const [ticketsRes, ordersRes] = await Promise.all([
+        fetchOwnTicketsFromSupabase(),
+        fetchOwnOrdersMappedFromSupabase(),
+      ]);
+
+      setTickets(ticketsRes.tickets);
+      setOrders(ordersRes.orders);
+
+      if (!ticketsRes.ok || !ordersRes.ok) {
+        setUserDataError(
+          ticketsRes.errorMessage ??
+            ordersRes.errorMessage ??
+            'Não foi possível sincronizar todos os dados da sua conta no Supabase.'
+        );
+      }
+    } catch (err) {
+      setTickets([]);
+      setOrders([]);
+      setUserDataError(
+        err instanceof Error
+          ? err.message
+          : 'Erro inesperado ao consultar seus ingressos e pedidos no Supabase.'
+      );
+    } finally {
+      setIsLoadingUserData(false);
+    }
+  }, [authenticatedUserId]);
+
+  useEffect(() => {
+    if (authStatus === 'authenticated' && authenticatedUserId) {
+      loadAuthenticatedUserData();
+    } else if (authStatus === 'unauthenticated') {
+      setTickets([]);
+      setOrders([]);
+      setUserDataError(null);
+      setIsLoadingUserData(false);
+    }
+  }, [authStatus, authenticatedUserId, loadAuthenticatedUserData]);
 
   useEffect(() => {
     if (!supabase) {
@@ -161,6 +211,9 @@ export default function App() {
     setCurrentUserProfile(null);
     setProfileError(null);
     setServerAdminConfirmed(null);
+    setTickets([]);
+    setOrders([]);
+    setUserDataError(null);
     if (activeView === 'admin') {
       setActiveView('client-area');
       setClientSubTab('login');
@@ -260,6 +313,16 @@ export default function App() {
   const currentLot: TicketLot | null =
     currentEvent?.lots.find((l) => l.id === selectedLotId) ?? currentEvent?.lots[0] ?? null;
 
+  const activeCartCount = useMemo(
+    () =>
+      calculateActiveCartCount({
+        hasPublishedEvent: Boolean(currentEvent && currentEvent.status === 'Publicado'),
+        hasActiveLot: Boolean(currentLot && currentLot.active),
+        checkoutQty,
+      }),
+    [currentEvent, currentLot, checkoutQty]
+  );
+
   const handleNavigate = (view: AppView, subTab?: ClientSubTab) => {
     setActiveView(view);
     if (subTab) {
@@ -281,7 +344,7 @@ export default function App() {
     }
     setSelectedEventId(event.id);
     setSelectedLotId(lot.id);
-    setCheckoutQty(quantity);
+    setCheckoutQty(quantity > 0 ? quantity : 1);
     setActiveView('checkout');
     window.scrollTo({ top: 0, behavior: 'auto' });
   };
@@ -370,8 +433,9 @@ export default function App() {
 
       <Navbar
         activeView={activeView}
+        activeClientSubTab={clientSubTab}
         onNavigate={handleNavigate}
-        cartCount={checkoutQty}
+        cartCount={activeCartCount}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         isAuthenticated={authStatus === 'authenticated'}
@@ -573,12 +637,17 @@ export default function App() {
             <CheckoutView
               event={currentEvent}
               selectedLot={currentLot}
-              quantity={checkoutQty}
+              quantity={checkoutQty > 0 ? checkoutQty : 1}
               onQuantityChange={setCheckoutQty}
               onSelectLot={(lot) => setSelectedLotId(lot.id)}
-              onCancelOrder={() => handleNavigate('event-detail')}
+              onCancelOrder={() => {
+                setCheckoutQty(0);
+                handleNavigate('event-detail');
+              }}
               onRegisterPendingOrder={(ord) => setOrders((prev) => [ord, ...prev])}
               onGoToClientOrders={() => handleNavigate('client-area', 'orders')}
+              currentUserProfile={currentUserProfile}
+              authenticatedEmail={authenticatedEmail}
             />
           ) : (
             <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -610,6 +679,10 @@ export default function App() {
             authenticatedEmail={authenticatedEmail}
             currentUserProfile={currentUserProfile}
             profileError={profileError}
+            isLoadingUserData={isLoadingUserData}
+            userDataError={userDataError}
+            onRefreshUserData={loadAuthenticatedUserData}
+            onGoToEvents={() => handleNavigate('events')}
             onSignOut={handleSignOut}
             onAuthSessionUpdated={() => syncAuthenticatedUserProfile()}
           />
@@ -622,8 +695,8 @@ export default function App() {
             tickets={tickets}
             orders={orders}
             checkins={checkins}
-            customers={INITIAL_CUSTOMERS}
-            auditLogs={INITIAL_AUDIT_LOGS}
+            customers={[]}
+            auditLogs={[]}
             adminAccess={adminAccess}
             currentUserProfile={currentUserProfile}
             authenticatedEmail={authenticatedEmail}

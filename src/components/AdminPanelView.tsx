@@ -44,15 +44,16 @@ import type {
 } from '../types/domain';
 import {
   formatBRL,
-  verifyAndProcessCheckin,
   generateEventSlug,
   validateAndBuildEventWritePayload,
+  isKnownDemoTicketCode,
 } from '../utils/ticketRules';
 import {
   supabaseConfigState,
   verifySupabaseConnection,
   type SupabaseConnectionStatus,
 } from '../lib/supabase';
+import { performCheckinInSupabase } from '../services/platformService';
 import { BrandLogo, QRCodeVisual, ResilientImage } from './BrandLogo';
 
 export type AdminModule =
@@ -207,29 +208,14 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     message: string;
   } | null>(null);
 
-  // Check-in Scanner State (PX CONTROL)
-  const [checkinInput, setCheckinInput] = useState('PX-784592');
+  // Check-in Scanner State (PX CONTROL) — No fictitious initial ticket or result
+  const [checkinInput, setCheckinInput] = useState('');
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [lastCheckinResult, setLastCheckinResult] = useState<{
     authorized: boolean;
     statusReason: string;
     record: CheckinRecord;
-  }>({
-    authorized: true,
-    statusReason: 'authorized',
-    record: checkins[0] || {
-      id: 'CHK-INIT',
-      ticketId: 'tkt-01',
-      ticketCode: 'PX-784592',
-      eventTitle: 'Encontro Nacional de Carros Rebaixados',
-      holderName: 'João da Silva',
-      categoryName: 'Pista (1º Lote)',
-      checkedInAt: '25/04/2025 14:32',
-      operatorName: 'Carlos Souza',
-      deviceId: 'PORTARIA-01',
-      result: 'authorized',
-      message: 'Entrada autorizada!',
-    },
-  });
+  } | null>(null);
   const [showCheckinHistory, setShowCheckinHistory] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -300,9 +286,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     }
   };
 
-  const handleVerifyCode = (e: React.FormEvent) => {
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!checkinInput.trim()) return;
+    const rawCode = checkinInput.trim();
+    if (!rawCode || isCheckingIn) return;
+
     const nowStr = new Date().toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -310,18 +298,81 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     });
-    const verification = verifyAndProcessCheckin(
-      checkinInput,
-      tickets,
-      'Carlos Souza',
-      nowStr
-    );
-    setLastCheckinResult({
-      authorized: verification.authorized,
-      statusReason: verification.statusReason,
-      record: verification.checkinRecord,
-    });
-    onProcessCheckin(verification.updatedTicket, verification.checkinRecord);
+    const operatorLabel =
+      currentUserProfile?.fullName || authenticatedEmail || 'Operador PX CONTROL';
+
+    if (isKnownDemoTicketCode(rawCode)) {
+      const blockedRecord: CheckinRecord = {
+        id: `CHK-DEMO-BLOCK-${Date.now()}`,
+        ticketId: 'N/A',
+        ticketCode: rawCode.toUpperCase(),
+        eventTitle: 'Código Fictício / Demonstração',
+        holderName: 'Não autorizado',
+        categoryName: 'N/A',
+        checkedInAt: nowStr,
+        operatorName: operatorLabel,
+        deviceId: 'PX-CONTROL-WEB',
+        result: 'invalid',
+        message:
+          'Código de demonstração bloqueado: ingressos fictícios de desenvolvimento não são aceitos no check-in.',
+      };
+      setLastCheckinResult({
+        authorized: false,
+        statusReason: 'invalid',
+        record: blockedRecord,
+      });
+      onProcessCheckin(undefined, blockedRecord);
+      return;
+    }
+
+    setIsCheckingIn(true);
+    try {
+      const rpcRes = await performCheckinInSupabase({
+        codeOrPayload: rawCode,
+        deviceId: 'PX-CONTROL-WEB',
+      });
+
+      const matchedTicket = tickets.find(
+        (t) =>
+          t.id === rpcRes.ticketId ||
+          t.code.toUpperCase() === (rpcRes.ticketCode ?? rawCode).toUpperCase()
+      );
+
+      const checkinRecord: CheckinRecord = {
+        id: `CHK-${Date.now()}`,
+        ticketId: rpcRes.ticketId ?? matchedTicket?.id ?? 'N/A',
+        ticketCode: rpcRes.ticketCode ?? rawCode.toUpperCase(),
+        eventTitle: matchedTicket?.eventTitle ?? 'Verificado via Supabase RPC',
+        holderName: rpcRes.holderName ?? matchedTicket?.holderName ?? '—',
+        categoryName: matchedTicket?.ticketTypeName ?? '—',
+        checkedInAt: rpcRes.usedAt
+          ? new Date(rpcRes.usedAt).toLocaleString('pt-BR')
+          : nowStr,
+        operatorName: operatorLabel,
+        deviceId: 'PX-CONTROL-WEB',
+        result: rpcRes.result,
+        message: rpcRes.message,
+      };
+
+      const updatedTicket: Ticket | undefined =
+        rpcRes.authorized && matchedTicket
+          ? {
+              ...matchedTicket,
+              status: 'used',
+              usedAt: checkinRecord.checkedInAt,
+              usedByOperator: operatorLabel,
+            }
+          : undefined;
+
+      setLastCheckinResult({
+        authorized: rpcRes.authorized,
+        statusReason: rpcRes.result,
+        record: checkinRecord,
+      });
+      onProcessCheckin(updatedTicket, checkinRecord);
+    } finally {
+      setIsCheckingIn(false);
+    }
   };
 
   const handleOpenCreateEventModal = () => {
@@ -1218,95 +1269,119 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
-                      <QRCodeVisual value={checkinInput || 'PX-784592'} size={140} />
+                      <QRCodeVisual value={checkinInput || 'PX-CONTROL-SCANNER'} size={140} />
                     )}
 
                     {/* Horizontal laser scan line */}
                     <div className="absolute left-3 right-3 top-1/2 h-0.5 bg-[#E50914] shadow-[0_0_12px_#E50914]" />
                   </div>
 
-                  {/* Quick Test Ticket Pills */}
-                  <div className="w-full pt-2 space-y-1.5">
-                    <span className="block text-[11px] text-neutral-400 text-center">
-                      Códigos rápidos para testar validação na portaria:
-                    </span>
-                    <div className="flex flex-wrap justify-center gap-1.5">
-                      {tickets.map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => setCheckinInput(t.code)}
-                          className="px-2.5 py-1 rounded bg-[#181B26] hover:bg-[#232736] border border-[#2C3144] text-[11px] font-mono-tabular text-neutral-200 cursor-pointer"
-                        >
-                          {t.code} ({t.status === 'paid' ? 'Pago' : 'Usado'})
-                        </button>
-                      ))}
+                  {tickets.length > 0 && (
+                    <div className="w-full pt-2 space-y-1.5">
+                      <span className="block text-[11px] text-neutral-400 text-center">
+                        Ingressos emitidos no banco:
+                      </span>
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        {tickets.slice(0, 5).map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setCheckinInput(t.code)}
+                            className="px-2.5 py-1 rounded bg-[#181B26] hover:bg-[#232736] border border-[#2C3144] text-[11px] font-mono-tabular text-neutral-200 cursor-pointer"
+                          >
+                            {t.code} ({t.status === 'paid' ? 'Pago' : 'Usado'})
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Right: Resultado da Verificação + Busca por código + Histórico */}
                 <div className="lg:col-span-7 rounded-2xl bg-[#11131C] border border-[#232736] p-6 space-y-5">
-                  {/* Verification Status Banner */}
-                  <div
-                    className={`rounded-xl p-4 border flex items-start gap-3.5 ${
-                      lastCheckinResult.authorized
-                        ? 'bg-emerald-500/10 border-emerald-500/30'
-                        : 'bg-[#E50914]/10 border-[#E50914]/40'
-                    }`}
-                  >
-                    {lastCheckinResult.authorized ? (
-                      <CheckCircle2 className="w-7 h-7 text-emerald-400 shrink-0" />
-                    ) : (
-                      <XCircle className="w-7 h-7 text-[#E50914] shrink-0" />
-                    )}
-                    <div>
-                      <h3
-                        className={`text-base font-bold ${
-                          lastCheckinResult.authorized ? 'text-emerald-400' : 'text-[#E50914]'
+                  {lastCheckinResult ? (
+                    <>
+                      {/* Verification Status Banner */}
+                      <div
+                        className={`rounded-xl p-4 border flex items-start gap-3.5 ${
+                          lastCheckinResult.authorized
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                            : 'bg-[#E50914]/10 border-[#E50914]/40'
                         }`}
                       >
-                        {lastCheckinResult.authorized ? 'Entrada autorizada!' : 'Entrada bloqueada!'}
+                        {lastCheckinResult.authorized ? (
+                          <CheckCircle2 className="w-7 h-7 text-emerald-400 shrink-0" />
+                        ) : (
+                          <XCircle className="w-7 h-7 text-[#E50914] shrink-0" />
+                        )}
+                        <div>
+                          <h3
+                            className={`text-base font-bold ${
+                              lastCheckinResult.authorized ? 'text-emerald-400' : 'text-[#E50914]'
+                            }`}
+                          >
+                            {lastCheckinResult.authorized
+                              ? 'Entrada autorizada!'
+                              : 'Entrada bloqueada!'}
+                          </h3>
+                          <p className="text-xs text-neutral-300 mt-0.5">
+                            {lastCheckinResult.record.message}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Attendee & Ticket Metadata Table */}
+                      <div className="space-y-2.5 text-xs border-t border-b border-[#1E2230] py-4">
+                        <div className="grid grid-cols-3 gap-2">
+                          <span className="text-neutral-400">Código</span>
+                          <span className="col-span-2 font-mono-tabular font-bold text-white">
+                            {lastCheckinResult.record.ticketCode}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <span className="text-neutral-400">Evento</span>
+                          <span className="col-span-2 font-semibold text-white">
+                            {lastCheckinResult.record.eventTitle}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <span className="text-neutral-400">Nome</span>
+                          <span className="col-span-2 font-semibold text-white">
+                            {lastCheckinResult.record.holderName}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <span className="text-neutral-400">Categoria</span>
+                          <span className="col-span-2 text-neutral-200">
+                            {lastCheckinResult.record.categoryName}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <span className="text-neutral-400">Data e hora</span>
+                          <span className="col-span-2 font-mono-tabular text-neutral-200">
+                            {lastCheckinResult.record.checkedInAt}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <span className="text-neutral-400">Operador</span>
+                          <span className="col-span-2 text-neutral-200">
+                            {lastCheckinResult.record.operatorName}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-xl bg-[#0D0F15] border border-[#232736] p-6 text-center space-y-2">
+                      <QrCode className="w-8 h-8 text-[#E50914] mx-auto" />
+                      <h3 className="text-sm font-bold text-white">
+                        Pronto para Validação na Portaria
                       </h3>
-                      <p className="text-xs text-neutral-300 mt-0.5">
-                        {lastCheckinResult.record.message}
+                      <p className="text-xs text-neutral-400">
+                        Escaneie o QR Code com a câmera ou digite o código do ingresso abaixo para
+                        validar no Supabase via <code className="text-neutral-300">perform_ticket_checkin</code>.
                       </p>
                     </div>
-                  </div>
-
-                  {/* Attendee & Ticket Metadata Table */}
-                  <div className="space-y-2.5 text-xs border-t border-b border-[#1E2230] py-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="text-neutral-400">Evento</span>
-                      <span className="col-span-2 font-semibold text-white">
-                        {lastCheckinResult.record.eventTitle}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="text-neutral-400">Nome</span>
-                      <span className="col-span-2 font-semibold text-white">
-                        {lastCheckinResult.record.holderName}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="text-neutral-400">Categoria</span>
-                      <span className="col-span-2 text-neutral-200">
-                        {lastCheckinResult.record.categoryName}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="text-neutral-400">Data e hora</span>
-                      <span className="col-span-2 font-mono-tabular text-neutral-200">
-                        {lastCheckinResult.record.checkedInAt}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <span className="text-neutral-400">Operador</span>
-                      <span className="col-span-2 text-neutral-200">
-                        {lastCheckinResult.record.operatorName}
-                      </span>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Buscar por código & Histórico Controls */}
                   <form onSubmit={handleVerifyCode} className="flex flex-wrap items-center gap-2.5">
@@ -1316,16 +1391,17 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                         type="text"
                         value={checkinInput}
                         onChange={(e) => setCheckinInput(e.target.value)}
-                        placeholder="Buscar por código (ex: PX-784592)"
+                        placeholder="Digite o código ou payload QR do ingresso"
                         aria-label="Buscar ingresso por código"
                         className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#171A24] border border-[#2C3144] text-xs font-mono-tabular text-white focus:outline-none focus:border-[#E50914]"
                       />
                     </div>
                     <button
                       type="submit"
-                      className="px-4 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold cursor-pointer"
+                      disabled={isCheckingIn}
+                      className="px-4 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-60 text-white text-xs font-bold cursor-pointer"
                     >
-                      Validar Código
+                      {isCheckingIn ? 'Validando...' : 'Validar Código'}
                     </button>
                     <button
                       type="button"

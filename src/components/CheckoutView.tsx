@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Lock,
 } from 'lucide-react';
-import type { EventItem, TicketLot, PaymentMethodType, Order } from '../types/domain';
+import type { EventItem, TicketLot, PaymentMethodType, Order, Profile } from '../types/domain';
 import {
   calculateOrderTotals,
   formatBRL,
@@ -23,6 +23,8 @@ interface CheckoutViewProps {
   event: EventItem;
   selectedLot: TicketLot;
   quantity: number;
+  currentUserProfile?: Profile | null;
+  authenticatedEmail?: string | null;
   onQuantityChange: (qty: number) => void;
   onSelectLot: (lot: TicketLot) => void;
   onCancelOrder: () => void;
@@ -34,6 +36,8 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
   event,
   selectedLot,
   quantity,
+  currentUserProfile = null,
+  authenticatedEmail = null,
   onQuantityChange,
   onSelectLot,
   onCancelOrder,
@@ -42,10 +46,10 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
 }) => {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(2);
   const [buyer, setBuyer] = useState<BuyerInput>({
-    fullName: 'João da Silva',
-    cpf: '123.456.789-00',
-    email: 'joao@email.com',
-    phone: '(11) 98765-4321',
+    fullName: currentUserProfile?.fullName ?? '',
+    cpf: currentUserProfile?.cpf ?? '',
+    email: currentUserProfile?.email || authenticatedEmail || '',
+    phone: currentUserProfile?.phone ?? '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof BuyerInput, string>>>({});
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('pix');
@@ -74,7 +78,7 @@ export const CheckoutView: React.FC<CheckoutViewProps> = ({
     const pendingOrder: Order = {
       id: `ORD-${Date.now()}`,
       orderCode: `#PX-${Math.floor(10000 + Math.random() * 89999)}`,
-      userId: 'usr-joao',
+      userId: currentUserProfile?.id ?? '',
       buyerName: buyer.fullName.trim(),
       buyerCpf: buyer.cpf.trim(),
       buyerEmail: buyer.email.trim(),

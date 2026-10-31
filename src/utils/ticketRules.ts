@@ -3162,3 +3162,106 @@ export function evaluateTicketCategoryMutationIntegrity(params: {
   return { allowed: true };
 }
 
+/**
+ * Known development/demo ticket and order identifiers that must stay strictly isolated
+ * from production UI state and real check-in flows.
+ */
+export const DEMO_TICKET_CODES = ['PX-784592', 'PX-784593', 'PX-619204'] as const;
+export const DEMO_ORDER_CODES = ['#PX-90421', '#PX-88310'] as const;
+
+/**
+ * Checks whether a scanned/entered code or QR payload belongs to a development demo fixture.
+ * Used by production check-in handlers to ensure demo QR codes are never accepted in production.
+ */
+export function isKnownDemoTicketCode(codeOrPayload: string): boolean {
+  const clean = (codeOrPayload ?? '').trim().toUpperCase();
+  if (!clean) return false;
+  return DEMO_TICKET_CODES.some(
+    (demoCode) => clean === demoCode || clean.includes(`|${demoCode}|`)
+  );
+}
+
+/**
+ * Determines the client-area sub-tab opened when the user clicks "Perfil" in navigation:
+ * - Authenticated user -> 'profile' (displays real profile data from public.profiles + edit form)
+ * - Unauthenticated visitor -> 'login' (displays login, registration, and password recovery options)
+ */
+export function resolveProfileNavigationTarget(
+  isAuthenticated: boolean
+): 'profile' | 'login' {
+  return isAuthenticated ? 'profile' : 'login';
+}
+
+/**
+ * Calculates the real cart badge quantity for the top navigation bar.
+ * Never displays a fictitious default quantity when no published event and active lot are selected.
+ */
+export function calculateActiveCartCount(params: {
+  hasPublishedEvent: boolean;
+  hasActiveLot: boolean;
+  checkoutQty: number;
+}): number {
+  if (!params.hasPublishedEvent || !params.hasActiveLot) {
+    return 0;
+  }
+  const safeQty = Math.floor(Number(params.checkoutQty));
+  if (!Number.isFinite(safeQty) || safeQty <= 0) {
+    return 0;
+  }
+  return safeQty;
+}
+
+/**
+ * Validates and sanitizes a user's self-service profile update payload for `public.profiles`.
+ * - Enforces a valid full name.
+ * - Optional phone (if provided, must have 10 or 11 digits) and optional city.
+ * - Strictly outputs only `{ full_name, phone, city }`, preventing any client attempt to pass
+ *   `id`, `role`, `cpf`, `email`, or `created_at`.
+ */
+export function validateProfileSelfUpdateInput(input: {
+  fullName: string;
+  phone?: string | null;
+  city?: string | null;
+}):
+  | {
+      ok: true;
+      sanitized: {
+        full_name: string;
+        phone: string | null;
+        city: string | null;
+      };
+    }
+  | {
+      ok: false;
+      errorMessage: string;
+    } {
+  const cleanName = (input.fullName ?? '').trim().replace(/\s+/g, ' ');
+  if (cleanName.length < 3) {
+    return {
+      ok: false,
+      errorMessage: 'Informe seu nome completo (mínimo de 3 caracteres).',
+    };
+  }
+
+  const rawPhone = (input.phone ?? '').trim();
+  const digitsPhone = rawPhone.replace(/\D/g, '');
+  if (rawPhone.length > 0 && (digitsPhone.length < 10 || digitsPhone.length > 11)) {
+    return {
+      ok: false,
+      errorMessage: 'Informe um telefone válido com DDD (10 ou 11 dígitos) ou deixe em branco.',
+    };
+  }
+
+  const cleanCity = (input.city ?? '').trim();
+
+  return {
+    ok: true,
+    sanitized: {
+      full_name: cleanName,
+      phone: rawPhone.length > 0 ? rawPhone : null,
+      city: cleanCity.length > 0 ? cleanCity : null,
+    },
+  };
+}
+
+
