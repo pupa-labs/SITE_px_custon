@@ -968,10 +968,32 @@ export function createApp(customDeps = {}) {
   return app;
 }
 
-const isMainModule =
-  process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename);
+export function shouldAutoStartServer(runtime = process) {
+  const env = runtime?.env || {};
+  if (
+    env.NODE_ENV === 'test' ||
+    Boolean(env.NODE_TEST_CONTEXT) ||
+    env.PX_SKIP_AUTO_LISTEN === '1' ||
+    env.PX_SKIP_AUTO_LISTEN === 'true'
+  ) {
+    return false;
+  }
 
-if (isMainModule) {
+  const execArgv = Array.isArray(runtime?.execArgv) ? runtime.execArgv : [];
+  const argv = Array.isArray(runtime?.argv) ? runtime.argv : [];
+  const allArgs = [...execArgv, ...argv];
+
+  if (
+    allArgs.includes('--test') ||
+    allArgs.some((arg) => /\.test\.[cm]?[jt]sx?$/i.test(String(arg)))
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+if (shouldAutoStartServer(process)) {
   const port = Number(process.env.PORT) || 3000;
   const host = process.env.HOST || '0.0.0.0';
   const app = createApp();
@@ -989,4 +1011,3 @@ if (isMainModule) {
   process.on('SIGTERM', shutdown);
   process.on('SIGINT', shutdown);
 }
-
