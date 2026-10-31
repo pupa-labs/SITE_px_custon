@@ -16,6 +16,8 @@ import {
   Flame,
   Calendar,
   Users,
+  RefreshCw,
+  AlertCircle,
 } from 'lucide-react';
 import type { EventCategory, EventItem } from '../types/domain';
 import { formatBRL } from '../utils/ticketRules';
@@ -29,6 +31,9 @@ interface HomeViewProps {
   onSelectCategory: (categoryId: string | null) => void;
   onOpenEvent: (event: EventItem) => void;
   onExploreAllEvents: () => void;
+  isLoadingEvents?: boolean;
+  eventsError?: string | null;
+  onRetryEvents?: () => void;
 }
 
 const HERO_SLIDES = [
@@ -39,7 +44,7 @@ const HERO_SLIDES = [
     line2: 'SEU EVENTO.',
     line3: 'SUA EXPERIÊNCIA.',
     subtitle: 'Ingressos para os melhores encontros automotivos do Brasil.',
-    image: '/assets/events/hero-jetta.jpg',
+    image: '/assets/events/hero-banner-full.jpg',
     targetEventSlug: 'encontro-nacional-de-carros-rebaixados',
   },
   {
@@ -71,6 +76,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onSelectCategory,
   onOpenEvent,
   onExploreAllEvents,
+  isLoadingEvents = false,
+  eventsError = null,
+  onRetryEvents,
 }) => {
   const [slideIndex, setSlideIndex] = useState(0);
   const [pwaNotice, setPwaNotice] = useState<string | null>(null);
@@ -78,8 +86,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const currentSlide = HERO_SLIDES[slideIndex];
 
+  const selectedCategory = selectedCategoryId
+    ? categories.find((c) => c.id === selectedCategoryId) ?? null
+    : null;
+
   const filteredEvents = selectedCategoryId
-    ? events.filter((ev) => ev.categoryId === selectedCategoryId)
+    ? events.filter(
+        (ev) =>
+          ev.categoryId === selectedCategoryId ||
+          (selectedCategory && ev.categoryId === selectedCategory.slug)
+      )
     : events;
 
   const featuredEvents = events.filter((ev) => ev.featured);
@@ -262,71 +278,175 @@ export const HomeView: React.FC<HomeViewProps> = ({
               PRÓXIMOS EVENTOS
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onExploreAllEvents}
-            className="text-xs sm:text-sm font-medium text-[#E50914] hover:underline whitespace-nowrap"
-          >
-            Ver todos
-          </button>
+          <div className="flex items-center gap-4">
+            {onRetryEvents && (
+              <button
+                type="button"
+                onClick={onRetryEvents}
+                disabled={isLoadingEvents}
+                className="text-xs font-medium text-neutral-400 hover:text-white inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingEvents ? 'animate-spin text-[#E50914]' : ''}`} />
+                <span>Atualizar</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onExploreAllEvents}
+              className="text-xs sm:text-sm font-medium text-[#E50914] hover:underline whitespace-nowrap cursor-pointer"
+            >
+              Ver todos
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {filteredEvents.map((ev) => (
-            <article
-              key={ev.id}
-              className="group rounded-xl overflow-hidden bg-[#11131A] border border-[#222532] hover:border-[#E50914]/60 transition-all flex flex-col justify-between"
-            >
-              <div>
-                {/* Event Card Image */}
-                <div className="relative h-36 overflow-hidden bg-[#0B0C10]">
-                  <ResilientImage
-                    src={ev.cardImageUrl}
-                    alt={ev.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent" />
+        {isLoadingEvents ? (
+          <div
+            data-testid="events-loading-state"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+          >
+            {[1, 2, 3, 4].map((skeletonId) => (
+              <div
+                key={skeletonId}
+                className="rounded-xl overflow-hidden bg-[#11131A] border border-[#222532] p-4 space-y-4 animate-pulse"
+              >
+                <div className="h-32 rounded-lg bg-[#1A1D28]" />
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-lg bg-[#1A1D28] shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-[#1A1D28] rounded w-4/5" />
+                    <div className="h-3 bg-[#1A1D28] rounded w-1/2" />
+                  </div>
                 </div>
-
-                {/* Date Box + Event Title + City */}
-                <div className="p-4 flex items-start gap-3">
-                  <div className="px-2.5 py-1.5 rounded-lg bg-[#181B24] border border-[#2A2E3D] text-center shrink-0 min-w-[46px]">
-                    <span className="block text-base font-extrabold font-mono-tabular text-white leading-none">
-                      {ev.dayNumber}
-                    </span>
-                    <span className="block text-[10px] font-bold uppercase text-[#E50914] mt-0.5">
-                      {ev.monthShort}
-                    </span>
-                  </div>
-
-                  <div className="min-w-0 space-y-1">
-                    <h3 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#E50914] transition-colors">
-                      {ev.title}
-                    </h3>
-                    <p className="text-xs text-neutral-400 flex items-center gap-1 truncate">
-                      <MapPin className="w-3.5 h-3.5 text-[#E50914] shrink-0" />
-                      <span className="truncate">{ev.city}</span>
-                    </p>
-                  </div>
+                <div className="space-y-2 pt-1">
+                  <div className="h-7 bg-[#E50914]/30 rounded-md" />
+                  <div className="h-8 bg-[#181B24] rounded-md" />
                 </div>
               </div>
-
-              {/* Price CTA & Ver Detalhes Button */}
-              <div className="px-4 pb-4 pt-1 space-y-2">
-                <div className="w-full py-1.5 px-3 rounded-md bg-[#E50914] text-white text-center text-xs font-bold font-mono-tabular">
-                  A partir de {formatBRL(ev.startingPrice)}
-                </div>
+            ))}
+          </div>
+        ) : eventsError ? (
+          <div
+            data-testid="events-error-state"
+            className="rounded-2xl bg-[#11131A] border border-[#E50914]/40 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div className="flex items-start gap-3.5">
+              <AlertCircle className="w-6 h-6 text-[#E50914] shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h3 className="text-sm sm:text-base font-bold text-white">
+                  Não foi possível carregar o catálogo de eventos publicados
+                </h3>
+                <p className="text-xs text-neutral-300">{eventsError}</p>
+              </div>
+            </div>
+            {onRetryEvents && (
+              <button
+                type="button"
+                onClick={onRetryEvents}
+                className="px-4 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 shrink-0 self-start sm:self-center cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Tentar novamente</span>
+              </button>
+            )}
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div
+            data-testid="events-empty-state"
+            className="rounded-2xl bg-[#11131A] border border-[#222532] p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div className="space-y-1">
+              <h3 className="text-sm sm:text-base font-bold text-white">
+                {selectedCategoryId
+                  ? 'Nenhum evento publicado nesta categoria no momento'
+                  : 'Nenhum evento publicado disponível no momento'}
+              </h3>
+              <p className="text-xs text-neutral-400">
+                {selectedCategoryId
+                  ? 'Limpe o filtro de categoria ou consulte todas as categorias do calendário oficial.'
+                  : 'Assim que novos eventos oficiais forem publicados no Supabase pela equipe PX CUSTON, eles aparecerão automaticamente aqui.'}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              {selectedCategoryId && (
                 <button
                   type="button"
-                  onClick={() => onOpenEvent(ev)}
-                  className="w-full py-2 px-3 rounded-md bg-[#181B24] hover:bg-[#222634] border border-[#2A2E3D] text-xs font-semibold text-neutral-200 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={() => onSelectCategory(null)}
+                  className="px-4 py-2 rounded-lg bg-[#181B24] hover:bg-[#222634] border border-[#2A2E3D] text-xs font-semibold text-white cursor-pointer"
                 >
-                  <span>Ver detalhes</span>
+                  Limpar filtro
                 </button>
-              </div>
-            </article>
-          ))}
-        </div>
+              )}
+              {onRetryEvents && (
+                <button
+                  type="button"
+                  onClick={onRetryEvents}
+                  className="px-4 py-2 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Atualizar catálogo</span>
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {filteredEvents.map((ev) => (
+              <article
+                key={ev.id}
+                className="group rounded-xl overflow-hidden bg-[#11131A] border border-[#222532] hover:border-[#E50914]/60 transition-all flex flex-col justify-between"
+              >
+                <div>
+                  {/* Event Card Image */}
+                  <div className="relative h-36 overflow-hidden bg-[#0B0C10]">
+                    <ResilientImage
+                      src={ev.cardImageUrl}
+                      alt={ev.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent" />
+                  </div>
+
+                  {/* Date Box + Event Title + City */}
+                  <div className="p-4 flex items-start gap-3">
+                    <div className="px-2.5 py-1.5 rounded-lg bg-[#181B24] border border-[#2A2E3D] text-center shrink-0 min-w-[46px]">
+                      <span className="block text-base font-extrabold font-mono-tabular text-white leading-none">
+                        {ev.dayNumber}
+                      </span>
+                      <span className="block text-[10px] font-bold uppercase text-[#E50914] mt-0.5">
+                        {ev.monthShort}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="text-sm font-bold text-white leading-snug line-clamp-2 group-hover:text-[#E50914] transition-colors">
+                        {ev.title}
+                      </h3>
+                      <p className="text-xs text-neutral-400 flex items-center gap-1 truncate">
+                        <MapPin className="w-3.5 h-3.5 text-[#E50914] shrink-0" />
+                        <span className="truncate">{ev.city}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price CTA & Ver Detalhes Button */}
+                <div className="px-4 pb-4 pt-1 space-y-2">
+                  <div className="w-full py-1.5 px-3 rounded-md bg-[#E50914] text-white text-center text-xs font-bold font-mono-tabular">
+                    A partir de {formatBRL(ev.startingPrice)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onOpenEvent(ev)}
+                    className="w-full py-2 px-3 rounded-md bg-[#181B24] hover:bg-[#222634] border border-[#2A2E3D] text-xs font-semibold text-neutral-200 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Ver detalhes</span>
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 4. EVENTOS EM DESTAQUE (Featured Experiences Section) */}
@@ -343,78 +463,101 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {featuredEvents.slice(0, 2).map((ev) => {
-            const occupancyPct = Math.min(100, Math.round((ev.ticketsSold / ev.capacity) * 100));
-            return (
+        {isLoadingEvents ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2].map((item) => (
               <div
-                key={ev.id}
-                className="rounded-2xl overflow-hidden bg-[#11131A] border border-[#242836] hover:border-[#E50914]/60 transition-all grid grid-cols-1 sm:grid-cols-12"
+                key={item}
+                className="rounded-2xl overflow-hidden bg-[#11131A] border border-[#242836] p-6 min-h-[200px] animate-pulse flex flex-col justify-between"
               >
-                <div className="sm:col-span-5 relative min-h-[200px] bg-[#0B0C10]">
-                  <ResilientImage
-                    src={ev.bannerUrl}
-                    alt={ev.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] sm:bg-gradient-to-r sm:from-transparent sm:to-[#11131A]" />
+                <div className="space-y-3">
+                  <div className="h-3 w-36 bg-[#1C1F2B] rounded" />
+                  <div className="h-6 w-3/4 bg-[#1C1F2B] rounded" />
+                  <div className="h-4 w-full bg-[#1C1F2B] rounded" />
                 </div>
-
-                <div className="sm:col-span-7 p-5 sm:p-6 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-[#E50914] font-semibold">
-                      <span>{ev.categoryName}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="font-mono-tabular">{ev.dateFormatted}</span>
-                    </div>
-                    <h3 className="text-lg sm:text-xl font-bold text-white leading-snug">
-                      {ev.title}
-                    </h3>
-                    <p className="text-xs text-neutral-300 line-clamp-2">{ev.description}</p>
+                <div className="h-9 w-40 bg-[#E50914]/30 rounded-lg self-end" />
+              </div>
+            ))}
+          </div>
+        ) : featuredEvents.length === 0 ? (
+          <div className="rounded-2xl bg-[#11131A] border border-[#242836] p-6 text-xs text-neutral-400">
+            Nenhum evento publicado marcado como destaque no momento.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {featuredEvents.slice(0, 2).map((ev) => {
+              const safeCapacity = Math.max(1, ev.capacity);
+              const occupancyPct = Math.min(100, Math.round((ev.ticketsSold / safeCapacity) * 100));
+              return (
+                <div
+                  key={ev.id}
+                  className="rounded-2xl overflow-hidden bg-[#11131A] border border-[#242836] hover:border-[#E50914]/60 transition-all grid grid-cols-1 sm:grid-cols-12"
+                >
+                  <div className="sm:col-span-5 relative min-h-[200px] bg-[#0B0C10]">
+                    <ResilientImage
+                      src={ev.bannerUrl}
+                      alt={ev.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] sm:bg-gradient-to-r sm:from-transparent sm:to-[#11131A]" />
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs text-neutral-400">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-[#E50914]" />
-                        {ev.timeRange}
-                      </span>
-                      <span className="flex items-center gap-1.5 font-mono-tabular">
-                        <Users className="w-3.5 h-3.5 text-[#E50914]" />
-                        {ev.ticketsSold} confirmados ({occupancyPct}%)
-                      </span>
+                  <div className="sm:col-span-7 p-5 sm:p-6 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-[#E50914] font-semibold">
+                        <span>{ev.categoryName}</span>
+                        <span aria-hidden="true">·</span>
+                        <span className="font-mono-tabular">{ev.dateFormatted}</span>
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-bold text-white leading-snug">
+                        {ev.title}
+                      </h3>
+                      <p className="text-xs text-neutral-300 line-clamp-2">{ev.description}</p>
                     </div>
 
-                    <div className="w-full h-1.5 rounded-full bg-[#1C1F2B] overflow-hidden">
-                      <div
-                        className="h-full bg-[#E50914] rounded-full"
-                        style={{ width: `${occupancyPct}%` }}
-                      />
-                    </div>
-
-                    <div className="pt-1 flex items-center justify-between gap-3">
-                      <div>
-                        <span className="block text-[11px] text-neutral-400">Ingressos desde</span>
-                        <span className="text-base font-extrabold text-white font-mono-tabular">
-                          {formatBRL(ev.startingPrice)}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-xs text-neutral-400">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-[#E50914]" />
+                          {ev.timeRange}
+                        </span>
+                        <span className="flex items-center gap-1.5 font-mono-tabular">
+                          <Users className="w-3.5 h-3.5 text-[#E50914]" />
+                          {ev.ticketsSold} confirmados ({occupancyPct}%)
                         </span>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onOpenEvent(ev)}
-                        className="px-4 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-                      >
-                        <span>Comprar Ingresso</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
+                      <div className="w-full h-1.5 rounded-full bg-[#1C1F2B] overflow-hidden">
+                        <div
+                          className="h-full bg-[#E50914] rounded-full"
+                          style={{ width: `${occupancyPct}%` }}
+                        />
+                      </div>
+
+                      <div className="pt-1 flex items-center justify-between gap-3">
+                        <div>
+                          <span className="block text-[11px] text-neutral-400">Ingressos desde</span>
+                          <span className="text-base font-extrabold text-white font-mono-tabular">
+                            {formatBRL(ev.startingPrice)}
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => onOpenEvent(ev)}
+                          className="px-4 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                        >
+                          <span>Comprar Ingresso</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* 5. BANNER PWA — INSTALAR NO DISPOSITIVO (Matches Bottom-Right Reference Panel) */}

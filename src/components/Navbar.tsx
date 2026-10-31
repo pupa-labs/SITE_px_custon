@@ -7,9 +7,11 @@ import {
   Ticket as TicketIcon,
   User,
   ShieldAlert,
+  LogOut,
   Menu,
   X,
 } from 'lucide-react';
+import type { Profile } from '../types/domain';
 import { BrandLogo } from './BrandLogo';
 
 export type AppView =
@@ -30,6 +32,11 @@ interface NavbarProps {
   cartCount: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  isAuthenticated?: boolean;
+  authenticatedEmail?: string | null;
+  currentUserProfile?: Profile | null;
+  isAdminAuthorized?: boolean;
+  onSignOut?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -38,9 +45,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   cartCount,
   searchQuery,
   onSearchChange,
+  isAuthenticated = false,
+  authenticatedEmail = null,
+  currentUserProfile = null,
+  isAdminAuthorized = false,
+  onSignOut,
 }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const displayUserName =
+    currentUserProfile?.fullName?.split(' ')[0] ||
+    authenticatedEmail?.split('@')[0] ||
+    'Minha Conta';
 
   const navItems: { id: AppView; label: string; subTab?: ClientSubTab }[] = [
     { id: 'home', label: 'Início' },
@@ -92,6 +109,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('admin')}
+              title={
+                isAdminAuthorized
+                  ? 'Acesso Administrativo Autorizado (PX CONTROL)'
+                  : 'Área Restrita para Administradores PX CUSTON'
+              }
               className={`relative py-2 flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 ${
                 activeView === 'admin'
                   ? 'text-[#E50914] font-semibold'
@@ -106,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* Zone 3: Search, Entrar Button, and Cart Trigger */}
+          {/* Zone 3: Search, Auth/Session Controls, and Cart Trigger */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             {searchOpen ? (
               <div className="relative flex items-center">
@@ -147,13 +169,39 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => onNavigate('client-area', 'login')}
-              className="px-4 sm:px-5 py-2 min-h-[40px] rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs sm:text-sm font-semibold tracking-wide transition-colors whitespace-nowrap shrink-0 shadow-[0_0_20px_rgba(229,9,20,0.3)]"
-            >
-              Entrar
-            </button>
+            {isAuthenticated ? (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onNavigate('client-area', 'tickets')}
+                  className="px-3 sm:px-3.5 py-2 min-h-[40px] rounded-lg bg-[#13151C] hover:bg-[#1B1E28] border border-[#2A2E3D] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  title={authenticatedEmail ?? 'Conta autenticada'}
+                >
+                  <User className="w-3.5 h-3.5 text-[#E50914]" />
+                  <span className="max-w-[110px] truncate">{displayUserName}</span>
+                </button>
+                {onSignOut && (
+                  <button
+                    type="button"
+                    onClick={onSignOut}
+                    aria-label="Sair da conta"
+                    title="Sair da conta"
+                    className="px-2.5 sm:px-3 py-2 min-h-[40px] rounded-lg bg-[#181B24] hover:bg-[#E50914]/20 border border-[#2A2E3D] hover:border-[#E50914]/50 text-neutral-300 hover:text-white text-xs font-semibold flex items-center gap-1 transition-colors shrink-0 cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-[#E50914]" />
+                    <span className="hidden sm:inline">Sair</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigate('client-area', 'login')}
+                className="px-4 sm:px-5 py-2 min-h-[40px] rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs sm:text-sm font-semibold tracking-wide transition-colors whitespace-nowrap shrink-0 shadow-[0_0_20px_rgba(229,9,20,0.3)] cursor-pointer"
+              >
+                Entrar
+              </button>
+            )}
 
             <button
               type="button"
@@ -205,6 +253,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ShieldAlert className="w-4 h-4" />
               <span>Painel Administrativo — PX CONTROL</span>
             </button>
+            {isAuthenticated && onSignOut && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSignOut();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-200 bg-[#151822] border border-[#262B3C] flex items-center gap-2"
+              >
+                <LogOut className="w-4 h-4 text-[#E50914]" />
+                <span>Sair da Conta ({authenticatedEmail ?? displayUserName})</span>
+              </button>
+            )}
           </div>
         )}
       </header>

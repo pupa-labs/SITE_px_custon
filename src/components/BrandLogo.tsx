@@ -52,6 +52,10 @@ interface ResilientImageProps {
 export const ResilientImage: React.FC<ResilientImageProps> = ({ src, alt, className = '' }) => {
   const [hasError, setHasError] = useState(false);
 
+  React.useEffect(() => {
+    setHasError(false);
+  }, [src]);
+
   if (hasError) {
     return (
       <div

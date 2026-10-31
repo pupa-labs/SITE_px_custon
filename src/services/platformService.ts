@@ -11,9 +11,16 @@ import type {
   DbTicketBatchRow,
   DbTicketCategoryRow,
   DbOrderRow,
+  DbProfileRow,
   PaymentMethodType,
   OrderStatus,
   PaymentStatus,
+  EventStatus,
+  AdminEventFormInput,
+  AdminSaveTicketBatchInput,
+  AdminSaveTicketCategoryInput,
+  CancelTicketOrderRpcPayload,
+  RefundTicketOrderRpcPayload,
 } from '../types/domain';
 import {
   supabase,
@@ -26,6 +33,13 @@ import {
   buildReserveOrderRpcArgs,
   normalizeReserveOrderRpcResponse,
   normalizeCheckinRpcResponse,
+  mapDbProfileRowToProfile,
+  buildSafeSignUpMetadata,
+  evaluateAdminAccess,
+  validateAndBuildEventWritePayload,
+  mapUiEventStatusToDb,
+  translateEventDatabaseError,
+  translateBatchOrCategoryDatabaseError,
 } from '../utils/ticketRules';
 
 export {
@@ -628,12 +642,25 @@ export function mapDbEventToEventItem(
   const year = isValidDate ? String(startDate.getUTCFullYear()) : '2025';
   const monthNumeric = String(monthIndex + 1).padStart(2, '0');
 
+  const sortedCategories = [...categories]
+    .filter((cat) => cat.active !== false)
+    .sort((a, b) => (a.sort_order ?? 1) - (b.sort_order ?? 1));
+
   const categoryById = new Map<string, DbTicketCategoryRow>();
-  for (const cat of categories) {
+  for (const cat of sortedCategories) {
     categoryById.set(cat.id, cat);
   }
 
-  const mappedLots: TicketLot[] = batches.map((batch) => {
+  const sortedBatches = [...batches]
+    .filter((batch) => batch.active !== false)
+    .sort((a, b) => {
+      if (a.batch_number !== b.batch_number) {
+        return a.batch_number - b.batch_number;
+      }
+      return Number(a.price) - Number(b.price);
+    });
+
+  const mappedLots: TicketLot[] = sortedBatches.map((batch) => {
     const parentCategory = categoryById.get(batch.category_id);
     const available = Math.max(
       0,
@@ -663,34 +690,235 @@ export function mapDbEventToEventItem(
     published: 'Publicado',
     draft: 'Rascunho',
     ended: 'Encerrado',
-    cancelled: 'Encerrado',
+    cancelled: 'Cancelado',
   };
+
+  const matchedUiCategory = INITIAL_CATEGORIES.find(
+    (cat) => cat.id === row.category_slug || cat.slug === row.category_slug
+  );
+
+  const rawStartingPrice = Number(row.starting_price);
+  const resolvedStartingPrice =
+    Number.isFinite(rawStartingPrice) && rawStartingPrice > 0
+      ? rawStartingPrice
+      : mappedLots.length > 0
+      ? Math.min(...mappedLots.map((lot) => lot.price))
+      : 0;
+
+  const rawGallery = Array.isArray(row.gallery_urls) ? row.gallery_urls.filter(Boolean) : [];
+  const resolvedGallery =
+    rawGallery.length > 0
+      ? rawGallery
+      : [row.banner_url, row.card_image_url].filter((url): url is string => Boolean(url));
 
   return {
     id: row.id,
     slug: row.slug,
     title: row.title,
     subtitle: row.subtitle ?? '',
-    categoryId: row.category_slug,
-    categoryName: row.category_name,
+    categoryId: matchedUiCategory ? matchedUiCategory.id : row.category_slug,
+    categoryName: row.category_name || matchedUiCategory?.name || 'Evento Automotivo',
     dateFormatted: `${dayNumber}/${monthNumeric}/${year}`,
+    eventDateIso: row.event_date,
     dayNumber,
     monthShort: PT_BR_MONTH_SHORT[monthIndex] ?? 'JAN',
     year,
     timeRange: row.time_range,
     city: row.city,
     venueName: row.venue_name,
-    startingPrice: Number(row.starting_price),
+    startingPrice: resolvedStartingPrice,
     bannerUrl: row.banner_url,
     cardImageUrl: row.card_image_url,
-    galleryUrls: Array.isArray(row.gallery_urls) ? row.gallery_urls : [],
+    galleryUrls: resolvedGallery,
     description: row.description,
     highlights: Array.isArray(row.highlights) ? row.highlights : [],
     status: statusMap[row.status] ?? 'Rascunho',
-    featured: row.featured,
-    ticketsSold: row.tickets_sold,
-    capacity: row.capacity,
+    dbStatus: row.status,
+    featured: Boolean(row.featured),
+    ticketsSold: Number(row.tickets_sold ?? 0),
+    capacity: Math.max(1, Number(row.capacity ?? 1)),
     lots: mappedLots,
+  };
+}
+
+/**
+ * Pure function that assembles the public catalog strictly from published `DbEventRow` records
+ * and their active `DbTicketCategoryRow` and `DbTicketBatchRow` children.
+ */
+export function assemblePublishedEventsCatalog(
+  eventRows: DbEventRow[],
+  categoryRows: DbTicketCategoryRow[] = [],
+  batchRows: DbTicketBatchRow[] = []
+): EventItem[] {
+  const publishedRows = eventRows
+    .filter((row) => row.status === 'published')
+    .sort((a, b) => a.event_date.localeCompare(b.event_date));
+
+  const categoriesByEventId = new Map<string, DbTicketCategoryRow[]>();
+  for (const cat of categoryRows) {
+    if (cat.active === false) continue;
+    const list = categoriesByEventId.get(cat.event_id) ?? [];
+    list.push(cat);
+    categoriesByEventId.set(cat.event_id, list);
+  }
+
+  const batchesByEventId = new Map<string, DbTicketBatchRow[]>();
+  for (const batch of batchRows) {
+    if (batch.active === false) continue;
+    const list = batchesByEventId.get(batch.event_id) ?? [];
+    list.push(batch);
+    batchesByEventId.set(batch.event_id, list);
+  }
+
+  return publishedRows.map((eventRow) =>
+    mapDbEventToEventItem(
+      eventRow,
+      categoriesByEventId.get(eventRow.id) ?? [],
+      batchesByEventId.get(eventRow.id) ?? []
+    )
+  );
+}
+
+/**
+ * Pure function that assembles the administrative catalog for PX CONTROL,
+ * including all statuses (`draft`, `published`, `ended`, `cancelled`) sorted by `event_date` ASC.
+ */
+export function assembleAdminEventsCatalog(
+  eventRows: DbEventRow[],
+  categoryRows: DbTicketCategoryRow[] = [],
+  batchRows: DbTicketBatchRow[] = []
+): EventItem[] {
+  const sortedRows = [...eventRows].sort((a, b) => {
+    const dateCompare = a.event_date.localeCompare(b.event_date);
+    if (dateCompare !== 0) return dateCompare;
+    return (b.created_at ?? '').localeCompare(a.created_at ?? '');
+  });
+
+  const categoriesByEventId = new Map<string, DbTicketCategoryRow[]>();
+  for (const cat of categoryRows) {
+    if (cat.active === false) continue;
+    const list = categoriesByEventId.get(cat.event_id) ?? [];
+    list.push(cat);
+    categoriesByEventId.set(cat.event_id, list);
+  }
+
+  const batchesByEventId = new Map<string, DbTicketBatchRow[]>();
+  for (const batch of batchRows) {
+    if (batch.active === false) continue;
+    const list = batchesByEventId.get(batch.event_id) ?? [];
+    list.push(batch);
+    batchesByEventId.set(batch.event_id, list);
+  }
+
+  return sortedRows.map((eventRow) =>
+    mapDbEventToEventItem(
+      eventRow,
+      categoriesByEventId.get(eventRow.id) ?? [],
+      batchesByEventId.get(eventRow.id) ?? []
+    )
+  );
+}
+
+/**
+ * Computes real event counts per category based on the loaded published events.
+ */
+export function computeCategoriesWithEventCounts(
+  baseCategories: EventCategory[],
+  publishedEvents: EventItem[]
+): EventCategory[] {
+  return baseCategories.map((cat) => {
+    const count = publishedEvents.filter(
+      (ev) => ev.categoryId === cat.id || ev.categoryId === cat.slug
+    ).length;
+    return {
+      ...cat,
+      eventCount: count,
+    };
+  });
+}
+
+/**
+ * Queries published events (`status = 'published'`), active ticket categories, and active ticket
+ * batches directly from Supabase.
+ * Never falls back to mock data or masks database errors.
+ */
+export async function fetchPublishedEventsFromSupabase(): Promise<{
+  ok: boolean;
+  events: EventItem[];
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const { data: eventRows, error: eventsError } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'published')
+    .order('event_date', { ascending: true });
+
+  if (eventsError) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Não foi possível carregar os eventos publicados do Supabase: ${eventsError.message}`,
+    };
+  }
+
+  const typedEvents = (eventRows as DbEventRow[]) ?? [];
+  if (typedEvents.length === 0) {
+    return {
+      ok: true,
+      events: [],
+    };
+  }
+
+  const eventIds = typedEvents.map((ev) => ev.id);
+
+  const [categoriesResult, batchesResult] = await Promise.all([
+    supabase
+      .from('ticket_categories')
+      .select('*')
+      .in('event_id', eventIds)
+      .eq('active', true)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('ticket_batches')
+      .select('*')
+      .in('event_id', eventIds)
+      .eq('active', true)
+      .order('batch_number', { ascending: true }),
+  ]);
+
+  if (categoriesResult.error) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao carregar categorias de ingressos do Supabase: ${categoriesResult.error.message}`,
+    };
+  }
+
+  if (batchesResult.error) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao carregar lotes de ingressos do Supabase: ${batchesResult.error.message}`,
+    };
+  }
+
+  const assembled = assemblePublishedEventsCatalog(
+    typedEvents,
+    (categoriesResult.data as DbTicketCategoryRow[]) ?? [],
+    (batchesResult.data as DbTicketBatchRow[]) ?? []
+  );
+
+  return {
+    ok: true,
+    events: assembled,
   };
 }
 
@@ -868,3 +1096,1075 @@ export async function performCheckinInSupabase(params: {
 
   return normalizeCheckinRpcResponse(data);
 }
+
+/**
+ * Fetches the authenticated user's profile from `public.profiles` and verifies
+ * administrative authorization via `public.is_admin_or_super_admin()`.
+ * Never trusts client-provided userId or role without verifying the active Supabase Auth session.
+ */
+export async function fetchAuthenticatedUserProfileFromSupabase(expectedUserId?: string): Promise<{
+  ok: boolean;
+  authenticatedUserId: string | null;
+  email: string | null;
+  profile: Profile | null;
+  serverAdminConfirmed: boolean | null;
+  errorMessage: string | null;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      serverAdminConfirmed: null,
+      errorMessage: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      serverAdminConfirmed: null,
+      errorMessage: authError?.message ?? null,
+    };
+  }
+
+  const user = authData.user;
+  if (expectedUserId && expectedUserId.trim() !== user.id) {
+    return {
+      ok: false,
+      authenticatedUserId: user.id,
+      email: user.email ?? null,
+      profile: null,
+      serverAdminConfirmed: false,
+      errorMessage: 'Inconsistência de sessão detectada ao verificar o usuário autenticado.',
+    };
+  }
+
+  const [profileQuery, adminRpc] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, full_name, cpf, email, phone, city, role, created_at, updated_at')
+      .eq('id', user.id)
+      .maybeSingle(),
+    supabase.rpc('is_admin_or_super_admin'),
+  ]);
+
+  const serverAdminConfirmed =
+    !adminRpc.error && typeof adminRpc.data === 'boolean' ? adminRpc.data : null;
+
+  if (profileQuery.error) {
+    return {
+      ok: false,
+      authenticatedUserId: user.id,
+      email: user.email ?? null,
+      profile: null,
+      serverAdminConfirmed,
+      errorMessage: `Não foi possível consultar o perfil em public.profiles: ${profileQuery.error.message}`,
+    };
+  }
+
+  if (!profileQuery.data) {
+    return {
+      ok: false,
+      authenticatedUserId: user.id,
+      email: user.email ?? null,
+      profile: null,
+      serverAdminConfirmed,
+      errorMessage:
+        'Sua conta está autenticada, mas o registro correspondente em public.profiles não foi encontrado.',
+    };
+  }
+
+  const mappedProfile = mapDbProfileRowToProfile(profileQuery.data as DbProfileRow);
+  return {
+    ok: true,
+    authenticatedUserId: user.id,
+    email: user.email ?? mappedProfile.email,
+    profile: mappedProfile,
+    serverAdminConfirmed,
+    errorMessage: null,
+  };
+}
+
+/**
+ * Authenticates a user with email & password via `supabase.auth.signInWithPassword`
+ * and loads their authoritative `public.profiles` row.
+ */
+export async function signInWithSupabasePassword(
+  email: string,
+  password: string
+): Promise<{
+  ok: boolean;
+  authenticatedUserId: string | null;
+  email: string | null;
+  profile: Profile | null;
+  serverAdminConfirmed: boolean | null;
+  errorMessage?: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      serverAdminConfirmed: null,
+      errorMessage: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail.includes('@') || !password) {
+    return {
+      ok: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      serverAdminConfirmed: null,
+      errorMessage: 'Informe um e-mail válido e sua senha para autenticar.',
+    };
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: cleanEmail,
+    password,
+  });
+
+  if (error || !data?.user) {
+    return {
+      ok: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      serverAdminConfirmed: null,
+      errorMessage:
+        error?.message === 'Invalid login credentials'
+          ? 'Credenciais inválidas. Verifique seu e-mail e senha.'
+          : error?.message ?? 'Não foi possível autenticar no Supabase Auth.',
+    };
+  }
+
+  const profileCheck = await fetchAuthenticatedUserProfileFromSupabase(data.user.id);
+  return {
+    ok: true,
+    authenticatedUserId: data.user.id,
+    email: data.user.email ?? cleanEmail,
+    profile: profileCheck.profile,
+    serverAdminConfirmed: profileCheck.serverAdminConfirmed,
+    errorMessage: profileCheck.errorMessage ?? undefined,
+  };
+}
+
+/**
+ * Registers a new customer account via `supabase.auth.signUp()`.
+ * - Uses `buildSafeSignUpMetadata` so public registration never sends `role` or privileges.
+ * - Respects Supabase email confirmation settings: detects whether an active session was
+ *   returned immediately (`requiresEmailConfirmation: false`) or if email confirmation is
+ *   pending (`requiresEmailConfirmation: true`).
+ */
+export async function signUpWithSupabase(input: {
+  fullName: string;
+  cpf: string;
+  email: string;
+  phone: string;
+  city?: string;
+  password: string;
+}): Promise<{
+  ok: boolean;
+  requiresEmailConfirmation: boolean;
+  authenticatedUserId: string | null;
+  email: string | null;
+  profile: Profile | null;
+  message: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      requiresEmailConfirmation: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      message: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const built = buildSafeSignUpMetadata(input);
+  if (!built.ok) {
+    return {
+      ok: false,
+      requiresEmailConfirmation: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      message: built.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email: built.sanitizedEmail,
+    password: input.password,
+    options: {
+      data: built.metadata,
+    },
+  });
+
+  if (error || !data?.user) {
+    return {
+      ok: false,
+      requiresEmailConfirmation: false,
+      authenticatedUserId: null,
+      email: null,
+      profile: null,
+      message: error?.message ?? 'Não foi possível concluir o cadastro no Supabase Auth.',
+    };
+  }
+
+  const requiresEmailConfirmation = Boolean(data.user && !data.session);
+
+  if (requiresEmailConfirmation) {
+    return {
+      ok: true,
+      requiresEmailConfirmation: true,
+      authenticatedUserId: data.user.id,
+      email: data.user.email ?? built.sanitizedEmail,
+      profile: null,
+      message:
+        'Cadastro realizado com sucesso! Verifique sua caixa de entrada e confirme seu e-mail para ativar o acesso à sua conta.',
+    };
+  }
+
+  const profileCheck = await fetchAuthenticatedUserProfileFromSupabase(data.user.id);
+  return {
+    ok: true,
+    requiresEmailConfirmation: false,
+    authenticatedUserId: data.user.id,
+    email: data.user.email ?? built.sanitizedEmail,
+    profile: profileCheck.profile,
+    message: 'Cadastro concluído e sessão autenticada com sucesso!',
+  };
+}
+
+/**
+ * Sends a password reset email via `supabase.auth.resetPasswordForEmail()`.
+ */
+export async function requestPasswordResetInSupabase(email: string): Promise<{
+  ok: boolean;
+  message: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      message: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail.includes('@')) {
+    return {
+      ok: false,
+      message: 'Informe um e-mail válido para receber as instruções de recuperação.',
+    };
+  }
+
+  const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail);
+  if (error) {
+    return {
+      ok: false,
+      message: `Não foi possível enviar o e-mail de recuperação: ${error.message}`,
+    };
+  }
+
+  return {
+    ok: true,
+    message: `Se houver uma conta associada a ${cleanEmail}, você receberá um link seguro para redefinir sua senha.`,
+  };
+}
+
+/**
+ * Signs out the current user session via `supabase.auth.signOut()`.
+ */
+export async function signOutFromSupabase(): Promise<{
+  ok: boolean;
+  errorMessage?: string;
+}> {
+  if (!supabase) {
+    return {
+      ok: false,
+      errorMessage: 'Cliente Supabase não configurado.',
+    };
+  }
+
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    return {
+      ok: false,
+      errorMessage: error.message,
+    };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Internal helper that verifies the active Supabase Auth session and `public.profiles` role
+ * (`admin` or `SUPER_ADMIN`) before executing any administrative query or mutation on `public.events`.
+ */
+async function verifyAuthorizedAdminSession(): Promise<
+  | {
+      ok: true;
+      authenticatedUserId: string;
+      profile: Profile;
+    }
+  | {
+      ok: false;
+      errorMessage: string;
+    }
+> {
+  const sessionCheck = await fetchAuthenticatedUserProfileFromSupabase();
+  const access = evaluateAdminAccess({
+    authenticatedUserId: sessionCheck.authenticatedUserId,
+    profile: sessionCheck.profile,
+    profileError: sessionCheck.errorMessage,
+    serverAdminConfirmed: sessionCheck.serverAdminConfirmed,
+  });
+
+  if (!access.allowed || !sessionCheck.authenticatedUserId || !sessionCheck.profile) {
+    return {
+      ok: false,
+      errorMessage: access.message,
+    };
+  }
+
+  return {
+    ok: true,
+    authenticatedUserId: sessionCheck.authenticatedUserId,
+    profile: sessionCheck.profile,
+  };
+}
+
+/**
+ * Fetches all administrative events (including `draft`, `published`, `ended`, `cancelled`)
+ * from `public.events` in Supabase for PX CONTROL.
+ * Requires an authenticated administrator session (`admin` or `SUPER_ADMIN`) and respects RLS.
+ */
+export async function fetchAdminEventsFromSupabase(): Promise<{
+  ok: boolean;
+  events: EventItem[];
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const { data: eventRows, error: eventsError } = await supabase
+    .from('events')
+    .select('*')
+    .order('event_date', { ascending: true });
+
+  if (eventsError) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: translateEventDatabaseError(eventsError, 'fetch'),
+    };
+  }
+
+  const typedEvents = (eventRows as DbEventRow[]) ?? [];
+  if (typedEvents.length === 0) {
+    return {
+      ok: true,
+      events: [],
+    };
+  }
+
+  const eventIds = typedEvents.map((ev) => ev.id);
+
+  const [categoriesResult, batchesResult] = await Promise.all([
+    supabase
+      .from('ticket_categories')
+      .select('*')
+      .in('event_id', eventIds)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('ticket_batches')
+      .select('*')
+      .in('event_id', eventIds)
+      .order('batch_number', { ascending: true }),
+  ]);
+
+  if (categoriesResult.error) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao consultar categorias de ingressos: ${categoriesResult.error.message}`,
+    };
+  }
+
+  if (batchesResult.error) {
+    return {
+      ok: false,
+      events: [],
+      errorMessage: `Erro ao consultar lotes de ingressos: ${batchesResult.error.message}`,
+    };
+  }
+
+  return {
+    ok: true,
+    events: assembleAdminEventsCatalog(
+      typedEvents,
+      (categoriesResult.data as DbTicketCategoryRow[]) ?? [],
+      (batchesResult.data as DbTicketBatchRow[]) ?? []
+    ),
+  };
+}
+
+/**
+ * Creates a new event in `public.events` on Supabase.
+ * - Verifies active admin session (`admin` / `SUPER_ADMIN`).
+ * - Validates all required fields, slug uniqueness, and ISO date format (`YYYY-MM-DD`).
+ * - Never invents fake batches (`lots: []`).
+ */
+export async function createEventInSupabase(
+  input: AdminEventFormInput,
+  existingEvents: Array<{ id: string; slug: string }> = []
+): Promise<{
+  ok: boolean;
+  event?: EventItem;
+  errorMessage?: string;
+  fieldErrors?: Record<string, string>;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const validation = validateAndBuildEventWritePayload(input, {
+    existingEvents,
+    categories: INITIAL_CATEGORIES,
+  });
+
+  if (!validation.ok) {
+    return {
+      ok: false,
+      errorMessage: validation.errorMessage,
+      fieldErrors: validation.fieldErrors,
+    };
+  }
+
+  const p = validation.payload;
+  const rpcResult = await supabase.rpc('admin_create_event', {
+    p_slug: p.slug,
+    p_title: p.title,
+    p_subtitle: p.subtitle,
+    p_category_slug: p.category_slug,
+    p_category_name: p.category_name,
+    p_event_date: p.event_date,
+    p_time_range: p.time_range,
+    p_city: p.city,
+    p_venue_name: p.venue_name,
+    p_starting_price: p.starting_price,
+    p_banner_url: p.banner_url,
+    p_card_image_url: p.card_image_url,
+    p_gallery_urls: p.gallery_urls,
+    p_description: p.description,
+    p_highlights: p.highlights,
+    p_status: p.status,
+    p_featured: p.featured,
+    p_capacity: p.capacity,
+  });
+
+  if (rpcResult.error || !rpcResult.data) {
+    return {
+      ok: false,
+      errorMessage: translateEventDatabaseError(
+        rpcResult.error ?? {
+          message:
+            'Nenhum registro foi retornado por public.admin_create_event. Verifique se a migration 002 está aplicada e se sua conta possui permissão administrativa.',
+        },
+        'create'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    event: mapDbEventToEventItem(rpcResult.data as DbEventRow, [], []),
+  };
+}
+
+/**
+ * Updates an existing event in `public.events` on Supabase exclusively via `public.admin_update_event`.
+ * - Verifies active admin session (`admin` / `SUPER_ADMIN`).
+ * - Validates all required fields, capacity >= tickets_sold + active_reservations, slug uniqueness, and ISO date format (`YYYY-MM-DD`).
+ * - No fallback to direct `.from('events').update(...)`.
+ */
+export async function updateEventInSupabase(
+  eventId: string,
+  input: AdminEventFormInput,
+  existingEvents: Array<{ id: string; slug: string }> = []
+): Promise<{
+  ok: boolean;
+  event?: EventItem;
+  errorMessage?: string;
+  fieldErrors?: Record<string, string>;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanEventId = (eventId ?? '').trim();
+  if (!cleanEventId) {
+    return {
+      ok: false,
+      errorMessage: 'ID do evento inválido para atualização.',
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const validation = validateAndBuildEventWritePayload(
+    { ...input, id: cleanEventId },
+    {
+      existingEvents,
+      categories: INITIAL_CATEGORIES,
+    }
+  );
+
+  if (!validation.ok) {
+    return {
+      ok: false,
+      errorMessage: validation.errorMessage,
+      fieldErrors: validation.fieldErrors,
+    };
+  }
+
+  const p = validation.payload;
+  const rpcResult = await supabase.rpc('admin_update_event', {
+    p_event_id: cleanEventId,
+    p_slug: p.slug,
+    p_title: p.title,
+    p_subtitle: p.subtitle,
+    p_category_slug: p.category_slug,
+    p_category_name: p.category_name,
+    p_event_date: p.event_date,
+    p_time_range: p.time_range,
+    p_city: p.city,
+    p_venue_name: p.venue_name,
+    p_starting_price: p.starting_price,
+    p_banner_url: p.banner_url,
+    p_card_image_url: p.card_image_url,
+    p_gallery_urls: p.gallery_urls,
+    p_description: p.description,
+    p_highlights: p.highlights,
+    p_status: p.status,
+    p_featured: p.featured,
+    p_capacity: p.capacity,
+  });
+
+  if (rpcResult.error || !rpcResult.data) {
+    return {
+      ok: false,
+      errorMessage: translateEventDatabaseError(
+        rpcResult.error ?? {
+          message:
+            'Nenhum registro foi atualizado por public.admin_update_event. Verifique se o evento ainda existe, se a migration 002 está aplicada e se sua conta possui permissão administrativa.',
+        },
+        'update'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    event: mapDbEventToEventItem(rpcResult.data as DbEventRow, [], []),
+  };
+}
+
+/**
+ * Publishes (`'published'`) or unpublishes (`'draft'`) an event in `public.events` on Supabase
+ * exclusively via `public.admin_update_event_status` to guarantee canonical lock ordering (`px_event_inventory` -> `events FOR UPDATE`).
+ */
+export async function updateEventStatusInSupabase(
+  eventId: string,
+  nextStatus: EventStatus | DbEventRow['status']
+): Promise<{
+  ok: boolean;
+  event?: EventItem;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanEventId = (eventId ?? '').trim();
+  if (!cleanEventId) {
+    return {
+      ok: false,
+      errorMessage: 'ID do evento inválido para alteração de status.',
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const dbStatus = mapUiEventStatusToDb(nextStatus);
+
+  const rpcResult = await supabase.rpc('admin_update_event_status', {
+    p_event_id: cleanEventId,
+    p_status: dbStatus,
+  });
+
+  if (rpcResult.error || !rpcResult.data) {
+    return {
+      ok: false,
+      errorMessage: translateEventDatabaseError(
+        rpcResult.error ?? {
+          message:
+            'Não foi possível alterar o status do evento via public.admin_update_event_status. Verifique se o evento existe, se a migration 002 está aplicada e se sua permissão administrativa está ativa.',
+        },
+        'status'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    event: mapDbEventToEventItem(rpcResult.data as DbEventRow, [], []),
+  };
+}
+
+/**
+ * Deletes an event from `public.events` on Supabase exclusively via `public.admin_delete_event`
+ * to guarantee canonical lock ordering (`px_event_inventory` -> `events FOR UPDATE` -> `ticket_batches (id ASC) FOR UPDATE`)
+ * before `ON DELETE CASCADE` reaches `public.ticket_batches`.
+ */
+export async function deleteEventInSupabase(eventId: string): Promise<{
+  ok: boolean;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanEventId = (eventId ?? '').trim();
+  if (!cleanEventId) {
+    return {
+      ok: false,
+      errorMessage: 'ID do evento inválido para exclusão.',
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const rpcResult = await supabase.rpc('admin_delete_event', {
+    p_event_id: cleanEventId,
+  });
+
+  if (rpcResult.error || !rpcResult.data) {
+    return {
+      ok: false,
+      errorMessage: translateEventDatabaseError(
+        rpcResult.error ?? {
+          message:
+            'O evento não pôde ser removido via public.admin_delete_event (registro não encontrado, RPC ausente ou exclusão bloqueada por permissão).',
+        },
+        'delete'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+  };
+}
+
+/**
+ * Creates or updates a ticket batch in `public.ticket_batches` via the transactional RPC
+ * `public.admin_save_ticket_batch`, which acquires `px_event_inventory` -> `events FOR UPDATE`
+ * -> `ticket_batches (id ASC) FOR UPDATE` prior to `INSERT`/`UPDATE`.
+ */
+export async function saveTicketBatchInSupabase(
+  input: AdminSaveTicketBatchInput
+): Promise<{
+  ok: boolean;
+  batch?: DbTicketBatchRow;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc('admin_save_ticket_batch', {
+    p_batch_id: input.id?.trim() ? input.id.trim() : null,
+    p_event_id: input.eventId.trim(),
+    p_category_id: input.categoryId.trim(),
+    p_name: input.name.trim(),
+    p_batch_number: input.batchNumber,
+    p_description: input.description?.trim() ?? '',
+    p_price: input.price,
+    p_total_quantity: input.totalQuantity,
+    p_thumbnail_url: input.thumbnailUrl ?? null,
+    p_starts_at: input.startsAt ?? null,
+    p_ends_at: input.endsAt ?? null,
+    p_active: input.active ?? true,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      errorMessage: translateBatchOrCategoryDatabaseError(
+        error ?? {
+          message:
+            'Nenhum registro foi retornado por public.admin_save_ticket_batch. Verifique se a migration 002 está aplicada e se sua conta possui permissão administrativa.',
+        },
+        'batch',
+        'save'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    batch: data as DbTicketBatchRow,
+  };
+}
+
+/**
+ * Deletes a ticket batch in `public.ticket_batches` via the transactional RPC
+ * `public.admin_delete_ticket_batch` (which blocks deletion if any orders/tickets exist).
+ */
+export async function deleteTicketBatchInSupabase(batchId: string): Promise<{
+  ok: boolean;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanBatchId = (batchId ?? '').trim();
+  if (!cleanBatchId) {
+    return {
+      ok: false,
+      errorMessage: 'ID do lote inválido para exclusão.',
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc('admin_delete_ticket_batch', {
+    p_batch_id: cleanBatchId,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      errorMessage: translateBatchOrCategoryDatabaseError(
+        error ?? {
+          message:
+            'O lote não pôde ser removido via public.admin_delete_ticket_batch (registro não encontrado, RPC ausente ou exclusão bloqueada por permissão).',
+        },
+        'batch',
+        'delete'
+      ),
+    };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Creates or updates a ticket category in `public.ticket_categories` via the transactional RPC
+ * `public.admin_save_ticket_category`, which acquires `px_event_inventory` -> `events FOR UPDATE`
+ * -> `ticket_categories (id ASC) FOR UPDATE` -> `ticket_batches (id ASC) FOR UPDATE` prior to `INSERT`/`UPDATE`.
+ */
+export async function saveTicketCategoryInSupabase(
+  input: AdminSaveTicketCategoryInput
+): Promise<{
+  ok: boolean;
+  category?: DbTicketCategoryRow;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc('admin_save_ticket_category', {
+    p_category_id: input.id?.trim() ? input.id.trim() : null,
+    p_event_id: input.eventId.trim(),
+    p_slug: input.slug.trim(),
+    p_name: input.name.trim(),
+    p_description: input.description?.trim() ? input.description.trim() : null,
+    p_max_per_order: input.maxPerOrder ?? 10,
+    p_sort_order: input.sortOrder ?? 1,
+    p_active: input.active ?? true,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      errorMessage: translateBatchOrCategoryDatabaseError(
+        error ?? {
+          message:
+            'Nenhum registro foi retornado por public.admin_save_ticket_category. Verifique se a migration 002 está aplicada e se sua conta possui permissão administrativa.',
+        },
+        'category',
+        'save'
+      ),
+    };
+  }
+
+  return {
+    ok: true,
+    category: data as DbTicketCategoryRow,
+  };
+}
+
+/**
+ * Deletes a ticket category in `public.ticket_categories` via the transactional RPC
+ * `public.admin_delete_ticket_category` (which blocks deletion if any batches have sales/reservations/orders or tickets).
+ */
+export async function deleteTicketCategoryInSupabase(categoryId: string): Promise<{
+  ok: boolean;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanCategoryId = (categoryId ?? '').trim();
+  if (!cleanCategoryId) {
+    return {
+      ok: false,
+      errorMessage: 'ID da categoria inválido para exclusão.',
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc('admin_delete_ticket_category', {
+    p_category_id: cleanCategoryId,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      errorMessage: translateBatchOrCategoryDatabaseError(
+        error ?? {
+          message:
+            'A categoria não pôde ser removida via public.admin_delete_ticket_category (registro não encontrado, RPC ausente ou exclusão bloqueada por permissão).',
+        },
+        'category',
+        'delete'
+      ),
+    };
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Cancels an unpaid reservation (`reserved` or `pending_payment`) via `public.cancel_ticket_order`,
+ * releasing `reserved_quantity` back to the batch while preserving the order record.
+ */
+export async function cancelOrderInSupabase(params: {
+  orderId: string;
+  reason?: string;
+}): Promise<{
+  ok: boolean;
+  payload?: CancelTicketOrderRpcPayload;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanOrderId = (params.orderId ?? '').trim();
+  if (!cleanOrderId) {
+    return {
+      ok: false,
+      errorMessage: 'Identificador do pedido (orderId) é obrigatório para cancelamento.',
+    };
+  }
+
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError || !authData?.user?.id) {
+    return {
+      ok: false,
+      errorMessage: 'Autenticação obrigatória para cancelar uma reserva.',
+    };
+  }
+
+  const { data, error } = await supabase.rpc('cancel_ticket_order', {
+    p_order_id: cleanOrderId,
+    p_reason: params.reason?.trim() || null,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      errorMessage: error?.message ?? 'Não foi possível cancelar o pedido.',
+    };
+  }
+
+  return {
+    ok: true,
+    payload: data as CancelTicketOrderRpcPayload,
+  };
+}
+
+/**
+ * Refunds a paid order in full (`paid -> refunded`) via `public.refund_ticket_order`.
+ * Requires an authenticated administrator session (`admin` or `SUPER_ADMIN`), transitions all
+ * issued tickets of the order to `status = 'refunded'` (blocking if any ticket is `'used'`),
+ * and decrements `ticket_batches.sold_quantity` and `events.tickets_sold`.
+ */
+export async function refundOrderInSupabase(params: {
+  orderId: string;
+  mpPaymentId: string;
+  reason?: string;
+}): Promise<{
+  ok: boolean;
+  payload?: RefundTicketOrderRpcPayload;
+  errorMessage?: string;
+}> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const cleanOrderId = (params.orderId ?? '').trim();
+  const cleanMpPaymentId = (params.mpPaymentId ?? '').trim();
+  if (!cleanOrderId || !cleanMpPaymentId) {
+    return {
+      ok: false,
+      errorMessage:
+        'Os identificadores do pedido (orderId) e do pagamento no Mercado Pago (mpPaymentId) são obrigatórios para o reembolso.',
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const { data, error } = await supabase.rpc('refund_ticket_order', {
+    p_order_id: cleanOrderId,
+    p_mp_payment_id: cleanMpPaymentId,
+    p_reason: params.reason?.trim() || null,
+  });
+
+  if (error || !data) {
+    return {
+      ok: false,
+      errorMessage: error?.message ?? 'Não foi possível processar o reembolso do pedido.',
+    };
+  }
+
+  return {
+    ok: true,
+    payload: data as RefundTicketOrderRpcPayload,
+  };
+}
+
+

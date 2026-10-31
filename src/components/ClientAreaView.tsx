@@ -11,10 +11,18 @@ import {
   MapPin,
   Calendar,
   ShieldCheck,
+  LogOut,
+  AlertCircle,
+  UserCheck,
 } from 'lucide-react';
-import type { Ticket, Order } from '../types/domain';
+import type { Ticket, Order, Profile } from '../types/domain';
 import type { ClientSubTab } from './Navbar';
 import { formatBRL } from '../utils/ticketRules';
+import {
+  signInWithSupabasePassword,
+  signUpWithSupabase,
+  requestPasswordResetInSupabase,
+} from '../services/platformService';
 import { BrandLogo, QRCodeVisual, ResilientImage } from './BrandLogo';
 
 interface ClientAreaViewProps {
@@ -22,6 +30,12 @@ interface ClientAreaViewProps {
   onChangeSubTab: (tab: ClientSubTab) => void;
   tickets: Ticket[];
   orders: Order[];
+  isAuthenticated?: boolean;
+  authenticatedEmail?: string | null;
+  currentUserProfile?: Profile | null;
+  profileError?: string | null;
+  onSignOut?: () => void;
+  onAuthSessionUpdated?: () => Promise<void> | void;
 }
 
 export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
@@ -29,69 +43,144 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
   onChangeSubTab,
   tickets,
   orders,
+  isAuthenticated = false,
+  authenticatedEmail = null,
+  currentUserProfile = null,
+  profileError = null,
+  onSignOut,
+  onAuthSessionUpdated,
 }) => {
   const [ticketFilter, setTicketFilter] = useState<'active' | 'all'>('active');
   const [selectedTicketModal, setSelectedTicketModal] = useState<Ticket | null>(null);
 
-  // Auth form states (prepared for Supabase Auth integration)
-  const [loginEmail, setLoginEmail] = useState('joao@email.com');
+  // Real Supabase Auth form states
+  const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [registerData, setRegisterData] = useState({
     fullName: '',
     cpf: '',
     email: '',
     phone: '',
+    city: '',
     password: '',
   });
   const [recoverEmail, setRecoverEmail] = useState('');
-  const [authFeedback, setAuthFeedback] = useState<string | null>(null);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authFeedback, setAuthFeedback] = useState<{
+    type: 'success' | 'error' | 'info';
+    text: string;
+  } | null>(null);
 
   const visibleTickets =
     ticketFilter === 'active'
       ? tickets.filter((t) => t.status === 'paid')
       : tickets;
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail.includes('@') || loginPassword.length < 4) {
-      setAuthFeedback('Preencha um e-mail válido e sua senha para autenticar via Supabase Auth.');
+    setAuthFeedback(null);
+
+    if (!loginEmail.trim().includes('@') || !loginPassword) {
+      setAuthFeedback({
+        type: 'error',
+        text: 'Preencha seu e-mail e senha para autenticar via Supabase Auth.',
+      });
       return;
     }
-    setAuthFeedback(
-      'Sessão verificada para João da Silva (perfil sincronizado com public.profiles). Redirecionando para Meus Ingressos...'
-    );
-    setTimeout(() => {
-      setAuthFeedback(null);
+
+    setAuthSubmitting(true);
+    try {
+      const result = await signInWithSupabasePassword(loginEmail, loginPassword);
+      if (!result.ok) {
+        setAuthFeedback({
+          type: 'error',
+          text: result.errorMessage ?? 'Falha ao autenticar no Supabase Auth.',
+        });
+        return;
+      }
+
+      setLoginPassword('');
+      if (onAuthSessionUpdated) {
+        await onAuthSessionUpdated();
+      }
+
+      const roleLabel = result.profile?.role ?? 'customer';
+      setAuthFeedback({
+        type: 'success',
+        text: result.profile
+          ? `Sessão autenticada para ${result.profile.fullName} (perfil verificado em public.profiles com papel "${roleLabel}").`
+          : result.errorMessage ??
+            'Sessão autenticada no Supabase Auth, porém o registro em public.profiles ainda não foi encontrado.',
+      });
       onChangeSubTab('tickets');
-    }, 900);
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      registerData.fullName.trim().length < 5 ||
-      !registerData.email.includes('@') ||
-      registerData.password.length < 6
-    ) {
-      setAuthFeedback(
-        'Preencha nome completo, CPF, e-mail válido e senha com no mínimo 6 caracteres.'
-      );
-      return;
+    setAuthFeedback(null);
+
+    setAuthSubmitting(true);
+    try {
+      const result = await signUpWithSupabase({
+        fullName: registerData.fullName,
+        cpf: registerData.cpf,
+        email: registerData.email,
+        phone: registerData.phone,
+        city: registerData.city,
+        password: registerData.password,
+      });
+
+      if (!result.ok) {
+        setAuthFeedback({
+          type: 'error',
+          text: result.message,
+        });
+        return;
+      }
+
+      setRegisterData((prev) => ({ ...prev, password: '' }));
+      if (onAuthSessionUpdated) {
+        await onAuthSessionUpdated();
+      }
+
+      setAuthFeedback({
+        type: result.requiresEmailConfirmation ? 'info' : 'success',
+        text: result.message,
+      });
+
+      if (!result.requiresEmailConfirmation) {
+        onChangeSubTab('tickets');
+      }
+    } finally {
+      setAuthSubmitting(false);
     }
-    setAuthFeedback(
-      `Cadastro preparado para ${registerData.fullName}. Na integração com Supabase Auth, o trigger criará automaticamente o registro vinculado em public.profiles.`
-    );
   };
 
-  const handleRecoverSubmit = (e: React.FormEvent) => {
+  const handleRecoverSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recoverEmail.includes('@')) {
-      setAuthFeedback('Informe o e-mail cadastrado para receber o link de redefinição.');
+    setAuthFeedback(null);
+
+    if (!recoverEmail.trim().includes('@')) {
+      setAuthFeedback({
+        type: 'error',
+        text: 'Informe o e-mail cadastrado para receber o link de redefinição.',
+      });
       return;
     }
-    setAuthFeedback(
-      `Solicitação registrada para ${recoverEmail}. O fluxo de recuperação utiliza supabase.auth.resetPasswordForEmail().`
-    );
+
+    setAuthSubmitting(true);
+    try {
+      const result = await requestPasswordResetInSupabase(recoverEmail);
+      setAuthFeedback({
+        type: result.ok ? 'success' : 'error',
+        text: result.message,
+      });
+    } finally {
+      setAuthSubmitting(false);
+    }
   };
 
   return (
@@ -111,7 +200,7 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
           {[
             { id: 'tickets', label: 'Meus Ingressos', icon: TicketIcon },
             { id: 'orders', label: 'Meus Pedidos', icon: ShoppingBag },
-            { id: 'login', label: 'Login', icon: LogIn },
+            { id: 'login', label: isAuthenticated ? 'Minha Sessão' : 'Login', icon: LogIn },
             { id: 'register', label: 'Cadastro', icon: UserPlus },
             { id: 'recover', label: 'Recuperar Senha', icon: KeyRound },
           ].map((tab) => {
@@ -138,6 +227,45 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
           })}
         </div>
       </div>
+
+      {/* Authenticated Session Status Banner */}
+      {isAuthenticated && (
+        <div className="rounded-xl bg-[#11131A] border border-[#242838] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <UserCheck className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="space-y-0.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold text-white">
+                  {currentUserProfile?.fullName || authenticatedEmail || 'Usuário Autenticado'}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-[#181B26] border border-[#2C3144] text-[10px] font-mono-tabular font-bold uppercase text-neutral-300">
+                  Role: {currentUserProfile?.role ?? 'não verificado'}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-400">
+                E-mail da sessão: <span className="text-neutral-200">{authenticatedEmail}</span>
+              </p>
+              {profileError && (
+                <p className="text-xs text-amber-400 flex items-center gap-1.5 pt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{profileError}</span>
+                </p>
+              )}
+            </div>
+          </div>
+
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="px-4 py-2 rounded-lg bg-[#181B24] hover:bg-[#E50914]/20 border border-[#2A2E3D] hover:border-[#E50914]/50 text-xs font-bold text-white inline-flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5 text-[#E50914]" />
+              <span>Encerrar Sessão</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 1. MEUS INGRESSOS (Matches Mobile Screen in Visual Reference) */}
       {activeSubTab === 'tickets' && (
@@ -304,7 +432,7 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
             <BrandLogo size="md" />
             <h2 className="font-display text-2xl font-bold text-white">Acessar Minha Conta</h2>
             <p className="text-xs text-neutral-400">
-              Autenticação integrada ao Supabase Auth com proteção RLS.
+              Autenticação integrada ao Supabase Auth com verificação de perfil em public.profiles.
             </p>
           </div>
 
@@ -318,8 +446,10 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                 type="email"
                 value={loginEmail}
                 onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="seu@email.com"
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                disabled={authSubmitting}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
               />
             </div>
 
@@ -330,7 +460,10 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                 </label>
                 <button
                   type="button"
-                  onClick={() => onChangeSubTab('recover')}
+                  onClick={() => {
+                    setAuthFeedback(null);
+                    onChangeSubTab('recover');
+                  }}
                   className="text-xs text-[#E50914] hover:underline"
                 >
                   Esqueceu a senha?
@@ -343,21 +476,31 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                 onChange={(e) => setLoginPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                disabled={authSubmitting}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
               />
             </div>
 
             {authFeedback && (
-              <p className="text-xs text-neutral-200 bg-[#181B26] border border-[#2E3446] rounded-lg p-3">
-                {authFeedback}
-              </p>
+              <div
+                className={`text-xs rounded-lg p-3 border ${
+                  authFeedback.type === 'error'
+                    ? 'bg-[#E50914]/10 border-[#E50914]/40 text-red-200'
+                    : authFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+                      : 'bg-[#181B26] border-[#2E3446] text-neutral-200'
+                }`}
+              >
+                {authFeedback.text}
+              </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white font-bold text-sm uppercase tracking-wider transition-colors cursor-pointer"
+              disabled={authSubmitting}
+              className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-60 text-white font-bold text-sm uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Entrar na Plataforma
+              {authSubmitting ? 'Autenticando...' : 'Entrar na Plataforma'}
             </button>
           </form>
 
@@ -365,7 +508,10 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
             Ainda não possui conta?{' '}
             <button
               type="button"
-              onClick={() => onChangeSubTab('register')}
+              onClick={() => {
+                setAuthFeedback(null);
+                onChangeSubTab('register');
+              }}
               className="text-[#E50914] font-semibold hover:underline"
             >
               Criar cadastro
@@ -397,7 +543,8 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                 onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
                 placeholder="Ex: João da Silva"
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                disabled={authSubmitting}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
               />
             </div>
 
@@ -413,7 +560,8 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                   onChange={(e) => setRegisterData({ ...registerData, cpf: e.target.value })}
                   placeholder="000.000.000-00"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white font-mono-tabular focus:outline-none focus:border-[#E50914]"
+                  disabled={authSubmitting}
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white font-mono-tabular focus:outline-none focus:border-[#E50914] disabled:opacity-60"
                 />
               </div>
               <div>
@@ -427,24 +575,42 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                   onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
                   placeholder="(11) 98765-4321"
                   required
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white font-mono-tabular focus:outline-none focus:border-[#E50914]"
+                  disabled={authSubmitting}
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white font-mono-tabular focus:outline-none focus:border-[#E50914] disabled:opacity-60"
                 />
               </div>
             </div>
 
-            <div>
-              <label htmlFor="reg-email" className="block text-xs text-neutral-300 mb-1">
-                E-mail
-              </label>
-              <input
-                id="reg-email"
-                type="email"
-                value={registerData.email}
-                onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                placeholder="seu@email.com"
-                required
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label htmlFor="reg-email" className="block text-xs text-neutral-300 mb-1">
+                  E-mail
+                </label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                  placeholder="seu@email.com"
+                  required
+                  disabled={authSubmitting}
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
+                />
+              </div>
+              <div>
+                <label htmlFor="reg-city" className="block text-xs text-neutral-300 mb-1">
+                  Cidade / UF (opcional)
+                </label>
+                <input
+                  id="reg-city"
+                  type="text"
+                  value={registerData.city}
+                  onChange={(e) => setRegisterData({ ...registerData, city: e.target.value })}
+                  placeholder="Ex: São Paulo - SP"
+                  disabled={authSubmitting}
+                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
+                />
+              </div>
             </div>
 
             <div>
@@ -458,21 +624,31 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                 onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                 placeholder="••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                disabled={authSubmitting}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
               />
             </div>
 
             {authFeedback && (
-              <p className="text-xs text-neutral-200 bg-[#181B26] border border-[#2E3446] rounded-lg p-3">
-                {authFeedback}
-              </p>
+              <div
+                className={`text-xs rounded-lg p-3 border ${
+                  authFeedback.type === 'error'
+                    ? 'bg-[#E50914]/10 border-[#E50914]/40 text-red-200'
+                    : authFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+                      : 'bg-[#181B26] border-[#2E3446] text-neutral-200'
+                }`}
+              >
+                {authFeedback.text}
+              </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white font-bold text-sm uppercase tracking-wider transition-colors cursor-pointer"
+              disabled={authSubmitting}
+              className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-60 text-white font-bold text-sm uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Concluir Cadastro
+              {authSubmitting ? 'Cadastrando...' : 'Concluir Cadastro'}
             </button>
           </form>
         </div>
@@ -499,23 +675,33 @@ export const ClientAreaView: React.FC<ClientAreaViewProps> = ({
                 type="email"
                 value={recoverEmail}
                 onChange={(e) => setRecoverEmail(e.target.value)}
-                placeholder="joao@email.com"
+                placeholder="seu@email.com"
                 required
-                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                disabled={authSubmitting}
+                className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914] disabled:opacity-60"
               />
             </div>
 
             {authFeedback && (
-              <p className="text-xs text-neutral-200 bg-[#181B26] border border-[#2E3446] rounded-lg p-3">
-                {authFeedback}
-              </p>
+              <div
+                className={`text-xs rounded-lg p-3 border ${
+                  authFeedback.type === 'error'
+                    ? 'bg-[#E50914]/10 border-[#E50914]/40 text-red-200'
+                    : authFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200'
+                      : 'bg-[#181B26] border-[#2E3446] text-neutral-200'
+                }`}
+              >
+                {authFeedback.text}
+              </div>
             )}
 
             <button
               type="submit"
-              className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white font-bold text-sm uppercase tracking-wider transition-colors cursor-pointer"
+              disabled={authSubmitting}
+              className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-60 text-white font-bold text-sm uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Enviar Link de Recuperação
+              {authSubmitting ? 'Enviando...' : 'Enviar Link de Recuperação'}
             </button>
           </form>
         </div>

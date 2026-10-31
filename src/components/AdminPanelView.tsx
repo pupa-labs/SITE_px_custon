@@ -24,6 +24,11 @@ import {
   TrendingUp,
   Eye,
   X,
+  ShieldAlert,
+  Lock,
+  LogIn,
+  LogOut,
+  RefreshCw,
 } from 'lucide-react';
 import type {
   EventItem,
@@ -34,8 +39,15 @@ import type {
   Profile,
   AuditLogEntry,
   EventStatus,
+  AdminAccessEvaluation,
+  AdminEventFormInput,
 } from '../types/domain';
-import { formatBRL, verifyAndProcessCheckin } from '../utils/ticketRules';
+import {
+  formatBRL,
+  verifyAndProcessCheckin,
+  generateEventSlug,
+  validateAndBuildEventWritePayload,
+} from '../utils/ticketRules';
 import {
   supabaseConfigState,
   verifySupabaseConnection,
@@ -65,12 +77,89 @@ interface AdminPanelViewProps {
   checkins: CheckinRecord[];
   customers: Profile[];
   auditLogs: AuditLogEntry[];
-  onAddEvent: (ev: EventItem) => void;
-  onToggleEventStatus: (eventId: string) => void;
-  onDeleteEvent: (eventId: string) => void;
+  adminAccess: AdminAccessEvaluation;
+  currentUserProfile?: Profile | null;
+  authenticatedEmail?: string | null;
+  isAuthLoading?: boolean;
+  isLoadingAdminEvents?: boolean;
+  adminEventsError?: string | null;
+  onRefreshAdminEvents?: () => Promise<void> | void;
+  onGoToLogin?: () => void;
+  onGoToHome?: () => void;
+  onSignOut?: () => void;
+  onRefreshProfile?: () => void;
+  onCreateEvent: (input: AdminEventFormInput) => Promise<{
+    ok: boolean;
+    event?: EventItem;
+    errorMessage?: string;
+    fieldErrors?: Record<string, string>;
+  }>;
+  onUpdateEvent: (
+    eventId: string,
+    input: AdminEventFormInput
+  ) => Promise<{
+    ok: boolean;
+    event?: EventItem;
+    errorMessage?: string;
+    fieldErrors?: Record<string, string>;
+  }>;
+  onToggleEventStatus: (
+    eventId: string,
+    nextStatus: EventStatus
+  ) => Promise<{
+    ok: boolean;
+    event?: EventItem;
+    errorMessage?: string;
+  }>;
+  onDeleteEvent: (eventId: string) => Promise<{
+    ok: boolean;
+    errorMessage?: string;
+  }>;
   onProcessCheckin: (updatedTicket: Ticket | undefined, record: CheckinRecord) => void;
   onSelectEventPublic: (ev: EventItem) => void;
 }
+
+interface EventModalFormState {
+  title: string;
+  subtitle: string;
+  slug: string;
+  categoryId: string;
+  dateInput: string;
+  timeRange: string;
+  city: string;
+  venueName: string;
+  startingPrice: string;
+  capacity: string;
+  ticketsSold: number;
+  bannerUrl: string;
+  cardImageUrl: string;
+  galleryUrls: string[];
+  description: string;
+  highlightsText: string;
+  status: EventStatus;
+  featured: boolean;
+}
+
+const EMPTY_EVENT_FORM: EventModalFormState = {
+  title: '',
+  subtitle: '',
+  slug: '',
+  categoryId: 'cat-carros',
+  dateInput: '',
+  timeRange: '10:00 às 22:00',
+  city: '',
+  venueName: '',
+  startingPrice: '',
+  capacity: '',
+  ticketsSold: 0,
+  bannerUrl: '/assets/events/hero-banner-full.jpg',
+  cardImageUrl: '/assets/events/ev-rebaixados.jpg',
+  galleryUrls: [],
+  description: '',
+  highlightsText: '',
+  status: 'Rascunho',
+  featured: false,
+};
 
 export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   events,
@@ -80,7 +169,19 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   checkins,
   customers,
   auditLogs,
-  onAddEvent,
+  adminAccess,
+  currentUserProfile = null,
+  authenticatedEmail = null,
+  isAuthLoading = false,
+  isLoadingAdminEvents = false,
+  adminEventsError = null,
+  onRefreshAdminEvents,
+  onGoToLogin,
+  onGoToHome,
+  onSignOut,
+  onRefreshProfile,
+  onCreateEvent,
+  onUpdateEvent,
   onToggleEventStatus,
   onDeleteEvent,
   onProcessCheckin,
@@ -89,16 +190,22 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   const [activeModule, setActiveModule] = useState<AdminModule>('dashboard');
   const [periodFilter, setPeriodFilter] = useState<'7d' | '30d' | 'all'>('30d');
 
-  // New Event Modal State
-  const [showNewEventModal, setShowNewEventModal] = useState(false);
-  const [newEventForm, setNewEventForm] = useState({
-    title: '',
-    city: 'São Paulo - SP',
-    dateFormatted: '15/08/2025',
-    startingPrice: '50',
-    categoryId: 'cat-carros',
-    status: 'Publicado' as EventStatus,
-  });
+  // Create / Edit Event Modal & Persistence State
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [eventForm, setEventForm] = useState<EventModalFormState>(EMPTY_EVENT_FORM);
+  const [isSavingEvent, setIsSavingEvent] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [modalFieldErrors, setModalFieldErrors] = useState<Record<string, string>>({});
+
+  // Table Row Action Feedback & Confirmation State
+  const [busyEventId, setBusyEventId] = useState<string | null>(null);
+  const [confirmDeleteEvent, setConfirmDeleteEvent] = useState<EventItem | null>(null);
+  const [eventsFeedback, setEventsFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   // Check-in Scanner State (PX CONTROL)
   const [checkinInput, setCheckinInput] = useState('PX-784592');
@@ -217,91 +324,193 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     onProcessCheckin(verification.updatedTicket, verification.checkinRecord);
   };
 
-  const handleCreateEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEventForm.title.trim()) return;
-    const parts = newEventForm.dateFormatted.split('/');
-    const day = parts[0] || '15';
-    const monthMap: Record<string, string> = {
-      '01': 'JAN',
-      '02': 'FEV',
-      '03': 'MAR',
-      '04': 'ABR',
-      '05': 'MAI',
-      '06': 'JUN',
-      '07': 'JUL',
-      '08': 'AGO',
-      '09': 'SET',
-      '10': 'OUT',
-      '11': 'NOV',
-      '12': 'DEZ',
-    };
-    const monthShort = monthMap[parts[1] || '08'] || 'AGO';
-    const year = parts[2] || '2025';
-    const price = Number(newEventForm.startingPrice) || 50;
-
-    const newEv: EventItem = {
-      id: `evt-${Date.now()}`,
-      slug: newEventForm.title.toLowerCase().replace(/\s+/g, '-'),
-      title: newEventForm.title.trim(),
-      subtitle: 'Evento Oficial PX CUSTON',
-      categoryId: newEventForm.categoryId,
-      categoryName:
-        categories.find((c) => c.id === newEventForm.categoryId)?.name || 'Evento Automotivo',
-      dateFormatted: newEventForm.dateFormatted,
-      dayNumber: day,
-      monthShort,
-      year,
-      timeRange: '10:00 às 22:00',
-      city: newEventForm.city,
-      venueName: `Arena Automotiva — ${newEventForm.city}`,
-      startingPrice: price,
-      bannerUrl: '/assets/events/hero-jetta.jpg',
-      cardImageUrl: '/assets/events/ev-rebaixados.jpg',
-      galleryUrls: [
-        '/assets/events/gallery-1.jpg',
-        '/assets/events/gallery-2.jpg',
-        '/assets/events/gallery-3.jpg',
-      ],
-      description:
-        'Evento oficial administrado pela equipe PX CUSTON com venda de ingressos QR Code e controle de portaria.',
-      highlights: [
-        '+2.000 visitantes esperados',
-        'Expositores oficiais',
-        'Praça de alimentação',
-        'Segurança e estacionamento',
-      ],
-      status: newEventForm.status,
-      featured: false,
-      ticketsSold: 0,
-      capacity: 1500,
-      lots: [
-        {
-          id: `lot-${Date.now()}`,
-          eventId: `evt-${Date.now()}`,
-          name: 'Pista (1º Lote Promocional)',
-          categoryLabel: 'Pista',
-          batchNumber: 1,
-          description: 'Acesso geral ao evento',
-          price,
-          totalQuantity: 1000,
-          availableQuantity: 1000,
-          thumbnailUrl: '/assets/events/gallery-1.jpg',
-          active: true,
-        },
-      ],
-    };
-
-    onAddEvent(newEv);
-    setShowNewEventModal(false);
-    setNewEventForm({
-      title: '',
-      city: 'São Paulo - SP',
-      dateFormatted: '15/08/2025',
-      startingPrice: '50',
-      categoryId: 'cat-carros',
-      status: 'Publicado',
+  const handleOpenCreateEventModal = () => {
+    setEditingEventId(null);
+    setSlugManuallyEdited(false);
+    setModalError(null);
+    setModalFieldErrors({});
+    setEventForm({
+      ...EMPTY_EVENT_FORM,
+      categoryId: categories[0]?.id || 'cat-carros',
     });
+    setShowEventModal(true);
+  };
+
+  const handleOpenEditEventModal = (ev: EventItem) => {
+    setEditingEventId(ev.id);
+    setSlugManuallyEdited(true);
+    setModalError(null);
+    setModalFieldErrors({});
+    setEventForm({
+      title: ev.title,
+      subtitle: ev.subtitle || '',
+      slug: ev.slug,
+      categoryId: ev.categoryId,
+      dateInput: ev.dateFormatted || ev.eventDateIso || '',
+      timeRange: ev.timeRange,
+      city: ev.city,
+      venueName: ev.venueName,
+      startingPrice: String(ev.startingPrice),
+      capacity: String(ev.capacity),
+      ticketsSold: ev.ticketsSold,
+      bannerUrl: ev.bannerUrl,
+      cardImageUrl: ev.cardImageUrl,
+      galleryUrls: Array.isArray(ev.galleryUrls) ? ev.galleryUrls : [],
+      description: ev.description,
+      highlightsText: Array.isArray(ev.highlights) ? ev.highlights.join('\n') : '',
+      status: ev.status,
+      featured: Boolean(ev.featured),
+    });
+    setShowEventModal(true);
+  };
+
+  const handleTitleChange = (nextTitle: string) => {
+    setEventForm((prev) => {
+      const otherSlugs = events
+        .filter((item) => !editingEventId || item.id !== editingEventId)
+        .map((item) => item.slug);
+      const nextSlug = slugManuallyEdited
+        ? prev.slug
+        : generateEventSlug(nextTitle, otherSlugs);
+      return {
+        ...prev,
+        title: nextTitle,
+        slug: nextSlug,
+      };
+    });
+  };
+
+  const handleSaveEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setModalError(null);
+    setModalFieldErrors({});
+    setEventsFeedback(null);
+
+    const selectedCategory = categories.find(
+      (c) => c.id === eventForm.categoryId || c.slug === eventForm.categoryId
+    );
+
+    const formInput: AdminEventFormInput = {
+      id: editingEventId ?? undefined,
+      title: eventForm.title,
+      subtitle: eventForm.subtitle,
+      slug: eventForm.slug,
+      categoryId: eventForm.categoryId,
+      categoryName: selectedCategory?.name,
+      dateInput: eventForm.dateInput,
+      timeRange: eventForm.timeRange,
+      city: eventForm.city,
+      venueName: eventForm.venueName,
+      startingPrice: eventForm.startingPrice,
+      capacity: eventForm.capacity,
+      ticketsSold: editingEventId ? eventForm.ticketsSold : 0,
+      bannerUrl: eventForm.bannerUrl,
+      cardImageUrl: eventForm.cardImageUrl,
+      galleryUrls: eventForm.galleryUrls,
+      description: eventForm.description,
+      highlights: eventForm.highlightsText,
+      status: eventForm.status,
+      featured: eventForm.featured,
+    };
+
+    const clientValidation = validateAndBuildEventWritePayload(formInput, {
+      existingEvents: events.map((ev) => ({ id: ev.id, slug: ev.slug })),
+      categories,
+    });
+
+    if (!clientValidation.ok) {
+      setModalError(clientValidation.errorMessage);
+      setModalFieldErrors(clientValidation.fieldErrors);
+      return;
+    }
+
+    setIsSavingEvent(true);
+    try {
+      const result = editingEventId
+        ? await onUpdateEvent(editingEventId, formInput)
+        : await onCreateEvent(formInput);
+
+      if (!result.ok) {
+        setModalError(
+          result.errorMessage ?? 'Não foi possível salvar o evento no Supabase.'
+        );
+        if (result.fieldErrors) {
+          setModalFieldErrors(result.fieldErrors);
+        }
+        return;
+      }
+
+      setShowEventModal(false);
+      setEditingEventId(null);
+      setEventsFeedback({
+        type: 'success',
+        message: editingEventId
+          ? `Evento "${result.event?.title ?? eventForm.title}" atualizado com sucesso em public.events.`
+          : `Evento "${result.event?.title ?? eventForm.title}" criado com sucesso em public.events.`,
+      });
+    } catch (err) {
+      setModalError(
+        err instanceof Error
+          ? err.message
+          : 'Erro inesperado ao salvar o evento no Supabase.'
+      );
+    } finally {
+      setIsSavingEvent(false);
+    }
+  };
+
+  const handleTogglePublish = async (ev: EventItem) => {
+    setEventsFeedback(null);
+    setBusyEventId(ev.id);
+    const nextStatus: EventStatus = ev.status === 'Publicado' ? 'Rascunho' : 'Publicado';
+    try {
+      const result = await onToggleEventStatus(ev.id, nextStatus);
+      if (!result.ok) {
+        setEventsFeedback({
+          type: 'error',
+          message:
+            result.errorMessage ??
+            `Não foi possível alterar o status do evento "${ev.title}".`,
+        });
+        return;
+      }
+      setEventsFeedback({
+        type: 'success',
+        message:
+          nextStatus === 'Publicado'
+            ? `Evento "${ev.title}" publicado com sucesso (status = 'published').`
+            : `Evento "${ev.title}" movido para rascunho com sucesso (status = 'draft').`,
+      });
+    } finally {
+      setBusyEventId(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteEvent) return;
+    const target = confirmDeleteEvent;
+    setEventsFeedback(null);
+    setBusyEventId(target.id);
+    try {
+      const result = await onDeleteEvent(target.id);
+      if (!result.ok) {
+        setEventsFeedback({
+          type: 'error',
+          message:
+            result.errorMessage ??
+            `Não foi possível excluir o evento "${target.title}" do Supabase.`,
+        });
+        setConfirmDeleteEvent(null);
+        return;
+      }
+      setConfirmDeleteEvent(null);
+      setEventsFeedback({
+        type: 'success',
+        message: `Evento "${target.title}" excluído permanentemente de public.events.`,
+      });
+    } finally {
+      setBusyEventId(null);
+    }
   };
 
   const sidebarItems: { id: AdminModule; label: string; icon: React.ElementType }[] = [
@@ -322,6 +531,121 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   const allLots = events.flatMap((ev) =>
     ev.lots.map((lot) => ({ ...lot, eventTitle: ev.title, eventDate: ev.dateFormatted }))
   );
+
+  if (isAuthLoading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14 pb-20">
+        <div className="rounded-2xl bg-[#11131A] border border-[#232736] p-8 text-center space-y-4">
+          <RefreshCw className="w-8 h-8 text-[#E50914] animate-spin mx-auto" />
+          <h1 className="font-display text-2xl font-extrabold text-white uppercase">
+            Verificando Credenciais Administrativas
+          </h1>
+          <p className="text-xs sm:text-sm text-neutral-400">
+            Consultando sessão ativa no Supabase Auth e permissões em public.profiles...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!adminAccess.allowed) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-20">
+        <div className="rounded-2xl bg-[#11131A] border border-[#E50914]/40 p-6 sm:p-10 space-y-6">
+          <div className="flex items-center justify-between border-b border-[#1E2230] pb-4">
+            <BrandLogo size="md" />
+            <span className="px-3 py-1 rounded-full bg-[#E50914]/15 border border-[#E50914]/40 text-xs font-mono-tabular font-bold uppercase text-[#E50914] flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5" />
+              <span>PX CONTROL — Acesso Restrito</span>
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-6 h-6 text-[#E50914] shrink-0 mt-0.5" />
+              <div className="space-y-1.5">
+                <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-white uppercase">
+                  Autorização Administrativa Necessária
+                </h1>
+                <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
+                  {adminAccess.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-[#0D0F15] border border-[#232736] p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <span className="block text-neutral-500">Status da Sessão</span>
+                <span className="font-semibold text-white">
+                  {adminAccess.reasonCode === 'unauthenticated'
+                    ? 'Visitante desconectado'
+                    : authenticatedEmail || currentUserProfile?.email || 'Autenticado'}
+                </span>
+              </div>
+              <div>
+                <span className="block text-neutral-500">Papel Verificado (public.profiles)</span>
+                <span className="font-mono-tabular font-bold text-[#E50914]">
+                  {adminAccess.userRole ?? 'Nenhum'}
+                </span>
+              </div>
+              <div>
+                <span className="block text-neutral-500">Papel Exigido</span>
+                <span className="font-mono-tabular font-semibold text-neutral-200">
+                  admin ou SUPER_ADMIN
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            {adminAccess.reasonCode === 'unauthenticated' ? (
+              <button
+                type="button"
+                onClick={onGoToLogin}
+                className="px-5 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer shadow-[0_0_20px_rgba(229,9,20,0.3)]"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Fazer Login Administrativo</span>
+              </button>
+            ) : (
+              <>
+                {onRefreshProfile && (
+                  <button
+                    type="button"
+                    onClick={onRefreshProfile}
+                    className="px-4 py-2.5 rounded-lg bg-[#181B24] hover:bg-[#222634] border border-[#2A2E3D] text-white text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-[#E50914]" />
+                    <span>Verificar Permissão Novamente</span>
+                  </button>
+                )}
+                {onSignOut && (
+                  <button
+                    type="button"
+                    onClick={onSignOut}
+                    className="px-4 py-2.5 rounded-lg bg-[#181B24] hover:bg-[#E50914]/20 border border-[#2A2E3D] hover:border-[#E50914]/50 text-neutral-200 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-[#E50914]" />
+                    <span>Trocar de Conta</span>
+                  </button>
+                )}
+              </>
+            )}
+
+            {onGoToHome && (
+              <button
+                type="button"
+                onClick={onGoToHome}
+                className="px-4 py-2.5 rounded-lg bg-[#151822] hover:bg-[#1E2230] border border-[#262B3C] text-neutral-300 hover:text-white text-xs font-semibold cursor-pointer"
+              >
+                Voltar ao Início
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
@@ -363,8 +687,15 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
           </div>
 
           <div className="hidden lg:block pt-6 border-t border-[#1D202C] px-2 text-[11px] text-neutral-400 space-y-1">
-            <p className="font-semibold text-white">Administrador</p>
-            <p className="font-mono-tabular text-[10px] text-neutral-500">Role: SUPER_ADMIN</p>
+            <p className="font-semibold text-white truncate">
+              {currentUserProfile?.fullName || 'Administrador'}
+            </p>
+            <p className="text-[10px] text-neutral-400 truncate">
+              {currentUserProfile?.email || authenticatedEmail}
+            </p>
+            <p className="font-mono-tabular text-[10px] text-emerald-400 font-bold">
+              Role: {currentUserProfile?.role}
+            </p>
           </div>
         </aside>
 
@@ -394,7 +725,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                 type="button"
                 onClick={() => {
                   setActiveModule('events');
-                  setShowNewEventModal(true);
+                  handleOpenCreateEventModal();
                 }}
                 className="px-4 py-2 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-[0_0_16px_rgba(229,9,20,0.35)]"
               >
@@ -602,12 +933,109 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
           {/* MODULE 2: GESTÃO DE EVENTOS (Matches Bottom-Left Reference Panel) */}
           {activeModule === 'events' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-lg font-bold text-white">Gestão de Eventos</h2>
-                <span className="text-xs text-neutral-400 font-mono-tabular">
-                  {events.length} eventos cadastrados
-                </span>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Gestão de Eventos</h2>
+                  <p className="text-xs text-neutral-400">
+                    Persistência direta em <span className="font-mono-tabular">public.events</span> (rascunhos e publicados).
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xs text-neutral-400 font-mono-tabular">
+                    {events.length} eventos no banco
+                  </span>
+                  {onRefreshAdminEvents && (
+                    <button
+                      type="button"
+                      onClick={() => onRefreshAdminEvents()}
+                      disabled={isLoadingAdminEvents}
+                      className="px-3 py-1.5 rounded-lg bg-[#171A24] hover:bg-[#222634] border border-[#2C3144] text-xs font-semibold text-neutral-200 hover:text-white inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                    >
+                      <RefreshCw
+                        className={`w-3.5 h-3.5 ${
+                          isLoadingAdminEvents ? 'animate-spin text-[#E50914]' : ''
+                        }`}
+                      />
+                      <span>Atualizar</span>
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {eventsFeedback && (
+                <div
+                  className={`rounded-xl p-3.5 border flex items-start justify-between gap-3 text-xs ${
+                    eventsFeedback.type === 'success'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-[#E50914]/10 border-[#E50914]/40 text-neutral-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    {eventsFeedback.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-[#E50914] shrink-0 mt-0.5" />
+                    )}
+                    <span>{eventsFeedback.message}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEventsFeedback(null)}
+                    aria-label="Fechar aviso"
+                    className="text-neutral-400 hover:text-white shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {adminEventsError && (
+                <div className="rounded-xl bg-[#18151B] border border-[#E50914]/40 p-4 flex items-center justify-between gap-3 text-xs text-neutral-200">
+                  <span>{adminEventsError}</span>
+                  {onRefreshAdminEvents && (
+                    <button
+                      type="button"
+                      onClick={() => onRefreshAdminEvents()}
+                      className="px-3 py-1.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white font-bold shrink-0 cursor-pointer"
+                    >
+                      Tentar novamente
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {confirmDeleteEvent && (
+                <div className="rounded-xl bg-[#191318] border border-[#E50914]/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-white">
+                      Confirmar exclusão permanente de &ldquo;{confirmDeleteEvent.title}&rdquo;?
+                    </p>
+                    <p className="text-neutral-400">
+                      Esta operação remove o registro de <span className="font-mono-tabular">public.events</span> caso não existam pedidos ou ingressos vinculados.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handleConfirmDelete}
+                      disabled={busyEventId === confirmDeleteEvent.id}
+                      className="px-3.5 py-2 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-50 text-white font-bold cursor-pointer"
+                    >
+                      {busyEventId === confirmDeleteEvent.id
+                        ? 'Excluindo...'
+                        : 'Confirmar Exclusão'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDeleteEvent(null)}
+                      disabled={busyEventId === confirmDeleteEvent.id}
+                      className="px-3 py-2 rounded-lg bg-[#1B1F2C] hover:bg-[#252A3C] text-neutral-300 hover:text-white font-semibold cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="overflow-x-auto rounded-xl border border-[#242838] bg-[#12151E]">
                 <table className="w-full text-left border-collapse">
@@ -622,69 +1050,108 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#1D2130] text-xs">
-                    {events.map((ev) => (
-                      <tr key={ev.id} className="hover:bg-[#171B26] transition-colors">
-                        <td className="py-3 px-4">
-                          <div className="w-16 h-10 rounded-md overflow-hidden border border-[#2D3246]">
-                            <ResilientImage
-                              src={ev.cardImageUrl}
-                              alt={ev.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="font-bold text-white">{ev.title}</p>
-                          <p className="text-[11px] text-neutral-400">{ev.categoryName}</p>
-                        </td>
-                        <td className="py-3 px-4 font-mono-tabular text-neutral-300">
-                          {ev.dateFormatted}
-                        </td>
-                        <td className="py-3 px-4 text-neutral-300">{ev.city}</td>
-                        <td className="py-3 px-4">
-                          <button
-                            type="button"
-                            onClick={() => onToggleEventStatus(ev.id)}
-                            title="Clique para alternar status Publicado / Rascunho"
-                            className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer ${
-                              ev.status === 'Publicado'
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-[#E50914]/20 text-red-300 border border-[#E50914]/30'
-                            }`}
-                          >
-                            {ev.status}
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => onSelectEventPublic(ev)}
-                              aria-label={`Visualizar página de ${ev.title}`}
-                              className="p-1.5 rounded bg-[#1B1F2C] hover:bg-[#252A3C] text-neutral-300 hover:text-white"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onToggleEventStatus(ev.id)}
-                              aria-label={`Alternar publicação de ${ev.title}`}
-                              className="p-1.5 rounded bg-[#1B1F2C] hover:bg-[#252A3C] text-neutral-300 hover:text-white"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onDeleteEvent(ev.id)}
-                              aria-label={`Remover evento ${ev.title}`}
-                              className="p-1.5 rounded bg-[#1B1F2C] hover:bg-[#E50914] text-neutral-300 hover:text-white transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                    {isLoadingAdminEvents && events.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 px-4 text-center text-neutral-400">
+                          Carregando eventos administrativos de public.events...
                         </td>
                       </tr>
-                    ))}
+                    ) : events.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-8 px-4 text-center text-neutral-400">
+                          Nenhum evento cadastrado em public.events. Clique em &ldquo;Novo Evento&rdquo; para criar o primeiro registro.
+                        </td>
+                      </tr>
+                    ) : (
+                      events.map((ev) => {
+                        const isBusy = busyEventId === ev.id;
+                        return (
+                          <tr key={ev.id} className="hover:bg-[#171B26] transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="w-16 h-10 rounded-md overflow-hidden border border-[#2D3246]">
+                                <ResilientImage
+                                  src={ev.cardImageUrl}
+                                  alt={ev.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <p className="font-bold text-white">{ev.title}</p>
+                              <p className="text-[11px] text-neutral-400">
+                                {ev.categoryName} ·{' '}
+                                <span className="font-mono-tabular text-neutral-500">
+                                  /{ev.slug}
+                                </span>
+                              </p>
+                            </td>
+                            <td className="py-3 px-4 font-mono-tabular text-neutral-300">
+                              {ev.dateFormatted}
+                            </td>
+                            <td className="py-3 px-4 text-neutral-300">
+                              <span className="block">{ev.city}</span>
+                              <span className="block text-[11px] text-neutral-500 truncate max-w-[180px]">
+                                {ev.venueName}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <button
+                                type="button"
+                                disabled={isBusy}
+                                onClick={() => handleTogglePublish(ev)}
+                                title={
+                                  ev.status === 'Publicado'
+                                    ? 'Clique para despublicar (mover para Rascunho)'
+                                    : 'Clique para publicar este evento no catálogo'
+                                }
+                                className={`px-2.5 py-1 rounded text-[11px] font-bold disabled:opacity-50 cursor-pointer ${
+                                  ev.status === 'Publicado'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                    : ev.status === 'Rascunho'
+                                    ? 'bg-[#E50914]/20 text-red-300 border border-[#E50914]/30'
+                                    : 'bg-neutral-500/20 text-neutral-300 border border-neutral-500/30'
+                                }`}
+                              >
+                                {isBusy ? 'Salvando...' : ev.status}
+                              </button>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="inline-flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => onSelectEventPublic(ev)}
+                                  aria-label={`Visualizar página de ${ev.title}`}
+                                  title="Visualizar página do evento"
+                                  className="p-1.5 rounded bg-[#1B1F2C] hover:bg-[#252A3C] text-neutral-300 hover:text-white cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => handleOpenEditEventModal(ev)}
+                                  aria-label={`Editar evento ${ev.title}`}
+                                  title="Editar dados do evento"
+                                  className="p-1.5 rounded bg-[#1B1F2C] hover:bg-[#252A3C] text-neutral-300 hover:text-white disabled:opacity-50 cursor-pointer"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => setConfirmDeleteEvent(ev)}
+                                  aria-label={`Remover evento ${ev.title}`}
+                                  title="Excluir evento do banco"
+                                  className="p-1.5 rounded bg-[#1B1F2C] hover:bg-[#E50914] text-neutral-300 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1191,96 +1658,369 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
         </div>
       </div>
 
-      {/* Modal: + Novo Evento */}
-      {showNewEventModal && (
+      {/* Modal: Cadastrar / Editar Evento em public.events */}
+      {showEventModal && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
-          aria-label="Cadastrar Novo Evento"
+          aria-label={editingEventId ? 'Editar Evento' : 'Cadastrar Novo Evento'}
         >
-          <div className="w-full max-w-md rounded-2xl bg-[#11131A] border border-[#2C3144] p-6 space-y-5">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#11131A] border border-[#2C3144] p-5 sm:p-6 space-y-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[#1E2230] pb-3">
-              <h3 className="font-display text-xl font-bold text-white">Cadastrar Novo Evento</h3>
+              <div>
+                <h3 className="font-display text-xl font-bold text-white">
+                  {editingEventId ? 'Editar Evento no PX CONTROL' : 'Cadastrar Novo Evento'}
+                </h3>
+                <p className="text-[11px] text-neutral-400">
+                  Os dados serão validados e gravados diretamente na tabela{' '}
+                  <span className="font-mono-tabular text-neutral-300">public.events</span> do Supabase.
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowNewEventModal(false)}
+                onClick={() => !isSavingEvent && setShowEventModal(false)}
                 aria-label="Fechar modal"
-                className="text-neutral-400 hover:text-white"
+                className="text-neutral-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateEvent} className="space-y-3.5 text-xs">
-              <div>
-                <label htmlFor="ev-title" className="block text-neutral-300 mb-1">
-                  Nome do Evento
-                </label>
-                <input
-                  id="ev-title"
-                  type="text"
-                  value={newEventForm.title}
-                  onChange={(e) => setNewEventForm({ ...newEventForm, title: e.target.value })}
-                  placeholder="Ex: Encontro Noturno PX CUSTON"
-                  required
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
-                />
+            {modalError && (
+              <div className="rounded-xl bg-[#E50914]/15 border border-[#E50914]/40 p-3 text-xs text-neutral-100 flex items-start gap-2.5">
+                <XCircle className="w-4 h-4 text-[#E50914] shrink-0 mt-0.5" />
+                <span>{modalError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveEvent} noValidate className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="ev-title" className="block text-neutral-300 mb-1">
+                    Nome do Evento *
+                  </label>
+                  <input
+                    id="ev-title"
+                    type="text"
+                    value={eventForm.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    placeholder="Ex: Encontro Noturno PX CUSTON"
+                    required
+                    className={`w-full px-3.5 py-2 rounded-lg bg-[#161924] border text-sm text-white focus:outline-none ${
+                      modalFieldErrors.title
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ev-subtitle" className="block text-neutral-300 mb-1">
+                    Subtítulo / Edição (opcional)
+                  </label>
+                  <input
+                    id="ev-subtitle"
+                    type="text"
+                    value={eventForm.subtitle}
+                    onChange={(e) => setEventForm({ ...eventForm, subtitle: e.target.value })}
+                    placeholder="Ex: Edição Oficial Interlagos"
+                    className="w-full px-3.5 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="ev-slug" className="block text-neutral-300 mb-1">
+                    Slug Único (URL) *
+                  </label>
+                  <input
+                    id="ev-slug"
+                    type="text"
+                    value={eventForm.slug}
+                    onChange={(e) => {
+                      setSlugManuallyEdited(true);
+                      setEventForm({ ...eventForm, slug: e.target.value });
+                    }}
+                    placeholder="encontro-noturno-px-custon"
+                    required
+                    className={`w-full px-3.5 py-2 rounded-lg bg-[#161924] border text-sm text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.slug
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ev-category" className="block text-neutral-300 mb-1">
+                    Categoria Automotiva *
+                  </label>
+                  <select
+                    id="ev-category"
+                    value={eventForm.categoryId}
+                    onChange={(e) => setEventForm({ ...eventForm, categoryId: e.target.value })}
+                    className="w-full px-3.5 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label htmlFor="ev-date" className="block text-neutral-300 mb-1">
-                    Data (DD/MM/AAAA)
+                    Data (DD/MM/AAAA) *
                   </label>
                   <input
                     id="ev-date"
                     type="text"
-                    value={newEventForm.dateFormatted}
-                    onChange={(e) =>
-                      setNewEventForm({ ...newEventForm, dateFormatted: e.target.value })
-                    }
+                    value={eventForm.dateInput}
+                    onChange={(e) => setEventForm({ ...eventForm, dateInput: e.target.value })}
+                    placeholder="25/04/2026"
                     required
-                    className="w-full px-3 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white font-mono-tabular"
+                    className={`w-full px-3 py-2 rounded-lg bg-[#161924] border text-sm text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.dateInput
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="ev-time" className="block text-neutral-300 mb-1">
+                    Horário *
+                  </label>
+                  <input
+                    id="ev-time"
+                    type="text"
+                    value={eventForm.timeRange}
+                    onChange={(e) => setEventForm({ ...eventForm, timeRange: e.target.value })}
+                    placeholder="10:00 às 22:00"
+                    required
+                    className={`w-full px-3 py-2 rounded-lg bg-[#161924] border text-sm text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.timeRange
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ev-status" className="block text-neutral-300 mb-1">
+                    Status no Banco *
+                  </label>
+                  <select
+                    id="ev-status"
+                    value={eventForm.status}
+                    onChange={(e) =>
+                      setEventForm({ ...eventForm, status: e.target.value as EventStatus })
+                    }
+                    className="w-full px-3 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white focus:outline-none focus:border-[#E50914]"
+                  >
+                    <option value="Rascunho">Rascunho (draft)</option>
+                    <option value="Publicado">Publicado (published)</option>
+                    <option value="Encerrado">Encerrado (ended)</option>
+                    <option value="Cancelado">Cancelado (cancelled)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="ev-city" className="block text-neutral-300 mb-1">
+                    Cidade / UF *
+                  </label>
+                  <input
+                    id="ev-city"
+                    type="text"
+                    value={eventForm.city}
+                    onChange={(e) => setEventForm({ ...eventForm, city: e.target.value })}
+                    placeholder="Ex: São Paulo - SP"
+                    required
+                    className={`w-full px-3.5 py-2 rounded-lg bg-[#161924] border text-sm text-white focus:outline-none ${
+                      modalFieldErrors.city
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ev-venue" className="block text-neutral-300 mb-1">
+                    Local / Arena *
+                  </label>
+                  <input
+                    id="ev-venue"
+                    type="text"
+                    value={eventForm.venueName}
+                    onChange={(e) => setEventForm({ ...eventForm, venueName: e.target.value })}
+                    placeholder="Ex: Autódromo de Interlagos"
+                    required
+                    className={`w-full px-3.5 py-2 rounded-lg bg-[#161924] border text-sm text-white focus:outline-none ${
+                      modalFieldErrors.venueName
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                 <div>
                   <label htmlFor="ev-price" className="block text-neutral-300 mb-1">
-                    1º Lote (R$)
+                    Preço Inicial (R$) *
                   </label>
                   <input
                     id="ev-price"
                     type="number"
-                    value={newEventForm.startingPrice}
+                    min="0"
+                    step="0.01"
+                    value={eventForm.startingPrice}
                     onChange={(e) =>
-                      setNewEventForm({ ...newEventForm, startingPrice: e.target.value })
+                      setEventForm({ ...eventForm, startingPrice: e.target.value })
                     }
+                    placeholder="40.00"
                     required
-                    className="w-full px-3 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white font-mono-tabular"
+                    className={`w-full px-3 py-2 rounded-lg bg-[#161924] border text-sm text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.startingPrice
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ev-capacity" className="block text-neutral-300 mb-1">
+                    Capacidade Total *
+                  </label>
+                  <input
+                    id="ev-capacity"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={eventForm.capacity}
+                    onChange={(e) => setEventForm({ ...eventForm, capacity: e.target.value })}
+                    placeholder="1500"
+                    required
+                    className={`w-full px-3 py-2 rounded-lg bg-[#161924] border text-sm text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.capacity
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <label className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#161924] border border-[#2B3042] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eventForm.featured}
+                    onChange={(e) => setEventForm({ ...eventForm, featured: e.target.checked })}
+                    className="accent-[#E50914]"
+                  />
+                  <span className="text-neutral-200 font-semibold">Evento em Destaque</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="ev-banner" className="block text-neutral-300 mb-1">
+                    Imagem do Banner (URL ou caminho) *
+                  </label>
+                  <input
+                    id="ev-banner"
+                    type="text"
+                    value={eventForm.bannerUrl}
+                    onChange={(e) => setEventForm({ ...eventForm, bannerUrl: e.target.value })}
+                    placeholder="/assets/events/hero-banner-full.jpg"
+                    required
+                    className={`w-full px-3 py-2 rounded-lg bg-[#161924] border text-xs text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.bannerUrl
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="ev-card-img" className="block text-neutral-300 mb-1">
+                    Imagem do Card (URL ou caminho) *
+                  </label>
+                  <input
+                    id="ev-card-img"
+                    type="text"
+                    value={eventForm.cardImageUrl}
+                    onChange={(e) => setEventForm({ ...eventForm, cardImageUrl: e.target.value })}
+                    placeholder="/assets/events/ev-rebaixados.jpg"
+                    required
+                    className={`w-full px-3 py-2 rounded-lg bg-[#161924] border text-xs text-white font-mono-tabular focus:outline-none ${
+                      modalFieldErrors.cardImageUrl
+                        ? 'border-[#E50914]'
+                        : 'border-[#2B3042] focus:border-[#E50914]'
+                    }`}
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="ev-city" className="block text-neutral-300 mb-1">
-                  Cidade / UF
+                <label htmlFor="ev-description" className="block text-neutral-300 mb-1">
+                  Descrição Oficial do Evento *
                 </label>
-                <input
-                  id="ev-city"
-                  type="text"
-                  value={newEventForm.city}
-                  onChange={(e) => setNewEventForm({ ...newEventForm, city: e.target.value })}
+                <textarea
+                  id="ev-description"
+                  rows={3}
+                  value={eventForm.description}
+                  onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                  placeholder="Descreva a programação, regras de exposição de veículos, atrações e estrutura do evento..."
                   required
-                  className="w-full px-3.5 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-sm text-white"
+                  className={`w-full px-3.5 py-2 rounded-lg bg-[#161924] border text-sm text-white focus:outline-none ${
+                    modalFieldErrors.description
+                      ? 'border-[#E50914]'
+                      : 'border-[#2B3042] focus:border-[#E50914]'
+                  }`}
                 />
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-3 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
-              >
-                Salvar Evento no PX CONTROL
-              </button>
+              <div>
+                <label htmlFor="ev-highlights" className="block text-neutral-300 mb-1">
+                  Destaques / Estrutura (um por linha ou separados por vírgula)
+                </label>
+                <textarea
+                  id="ev-highlights"
+                  rows={2}
+                  value={eventForm.highlightsText}
+                  onChange={(e) => setEventForm({ ...eventForm, highlightsText: e.target.value })}
+                  placeholder="Ex: Expositores oficiais, Praça de alimentação, Estacionamento monitorado"
+                  className="w-full px-3.5 py-2 rounded-lg bg-[#161924] border border-[#2B3042] text-xs text-white focus:outline-none focus:border-[#E50914]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#1E2230]">
+                <button
+                  type="button"
+                  disabled={isSavingEvent}
+                  onClick={() => setShowEventModal(false)}
+                  className="px-4 py-2.5 rounded-lg bg-[#181B24] hover:bg-[#222634] border border-[#2A2E3D] text-neutral-300 hover:text-white font-semibold cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEvent}
+                  className="px-5 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-60 text-white font-bold text-xs uppercase tracking-wider cursor-pointer"
+                >
+                  {isSavingEvent
+                    ? 'Salvando no Supabase...'
+                    : editingEventId
+                    ? 'Salvar Alterações no Supabase'
+                    : 'Criar Evento no Supabase'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -1288,3 +2028,4 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     </div>
   );
 };
+

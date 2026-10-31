@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MapPin,
   Clock,
@@ -40,6 +40,15 @@ export const EventDetailView: React.FC<EventDetailViewProps> = ({
     return initial;
   });
 
+  useEffect(() => {
+    setActivePhoto(event.bannerUrl);
+    const nextQuantities: Record<string, number> = {};
+    event.lots.forEach((l, idx) => {
+      nextQuantities[l.id] = idx === 0 ? 2 : 1;
+    });
+    setLotQuantities(nextQuantities);
+  }, [event.id, event.bannerUrl, event.lots]);
+
   const handleShare = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href).catch(() => {});
@@ -54,6 +63,9 @@ export const EventDetailView: React.FC<EventDetailViewProps> = ({
     <Utensils key="f" className="w-4 h-4 text-[#E50914] shrink-0" />,
     <Car key="c" className="w-4 h-4 text-[#E50914] shrink-0" />,
   ];
+
+  const isEventPublished = event.status === 'Publicado';
+  const canPurchaseLots = isEventPublished && event.lots.length > 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8 pb-20">
@@ -153,16 +165,24 @@ export const EventDetailView: React.FC<EventDetailViewProps> = ({
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <button
               type="button"
+              disabled={!canPurchaseLots}
               onClick={() => {
+                if (!canPurchaseLots) return;
                 const firstLot = event.lots[0];
                 if (firstLot) {
                   onBuyLot(event, firstLot, lotQuantities[firstLot.id] || 1);
                 }
               }}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-[0_0_24px_rgba(229,9,20,0.4)] whitespace-nowrap cursor-pointer"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-[0_0_24px_rgba(229,9,20,0.4)] whitespace-nowrap cursor-pointer"
             >
               <TicketIcon className="w-4 h-4" />
-              <span>COMPRAR INGRESSOS</span>
+              <span>
+                {!isEventPublished
+                  ? `EVENTO EM ${event.status.toUpperCase()}`
+                  : event.lots.length > 0
+                  ? 'COMPRAR INGRESSOS'
+                  : 'LOTES EM BREVE'}
+              </span>
               <ChevronRight className="w-4 h-4" />
             </button>
 
@@ -229,88 +249,98 @@ export const EventDetailView: React.FC<EventDetailViewProps> = ({
           </span>
         </div>
 
-        <div className="space-y-3">
-          {event.lots.map((lot) => {
-            const qty = lotQuantities[lot.id] || 1;
-            return (
-              <div
-                key={lot.id}
-                className="rounded-xl bg-[#11131A] border border-[#232736] hover:border-[#32374B] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors"
-              >
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-16 h-12 rounded-lg overflow-hidden border border-[#2A2E3D] shrink-0 bg-[#0B0C10]">
-                    <ResilientImage
-                      src={lot.thumbnailUrl}
-                      alt={lot.name}
-                      className="w-full h-full object-cover"
-                    />
+        {event.lots.length === 0 ? (
+          <div className="rounded-xl bg-[#11131A] border border-[#232736] p-6 text-xs sm:text-sm text-neutral-300">
+            Nenhum lote de ingressos ativo disponível para este evento no momento.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {event.lots.map((lot) => {
+              const qty = lotQuantities[lot.id] || 1;
+              return (
+                <div
+                  key={lot.id}
+                  className="rounded-xl bg-[#11131A] border border-[#232736] hover:border-[#32374B] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-16 h-12 rounded-lg overflow-hidden border border-[#2A2E3D] shrink-0 bg-[#0B0C10]">
+                      <ResilientImage
+                        src={lot.thumbnailUrl}
+                        alt={lot.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <h3 className="text-sm sm:text-base font-bold text-white truncate">
+                        {lot.name}
+                      </h3>
+                      <p className="text-xs text-neutral-400">{lot.description}</p>
+                      <p className="text-[11px] text-neutral-500 font-mono-tabular">
+                        Categoria: {lot.categoryLabel} · {lot.batchNumber}º Lote ({lot.availableQuantity}{' '}
+                        disponíveis)
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 space-y-0.5">
-                    <h3 className="text-sm sm:text-base font-bold text-white truncate">
-                      {lot.name}
-                    </h3>
-                    <p className="text-xs text-neutral-400">{lot.description}</p>
-                    <p className="text-[11px] text-neutral-500 font-mono-tabular">
-                      Categoria: {lot.categoryLabel} · {lot.batchNumber}º Lote ({lot.availableQuantity}{' '}
-                      disponíveis)
-                    </p>
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#1E212D]">
-                  {/* Quantity Selector */}
-                  <div className="flex items-center gap-2 bg-[#171A24] border border-[#282C3C] rounded-lg px-2 py-1">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#1E212D]">
+                    {/* Quantity Selector */}
+                    <div className="flex items-center gap-2 bg-[#171A24] border border-[#282C3C] rounded-lg px-2 py-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setLotQuantities((prev) => ({
+                            ...prev,
+                            [lot.id]: Math.max(1, (prev[lot.id] || 1) - 1),
+                          }))
+                        }
+                        aria-label={`Diminuir quantidade de ${lot.name}`}
+                        className="w-6 h-6 rounded text-neutral-300 hover:text-white hover:bg-[#222636] flex items-center justify-center font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="w-5 text-center text-xs font-bold font-mono-tabular text-white">
+                        {qty}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setLotQuantities((prev) => ({
+                            ...prev,
+                            [lot.id]: Math.min(lot.maxPerOrder ?? 10, (prev[lot.id] || 1) + 1),
+                          }))
+                        }
+                        aria-label={`Aumentar quantidade de ${lot.name}`}
+                        className="w-6 h-6 rounded text-neutral-300 hover:text-white hover:bg-[#222636] flex items-center justify-center font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Lot Price */}
+                    <div className="text-right min-w-[88px]">
+                      <span className="text-base sm:text-lg font-extrabold text-white font-mono-tabular">
+                        {formatBRL(lot.price)}
+                      </span>
+                    </div>
+
+                    {/* Comprar Button */}
                     <button
                       type="button"
-                      onClick={() =>
-                        setLotQuantities((prev) => ({
-                          ...prev,
-                          [lot.id]: Math.max(1, (prev[lot.id] || 1) - 1),
-                        }))
-                      }
-                      aria-label={`Diminuir quantidade de ${lot.name}`}
-                      className="w-6 h-6 rounded text-neutral-300 hover:text-white hover:bg-[#222636] flex items-center justify-center font-bold"
+                      disabled={!isEventPublished}
+                      onClick={() => {
+                        if (!isEventPublished) return;
+                        onBuyLot(event, lot, qty);
+                      }}
+                      className="px-5 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-[0_0_16px_rgba(229,9,20,0.3)]"
                     >
-                      -
-                    </button>
-                    <span className="w-5 text-center text-xs font-bold font-mono-tabular text-white">
-                      {qty}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setLotQuantities((prev) => ({
-                          ...prev,
-                          [lot.id]: Math.min(10, (prev[lot.id] || 1) + 1),
-                        }))
-                      }
-                      aria-label={`Aumentar quantidade de ${lot.name}`}
-                      className="w-6 h-6 rounded text-neutral-300 hover:text-white hover:bg-[#222636] flex items-center justify-center font-bold"
-                    >
-                      +
+                      {isEventPublished ? 'Comprar' : event.status}
                     </button>
                   </div>
-
-                  {/* Lot Price */}
-                  <div className="text-right min-w-[88px]">
-                    <span className="text-base sm:text-lg font-extrabold text-white font-mono-tabular">
-                      {formatBRL(lot.price)}
-                    </span>
-                  </div>
-
-                  {/* Comprar Button */}
-                  <button
-                    type="button"
-                    onClick={() => onBuyLot(event, lot, qty)}
-                    className="px-5 py-2.5 rounded-lg bg-[#E50914] hover:bg-[#c80710] text-white text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer shadow-[0_0_16px_rgba(229,9,20,0.3)]"
-                  >
-                    Comprar
-                  </button>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Lightbox Modal for Gallery */}

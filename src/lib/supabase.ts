@@ -217,15 +217,42 @@ export async function verifySupabaseConnection(): Promise<SupabaseConnectionStat
       };
     }
 
+    // 3. Verify PostgREST access to public.events (RLS published events query)
+    const { count, error: dbError } = await supabase
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published');
+
+    const totalLatencyMs = Math.round(performance.now() - startTime);
+
+    if (dbError) {
+      const isSchemaPending =
+        dbError.code === '42P01' ||
+        dbError.code === 'PGRST205' ||
+        dbError.message.toLowerCase().includes('relation') ||
+        dbError.message.toLowerCase().includes('does not exist');
+
+      return {
+        configured: true,
+        reachable: true,
+        authStatus: 'ok',
+        databaseStatus: isSchemaPending ? 'schema_pending' : 'error',
+        latencyMs: totalLatencyMs,
+        checkedAt,
+        summary: isSchemaPending
+          ? 'Conexão autenticada, porém a tabela public.events ainda não foi localizada no banco.'
+          : `Conexão autenticada, mas houve erro ao consultar public.events: ${dbError.message}`,
+      };
+    }
+
     return {
       configured: true,
       reachable: true,
       authStatus: 'ok',
       databaseStatus: 'ready',
-      latencyMs,
+      latencyMs: totalLatencyMs,
       checkedAt,
-      summary:
-        'Conexão com o Supabase autenticada! Migração SQL (001_initial_schema.sql) pronta para aplicação no SQL Editor.',
+      summary: `Conexão com o Supabase operacional! Tabela public.events acessível (${count ?? 0} evento(s) publicado(s) no catálogo).`,
     };
   } catch {
     const latencyMs = Math.round(performance.now() - startTime);

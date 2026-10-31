@@ -26,7 +26,9 @@ export type PaymentMethodType = 'pix' | 'credit_card';
 
 export type UserRole = 'visitor' | 'customer' | 'checkin_operator' | 'admin' | 'SUPER_ADMIN';
 
-export type EventStatus = 'Publicado' | 'Rascunho' | 'Encerrado';
+export type AuthStatus = 'loading' | 'unauthenticated' | 'authenticated';
+
+export type EventStatus = 'Publicado' | 'Rascunho' | 'Encerrado' | 'Cancelado';
 
 export interface Profile {
   id: string;
@@ -37,6 +39,19 @@ export interface Profile {
   city: string;
   role: UserRole;
   createdAt: string;
+}
+
+export interface AdminAccessEvaluation {
+  allowed: boolean;
+  reasonCode:
+    | 'authorized_admin'
+    | 'unauthenticated'
+    | 'profile_missing'
+    | 'profile_error'
+    | 'profile_id_mismatch'
+    | 'insufficient_role';
+  userRole: UserRole;
+  message: string;
 }
 
 export interface EventCategory {
@@ -76,6 +91,7 @@ export interface EventItem {
   categoryId: string;
   categoryName: string;
   dateFormatted: string;
+  eventDateIso?: string;
   dayNumber: string;
   monthShort: string;
   year: string;
@@ -89,10 +105,55 @@ export interface EventItem {
   description: string;
   highlights: string[];
   status: EventStatus;
+  dbStatus?: 'draft' | 'published' | 'ended' | 'cancelled';
   featured: boolean;
   ticketsSold: number;
   capacity: number;
   lots: TicketLot[];
+}
+
+export interface AdminEventFormInput {
+  id?: string;
+  title: string;
+  subtitle?: string;
+  slug?: string;
+  categoryId: string;
+  categoryName?: string;
+  dateInput: string;
+  timeRange: string;
+  city: string;
+  venueName: string;
+  startingPrice: number | string;
+  capacity: number | string;
+  ticketsSold?: number;
+  bannerUrl: string;
+  cardImageUrl: string;
+  galleryUrls?: string[];
+  description: string;
+  highlights?: string[] | string;
+  status: EventStatus | 'draft' | 'published' | 'ended' | 'cancelled';
+  featured?: boolean;
+}
+
+export interface DbEventWritePayload {
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  category_slug: string;
+  category_name: string;
+  event_date: string;
+  time_range: string;
+  city: string;
+  venue_name: string;
+  starting_price: number;
+  banner_url: string;
+  card_image_url: string;
+  gallery_urls: string[];
+  description: string;
+  highlights: string[];
+  status: 'draft' | 'published' | 'ended' | 'cancelled';
+  featured: boolean;
+  capacity: number;
 }
 
 export interface Ticket {
@@ -300,6 +361,21 @@ export interface DbTicketRow {
   updated_at: string;
 }
 
+export interface DbAuditLogRow {
+  id: string;
+  actor_id: string | null;
+  actor_role: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  event_id: string | null;
+  order_id: string | null;
+  mp_payment_id: string | null;
+  idempotency_key: string | null;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
 /**
  * RPC Contracts (matching supabase/migrations/002_rpc_contracts_permissions_idempotency.sql)
  */
@@ -342,6 +418,153 @@ export interface ConfirmOrderPaymentRpcPayload {
   idempotent_replay: boolean;
 }
 
+export interface CancelTicketOrderRpcArgs {
+  p_order_id: string;
+  p_reason?: string | null;
+}
+
+export interface CancelTicketOrderRpcPayload {
+  order_id: string;
+  order_code: string;
+  order_status: 'cancelled';
+  payment_status: 'cancelled' | 'rejected';
+  released_quantity: number;
+  idempotent_replay: boolean;
+}
+
+export interface RefundTicketOrderRpcArgs {
+  p_order_id: string;
+  p_mp_payment_id: string;
+  p_reason?: string | null;
+}
+
+export interface RefundTicketOrderRpcPayload {
+  order_id: string;
+  order_code: string;
+  mp_payment_id: string;
+  order_status: 'refunded';
+  payment_status: 'refunded';
+  tickets_refunded: number;
+  idempotent_replay: boolean;
+}
+
+export interface RecordLatePaymentIncidentRpcArgs {
+  p_order_id: string;
+  p_mp_payment_id: string;
+  p_mp_payment_status: PaymentStatus;
+  p_verified_amount: number;
+  p_currency: 'BRL';
+  p_external_reference: string;
+  p_reason?: string | null;
+}
+
+export interface RecordLatePaymentIncidentRpcPayload {
+  incident_recorded: boolean;
+  audit_log_id: string;
+  order_id: string;
+  order_code: string;
+  order_status: 'expired' | 'cancelled';
+  mp_payment_id: string;
+  verified_amount: number;
+  tickets_issued: 0;
+  requires_refund: true;
+  idempotent_replay: boolean;
+}
+
+export interface AdminCreateEventRpcArgs {
+  p_slug: string;
+  p_title: string;
+  p_subtitle: string | null;
+  p_category_slug: string;
+  p_category_name: string;
+  p_event_date: string;
+  p_time_range: string;
+  p_city: string;
+  p_venue_name: string;
+  p_starting_price: number;
+  p_banner_url: string;
+  p_card_image_url: string;
+  p_gallery_urls: string[];
+  p_description: string;
+  p_highlights: string[];
+  p_status: DbEventRow['status'];
+  p_featured: boolean;
+  p_capacity: number;
+}
+
+export interface AdminUpdateEventRpcArgs extends AdminCreateEventRpcArgs {
+  p_event_id: string;
+}
+
+export interface AdminUpdateEventStatusRpcArgs {
+  p_event_id: string;
+  p_status: DbEventRow['status'];
+}
+
+export interface AdminDeleteEventRpcArgs {
+  p_event_id: string;
+}
+
+export interface AdminSaveTicketBatchRpcArgs {
+  p_batch_id: string | null;
+  p_event_id: string;
+  p_category_id: string;
+  p_name: string;
+  p_batch_number: number;
+  p_description: string;
+  p_price: number;
+  p_total_quantity: number;
+  p_thumbnail_url?: string | null;
+  p_starts_at?: string | null;
+  p_ends_at?: string | null;
+  p_active?: boolean;
+}
+
+export interface AdminDeleteTicketBatchRpcArgs {
+  p_batch_id: string;
+}
+
+export interface AdminSaveTicketBatchInput {
+  id?: string | null;
+  eventId: string;
+  categoryId: string;
+  name: string;
+  batchNumber: number;
+  description?: string;
+  price: number;
+  totalQuantity: number;
+  thumbnailUrl?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  active?: boolean;
+}
+
+export interface AdminSaveTicketCategoryRpcArgs {
+  p_category_id: string | null;
+  p_event_id: string;
+  p_slug: string;
+  p_name: string;
+  p_description?: string | null;
+  p_max_per_order?: number;
+  p_sort_order?: number;
+  p_active?: boolean;
+}
+
+export interface AdminDeleteTicketCategoryRpcArgs {
+  p_category_id: string;
+}
+
+export interface AdminSaveTicketCategoryInput {
+  id?: string | null;
+  eventId: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  maxPerOrder?: number;
+  sortOrder?: number;
+  active?: boolean;
+}
+
 export interface CheckinRpcArgs {
   p_code_or_payload: string;
   p_device_id?: string;
@@ -356,6 +579,7 @@ export interface CheckinRpcPayload {
   code?: string;
   holder_name?: string;
   used_at?: string;
-  status?: TicketStatus;
+  status?: TicketStatus | OrderStatus | 'unknown';
   message: string;
 }
+
