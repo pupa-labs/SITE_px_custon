@@ -22,6 +22,7 @@ import type {
   AdminSaveTicketCategoryInput,
   CancelTicketOrderRpcPayload,
   RefundTicketOrderRpcPayload,
+  MercadoPagoCreatePaymentResponse,
 } from '../types/domain';
 import {
   supabase,
@@ -43,6 +44,7 @@ import {
   translateBatchOrCategoryDatabaseError,
   validateProfileSelfUpdateInput,
   isKnownDemoTicketCode,
+  isAllowedPaymentMethod,
 } from '../utils/ticketRules';
 
 export {
@@ -2489,4 +2491,240 @@ export async function refundOrderInSupabase(params: {
   };
 }
 
+/**
+ * Calls the Express backend (`POST /api/payments/mercadopago/create`) using the authenticated
+ * user's Supabase JWT (`Authorization: Bearer <access_token>`) to create a real Mercado Pago
+ * PIX payment (`/v1/payments`) or Credit Card preference (`/checkout/preferences`).
+ *
+ * Rules enforced:
+ * - Only `'pix'` and `'credit_card'` are accepted (`'debit_card'` is rejected).
+ * - Uses `orders.total_amount` (`subtotal + 6% convenience_fee`) calculated in PostgreSQL without duplicating the fee.
+ * - Never fabricates fake PIX codes or fake preference IDs on error.
+ */
+export async function createMercadoPagoPaymentSession(params: {
+  orderId: string;
+  paymentMethod: PaymentMethodType;
+}): Promise<MercadoPagoCreatePaymentResponse> {
+  const cleanOrderId = (params.orderId ?? '').trim();
+  if (!cleanOrderId) {
+    return {
+      ok: false,
+      orderId: '',
+      orderCode: '',
+      paymentMethod: 'pix',
+      subtotal: 0,
+      convenienceFee: 0,
+      totalAmount: 0,
+      errorMessage: 'Identificador do pedido (orderId) é obrigatório para iniciar o pagamento.',
+    };
+  }
 
+  if (!isAllowedPaymentMethod(params.paymentMethod)) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      orderCode: '',
+      paymentMethod: 'pix',
+      subtotal: 0,
+      convenienceFee: 0,
+      totalAmount: 0,
+      errorMessage:
+        'Meio de pagamento não suportado. Selecione PIX ou Cartão de Crédito.',
+    };
+  }
+
+  if (!supabase) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      orderCode: '',
+      paymentMethod: params.paymentMethod,
+      subtotal: 0,
+      convenienceFee: 0,
+      totalAmount: 0,
+      errorMessage: 'Cliente Supabase não configurado no ambiente atual.',
+    };
+  }
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  if (sessionError || !accessToken) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      orderCode: '',
+      paymentMethod: params.paymentMethod,
+      subtotal: 0,
+      convenienceFee: 0,
+      totalAmount: 0,
+      errorMessage: 'Sua sessão autenticada expirou. Faça login novamente para gerar o pagamento.',
+    };
+  }
+
+  try {
+    const response = await fetch('/api/payments/mercadopago/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        orderId: cleanOrderId,
+        paymentMethod: params.paymentMethod,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | (MercadoPagoCreatePaymentResponse & { error?: string })
+      | null;
+
+    if (!response.ok || !payload || !payload.ok) {
+      return {
+        ok: false,
+        orderId: cleanOrderId,
+        orderCode: payload?.orderCode ?? '',
+        paymentMethod: params.paymentMethod,
+        subtotal: Number(payload?.subtotal ?? 0),
+        convenienceFee: Number(payload?.convenienceFee ?? 0),
+        totalAmount: Number(payload?.totalAmount ?? 0),
+        errorMessage:
+          payload?.errorMessage ??
+          payload?.error ??
+          `Falha ao comunicar com o servidor de pagamentos (HTTP ${response.status}).`,
+      };
+    }
+
+    return payload;
+  } catch (err) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      orderCode: '',
+      paymentMethod: params.paymentMethod,
+      subtotal: 0,
+      convenienceFee: 0,
+      totalAmount: 0,
+      errorMessage:
+        err instanceof Error
+          ? `Erro de conexão ao iniciar pagamento no Mercado Pago: ${err.message}`
+          : 'Erro inesperado ao iniciar pagamento no Mercado Pago.',
+    };
+  }
+}
+
+/**
+ * Queries the authoritative order & payment status from the backend (`GET /api/payments/mercadopago/status/:orderId`)
+ * or directly from `public.orders` via RLS to check if the Mercado Pago webhook has confirmed the payment.
+ */
+export async function checkOrderPaymentStatusInBackend(orderId: string): Promise<{
+  ok: boolean;
+  orderId: string;
+  orderCode?: string;
+  orderStatus?: OrderStatus;
+  paymentStatus?: PaymentStatus;
+  paymentMethod?: PaymentMethodType;
+  subtotal?: number;
+  convenienceFee?: number;
+  totalAmount?: number;
+  mpPreferenceId?: string | null;
+  mpPaymentId?: string | null;
+  paidAt?: string | null;
+  errorMessage?: string;
+}> {
+  const cleanOrderId = (orderId ?? '').trim();
+  if (!cleanOrderId) {
+    return {
+      ok: false,
+      orderId: '',
+      errorMessage: 'Identificador do pedido inválido para consulta de status.',
+    };
+  }
+
+  if (!supabase) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      errorMessage: 'Cliente Supabase não configurado.',
+    };
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+
+  if (accessToken) {
+    try {
+      const response = await fetch(
+        `/api/payments/mercadopago/status/${encodeURIComponent(cleanOrderId)}`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.ok) {
+          return {
+            ok: true,
+            orderId: data.orderId,
+            orderCode: data.orderCode,
+            orderStatus: data.orderStatus,
+            paymentStatus: data.paymentStatus,
+            paymentMethod: data.paymentMethod,
+            subtotal: Number(data.subtotal),
+            convenienceFee: Number(data.convenienceFee),
+            totalAmount: Number(data.totalAmount),
+            mpPreferenceId: data.mpPreferenceId ?? null,
+            mpPaymentId: data.mpPaymentId ?? null,
+            paidAt: data.paidAt ?? null,
+          };
+        }
+      }
+    } catch {
+      // Fallback to direct RLS-protected query on public.orders if backend endpoint is unreachable
+    }
+  }
+
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData?.user?.id) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      errorMessage: 'Sessão autenticada obrigatória para consultar o status do pedido.',
+    };
+  }
+
+  const { data: row, error } = await supabase
+    .from('orders')
+    .select(
+      'id, order_code, order_status, payment_status, payment_method, subtotal, convenience_fee, total_amount, mp_preference_id, mp_payment_id, paid_at'
+    )
+    .eq('id', cleanOrderId)
+    .eq('user_id', authData.user.id)
+    .maybeSingle();
+
+  if (error || !row) {
+    return {
+      ok: false,
+      orderId: cleanOrderId,
+      errorMessage: error?.message ?? 'Pedido não encontrado em public.orders.',
+    };
+  }
+
+  return {
+    ok: true,
+    orderId: row.id,
+    orderCode: row.order_code,
+    orderStatus: row.order_status as OrderStatus,
+    paymentStatus: row.payment_status as PaymentStatus,
+    paymentMethod: row.payment_method as PaymentMethodType,
+    subtotal: Number(row.subtotal),
+    convenienceFee: Number(row.convenience_fee),
+    totalAmount: Number(row.total_amount),
+    mpPreferenceId: row.mp_preference_id ?? null,
+    mpPaymentId: row.mp_payment_id ?? null,
+    paidAt: row.paid_at ?? null,
+  };
+}

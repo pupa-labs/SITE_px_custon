@@ -44,6 +44,13 @@ import {
   resolveProfileNavigationTarget,
   calculateActiveCartCount,
   validateProfileSelfUpdateInput,
+  ALLOWED_PAYMENT_METHODS,
+  isAllowedPaymentMethod,
+  verifyOrderFinancialConsistency,
+  buildMercadoPagoPaymentPayload,
+  parseMercadoPagoWebhookSignature,
+  buildMercadoPagoWebhookManifest,
+  evaluateOfficialMercadoPagoWebhookPayment,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -2669,15 +2676,602 @@ test('production UI source files isolate all demo orders, tickets, QR codes, che
   assert.ok(clientAreaSource.includes("activeSubTab === 'profile'"));
   assert.ok(clientAreaSource.includes('updateOwnProfileInSupabase'));
 
-  // 4. CheckoutView.tsx must not pre-fill fake buyer data ('João da Silva', '123.456.789-00', 'joao@email.com')
+  // 4. CheckoutView.tsx must not pre-fill fake buyer data ('João da Silva', '123.456.789-00', 'joao@email.com') or static PIX / fake order IDs
   assert.equal(checkoutSource.includes("useState('João da Silva')"), false);
   assert.equal(checkoutSource.includes("useState('123.456.789-00')"), false);
   assert.equal(checkoutSource.includes("useState('joao@email.com')"), false);
   assert.equal(checkoutSource.includes("userId: 'usr-joao'"), false);
+  assert.equal(checkoutSource.includes('px-custon-checkout-pending'), false);
+  assert.equal(checkoutSource.includes('AGUARDANDO_BACKEND_MP_PREFERENCE'), false);
+  assert.equal(checkoutSource.includes('ORD-${Date.now()}'), false);
+  assert.ok(checkoutSource.includes('Taxa de serviço (6%)'));
+  assert.ok(checkoutSource.includes('reserveOrderInSupabase'));
+  assert.ok(checkoutSource.includes('createMercadoPagoPaymentSession'));
 
   // 5. AdminPanelView.tsx must not pre-fill 'PX-784592' or initial check-in result and must block demo codes
   assert.equal(adminPanelSource.includes("useState('PX-784592')"), false);
   assert.ok(adminPanelSource.includes('isKnownDemoTicketCode'));
 });
 
+test('Mercado Pago pure rules: allows only PIX and credit_card, preserves 6% fee without duplication, and validates official webhook payloads', () => {
+  const ORDER_UUID = '11111111-2222-3333-4444-555555555555';
 
+  // 1. Only pix and credit_card are allowed; debit_card is strictly rejected
+  assert.deepEqual(ALLOWED_PAYMENT_METHODS, ['pix', 'credit_card']);
+  assert.equal(isAllowedPaymentMethod('pix'), true);
+  assert.equal(isAllowedPaymentMethod('credit_card'), true);
+  assert.equal(isAllowedPaymentMethod('debit_card'), false);
+  assert.equal(isAllowedPaymentMethod('boleto'), false);
+  assert.equal(isAllowedPaymentMethod(''), false);
+
+  // 2. 6% financial consistency check (2 x R$ 40,00 = R$ 80,00 + R$ 4,80 (6%) = R$ 84,80)
+  const validFin = verifyOrderFinancialConsistency({
+    unit_price: 40,
+    quantity: 2,
+    subtotal: 80,
+    convenience_fee: 4.8,
+    total_amount: 84.8,
+  });
+  assert.equal(validFin.ok, true);
+  if (validFin.ok) {
+    assert.equal(validFin.subtotal, 80);
+    assert.equal(validFin.convenienceFee, 4.8);
+    assert.equal(validFin.totalAmount, 84.8);
+  }
+
+  // Rejects duplicated 6% fee (e.g. R$ 89,60 instead of R$ 84,80)
+  const duplicatedFee = verifyOrderFinancialConsistency({
+    unit_price: 40,
+    quantity: 2,
+    subtotal: 80,
+    convenience_fee: 9.6,
+    total_amount: 89.6,
+  });
+  assert.equal(duplicatedFee.ok, false);
+
+  const baseOrderRow = {
+    id: ORDER_UUID,
+    order_code: '#PX-100200',
+    unit_price: 40,
+    quantity: 2,
+    subtotal: 80,
+    convenience_fee: 4.8,
+    total_amount: 84.8,
+    payment_method: 'pix',
+    buyer_name: 'Carlos Eduardo',
+    buyer_cpf: '123.456.789-01',
+    buyer_email: 'carlos@pxcuston.com.br',
+  };
+
+  // 3. PIX payload uses exact orders.total_amount (84.80) without adding another 6%
+  const pixPayloadRes = buildMercadoPagoPaymentPayload({
+    order: baseOrderRow,
+    eventTitle: 'Encontro Nacional PX CUSTON',
+    notificationUrl: 'https://pxcuston.com.br/api/webhooks/mercadopago',
+  });
+  assert.equal(pixPayloadRes.ok, true);
+  if (pixPayloadRes.ok) {
+    assert.equal(pixPayloadRes.paymentMethod, 'pix');
+    assert.equal(pixPayloadRes.endpoint, '/v1/payments');
+    assert.equal(pixPayloadRes.totalAmount, 84.8);
+    assert.equal(pixPayloadRes.body.transaction_amount, 84.8);
+    assert.equal(pixPayloadRes.body.payment_method_id, 'pix');
+    assert.equal(pixPayloadRes.body.external_reference, ORDER_UUID);
+    const payer = pixPayloadRes.body.payer as { identification: { number: string } };
+    assert.equal(payer.identification.number, '12345678901');
+  }
+
+  // 4. Credit card preference payload uses exact orders.total_amount (84.80) with quantity=1 and excludes debit_card
+  const ccPayloadRes = buildMercadoPagoPaymentPayload({
+    order: { ...baseOrderRow, payment_method: 'credit_card' },
+    eventTitle: 'Encontro Nacional PX CUSTON',
+    notificationUrl: 'https://pxcuston.com.br/api/webhooks/mercadopago',
+    backUrl: 'https://pxcuston.com.br',
+  });
+  assert.equal(ccPayloadRes.ok, true);
+  if (ccPayloadRes.ok) {
+    assert.equal(ccPayloadRes.paymentMethod, 'credit_card');
+    assert.equal(ccPayloadRes.endpoint, '/checkout/preferences');
+    const items = ccPayloadRes.body.items as Array<{ quantity: number; unit_price: number }>;
+    assert.equal(items.length, 1);
+    assert.equal(items[0].quantity, 1);
+    assert.equal(items[0].unit_price, 84.8);
+    assert.equal(ccPayloadRes.body.external_reference, ORDER_UUID);
+    const pm = ccPayloadRes.body.payment_methods as {
+      excluded_payment_types: Array<{ id: string }>;
+    };
+    const excludedIds = pm.excluded_payment_types.map((t: { id: string }) => t.id);
+    assert.ok(excludedIds.includes('debit_card'));
+    assert.ok(excludedIds.includes('ticket'));
+  }
+
+  // 5. Rejects debit_card in buildMercadoPagoPaymentPayload
+  const debitRejected = buildMercadoPagoPaymentPayload({
+    order: { ...baseOrderRow, payment_method: 'debit_card' },
+    eventTitle: 'Encontro Nacional PX CUSTON',
+  });
+  assert.equal(debitRejected.ok, false);
+
+  // 6. Webhook signature parsing & manifest construction
+  const parsedSig = parseMercadoPagoWebhookSignature(
+    'ts=1714500000,v1=abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789'
+  );
+  assert.deepEqual(parsedSig, {
+    ok: true,
+    ts: '1714500000',
+    v1: 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+  });
+  assert.equal(
+    buildMercadoPagoWebhookManifest({
+      dataId: '99887766',
+      requestId: 'req-abc-123',
+      ts: '1714500000',
+    }),
+    'id:99887766;request-id:req-abc-123;ts:1714500000;'
+  );
+
+  // 7. Webhook payment evaluation (approved, debit_card blocked, idempotent_replay vs reject_invalid)
+  const baseDbOrder = {
+    id: ORDER_UUID,
+    order_code: '#PX-100200',
+    order_status: 'pending_payment' as const,
+    payment_status: 'pending' as const,
+    payment_method: 'pix',
+    unit_price: 40,
+    quantity: 2,
+    subtotal: 80,
+    convenience_fee: 4.8,
+    total_amount: 84.8,
+    mp_payment_id: null,
+  };
+
+  const approvedEval = evaluateOfficialMercadoPagoWebhookPayment({
+    order: baseDbOrder,
+    mpPayment: {
+      id: '99887766',
+      status: 'approved',
+      transaction_amount: 84.8,
+      currency_id: 'BRL',
+      external_reference: ORDER_UUID,
+      payment_method_id: 'pix',
+      payment_type_id: 'bank_transfer',
+    },
+  });
+  assert.equal(approvedEval.ok, true);
+  assert.equal(approvedEval.action, 'confirm_payment');
+
+  const debitWebhookBlocked = evaluateOfficialMercadoPagoWebhookPayment({
+    order: baseDbOrder,
+    mpPayment: {
+      id: '99887766',
+      status: 'approved',
+      transaction_amount: 84.8,
+      currency_id: 'BRL',
+      external_reference: ORDER_UUID,
+      payment_method_id: 'debvisa',
+      payment_type_id: 'debit_card',
+    },
+  });
+  assert.equal(debitWebhookBlocked.ok, false);
+  assert.equal(debitWebhookBlocked.action, 'reject_invalid');
+
+  const idempotentPaid = evaluateOfficialMercadoPagoWebhookPayment({
+    order: {
+      ...baseDbOrder,
+      order_status: 'paid',
+      payment_status: 'approved',
+      mp_payment_id: '99887766',
+    },
+    mpPayment: {
+      id: '99887766',
+      status: 'approved',
+      transaction_amount: 84.8,
+      currency_id: 'BRL',
+      external_reference: ORDER_UUID,
+      payment_method_id: 'pix',
+      payment_type_id: 'bank_transfer',
+    },
+  });
+  assert.equal(idempotentPaid.ok, true);
+  assert.equal(idempotentPaid.action, 'idempotent_replay');
+
+  const conflictingPaid = evaluateOfficialMercadoPagoWebhookPayment({
+    order: {
+      ...baseDbOrder,
+      order_status: 'paid',
+      payment_status: 'approved',
+      mp_payment_id: '99887766',
+    },
+    mpPayment: {
+      id: '11223344',
+      status: 'approved',
+      transaction_amount: 84.8,
+      currency_id: 'BRL',
+      external_reference: ORDER_UUID,
+      payment_method_id: 'pix',
+      payment_type_id: 'bank_transfer',
+    },
+  });
+  assert.equal(conflictingPaid.ok, false);
+  assert.equal(conflictingPaid.action, 'reject_invalid');
+  assert.equal(conflictingPaid.statusCode, 409);
+});
+
+test('Express server.js Mercado Pago endpoints enforce 6% fee, PIX & Credit Card creation, HMAC webhook verification, direct MP API lookup, and idempotency', async () => {
+  const crypto = await import('node:crypto');
+  const { createApp } = await import('../../server.js');
+
+  const ORDER_UUID = '11111111-2222-3333-4444-555555555555';
+  const webhookSecret = 'mp-webhook-secret-test-key';
+  const mpAccessToken = 'APP_USR-test-token-px-custon';
+
+  // Simulated in-memory database row representing an order created by reserve_ticket_order (2 x 40 = 80 + 4.80 = 84.80)
+  const dbOrders = new Map<string, Record<string, unknown>>();
+  const resetOrderRow = (paymentMethod: 'pix' | 'credit_card' = 'pix') => {
+    dbOrders.set(ORDER_UUID, {
+      id: ORDER_UUID,
+      order_code: '#PX-100200',
+      user_id: 'usr-customer-1',
+      event_id: 'evt-uuid-1',
+      ticket_batch_id: 'batch-uuid-1',
+      buyer_name: 'Carlos Eduardo',
+      buyer_cpf: '123.456.789-01',
+      buyer_email: 'carlos@pxcuston.com.br',
+      buyer_phone: '(11) 98888-7777',
+      quantity: 2,
+      unit_price: 40,
+      subtotal: 80,
+      convenience_fee: 4.8,
+      total_amount: 84.8,
+      payment_method: paymentMethod,
+      order_status: 'reserved',
+      payment_status: 'pending',
+      mp_preference_id: null,
+      mp_payment_id: null,
+      reservation_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(),
+      paid_at: null,
+    });
+  };
+  resetOrderRow('pix');
+
+  const recordedMpRequests: Array<{ url: string; method: string; body?: Record<string, unknown> }> =
+    [];
+  const confirmedRpcCalls: Array<Record<string, unknown>> = [];
+
+  const mockSupabaseAdmin = {
+    auth: {
+      getUser: async (token: string) => {
+        if (token === 'valid-jwt-customer-1') {
+          return {
+            data: { user: { id: 'usr-customer-1', email: 'carlos@pxcuston.com.br' } },
+            error: null,
+          };
+        }
+        if (token === 'valid-jwt-other-user') {
+          return {
+            data: { user: { id: 'usr-other-999', email: 'other@pxcuston.com.br' } },
+            error: null,
+          };
+        }
+        return { data: { user: null }, error: { message: 'Invalid token' } };
+      },
+    },
+    from: (table: string) => {
+      if (table === 'events') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => ({
+                data: { title: 'Encontro Nacional PX CUSTON' },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === 'orders') {
+        return {
+          select: () => {
+            const eqFilters: Record<string, unknown> = {};
+            const neqFilters: Record<string, unknown> = {};
+            const chain = {
+              eq: (col: string, val: unknown) => {
+                eqFilters[col] = val;
+                return chain;
+              },
+              neq: (col: string, val: unknown) => {
+                neqFilters[col] = val;
+                return chain;
+              },
+              maybeSingle: async () => {
+                for (const row of dbOrders.values()) {
+                  let matches = true;
+                  for (const [k, v] of Object.entries(eqFilters)) {
+                    if (row[k] !== v) matches = false;
+                  }
+                  for (const [k, v] of Object.entries(neqFilters)) {
+                    if (row[k] === v) matches = false;
+                  }
+                  if (matches) return { data: { ...row }, error: null };
+                }
+                return { data: null, error: null };
+              },
+            };
+            return chain;
+          },
+          update: (patch: Record<string, unknown>) => ({
+            eq: (col: string, val: unknown) => {
+              const existing = dbOrders.get(String(val));
+              if (existing && col === 'id') {
+                dbOrders.set(String(val), { ...existing, ...patch });
+              }
+              return Promise.resolve({ error: null });
+            },
+          }),
+        };
+      }
+      throw new Error(`Unexpected table ${table}`);
+    },
+    rpc: async (fnName: string, args: Record<string, unknown>) => {
+      if (fnName === 'confirm_order_payment') {
+        confirmedRpcCalls.push(args);
+        const ord = dbOrders.get(String(args.p_order_id));
+        if (ord) {
+          ord.order_status = 'paid';
+          ord.payment_status = 'approved';
+          ord.mp_payment_id = String(args.p_mp_payment_id);
+        }
+        return {
+          data: {
+            order_id: args.p_order_id,
+            order_code: '#PX-100200',
+            order_status: 'paid',
+            payment_status: 'approved',
+            mp_payment_id: args.p_mp_payment_id,
+            tickets_issued: 2,
+            idempotent_replay: false,
+          },
+          error: null,
+        };
+      }
+      return { data: null, error: null };
+    },
+  };
+
+  let mockOfficialMpPaymentResponse: Record<string, unknown> = {
+    id: 99887766,
+    status: 'approved',
+    transaction_amount: 84.8,
+    currency_id: 'BRL',
+    external_reference: ORDER_UUID,
+    payment_method_id: 'pix',
+    payment_type_id: 'bank_transfer',
+  };
+
+  const mockFetch = async (url: string, init?: RequestInit) => {
+    const method = init?.method ?? 'GET';
+    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    recordedMpRequests.push({ url, method, body });
+
+    if (url === 'https://api.mercadopago.com/v1/payments' && method === 'POST') {
+      return new Response(
+        JSON.stringify({
+          id: 99887766,
+          status: 'pending',
+          point_of_interaction: {
+            transaction_data: {
+              qr_code: '00020126580014br.gov.bcb.pix0136real-mp-pix-99887766',
+              qr_code_base64:
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+              ticket_url: 'https://www.mercadopago.com.br/payments/99887766/ticket',
+            },
+          },
+        }),
+        { status: 201, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (url === 'https://api.mercadopago.com/checkout/preferences' && method === 'POST') {
+      return new Response(
+        JSON.stringify({
+          id: 'pref-mp-123456',
+          init_point: 'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-mp-123456',
+          sandbox_init_point:
+            'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=pref-mp-123456',
+        }),
+        { status: 201, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (url.startsWith('https://api.mercadopago.com/v1/payments/') && method === 'GET') {
+      return new Response(JSON.stringify(mockOfficialMpPaymentResponse), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify({ message: 'Not found' }), { status: 404 });
+  };
+
+  const app = createApp({
+    env: {
+      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'service-role-test-key',
+      MP_ACCESS_TOKEN: mpAccessToken,
+      MP_WEBHOOK_SECRET: webhookSecret,
+      APP_URL: 'https://pxcuston.com.br',
+    },
+    supabaseAdmin: mockSupabaseAdmin,
+    supabaseAuthClient: mockSupabaseAdmin,
+    mpFetch: mockFetch,
+  });
+
+  const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+    const s = app.listen(0, '127.0.0.1', () => resolve(s));
+  });
+  const address = server.address();
+  const port = typeof address === 'object' && address ? address.port : 0;
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    // 1. Rejects unauthenticated request (401)
+    const unauthRes = await fetch(`${baseUrl}/api/payments/mercadopago/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: ORDER_UUID, paymentMethod: 'pix' }),
+    });
+    assert.equal(unauthRes.status, 401);
+
+    // 2. Rejects debit_card (422)
+    const debitRes = await fetch(`${baseUrl}/api/payments/mercadopago/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid-jwt-customer-1',
+      },
+      body: JSON.stringify({ orderId: ORDER_UUID, paymentMethod: 'debit_card' }),
+    });
+    assert.equal(debitRes.status, 422);
+
+    // 3. Rejects order belonging to a different user (403)
+    const wrongUserRes = await fetch(`${baseUrl}/api/payments/mercadopago/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid-jwt-other-user',
+      },
+      body: JSON.stringify({ orderId: ORDER_UUID, paymentMethod: 'pix' }),
+    });
+    assert.equal(wrongUserRes.status, 403);
+
+    // 4. Creates real PIX payment using orders.total_amount (84.80) without duplicating 6% fee
+    const pixCreateRes = await fetch(`${baseUrl}/api/payments/mercadopago/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid-jwt-customer-1',
+      },
+      body: JSON.stringify({ orderId: ORDER_UUID, paymentMethod: 'pix' }),
+    });
+    assert.equal(pixCreateRes.status, 200);
+    const pixData = await pixCreateRes.json();
+    assert.equal(pixData.ok, true);
+    assert.equal(pixData.subtotal, 80);
+    assert.equal(pixData.convenienceFee, 4.8);
+    assert.equal(pixData.totalAmount, 84.8);
+    assert.equal(pixData.mpPaymentId, '99887766');
+    assert.equal(
+      pixData.pixQrCode,
+      '00020126580014br.gov.bcb.pix0136real-mp-pix-99887766'
+    );
+
+    const lastMpReq = recordedMpRequests[recordedMpRequests.length - 1];
+    assert.equal(lastMpReq.url, 'https://api.mercadopago.com/v1/payments');
+    assert.equal(lastMpReq.body?.transaction_amount, 84.8);
+
+    // 5. Creates Credit Card preference with exact orders.total_amount (84.80) and debit_card excluded
+    resetOrderRow('credit_card');
+    const ccCreateRes = await fetch(`${baseUrl}/api/payments/mercadopago/create`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer valid-jwt-customer-1',
+      },
+      body: JSON.stringify({ orderId: ORDER_UUID, paymentMethod: 'credit_card' }),
+    });
+    assert.equal(ccCreateRes.status, 200);
+    const ccData = await ccCreateRes.json();
+    assert.equal(ccData.ok, true);
+    assert.equal(ccData.totalAmount, 84.8);
+    assert.equal(ccData.preferenceId, 'pref-mp-123456');
+    assert.ok(ccData.initPoint.includes('pref-mp-123456'));
+
+    const prefMpReq = recordedMpRequests[recordedMpRequests.length - 1];
+    assert.equal(prefMpReq.url, 'https://api.mercadopago.com/checkout/preferences');
+    const items = prefMpReq.body?.items as Array<{ unit_price: number; quantity: number }>;
+    assert.equal(items[0].unit_price, 84.8);
+    assert.equal(items[0].quantity, 1);
+
+    // 6. Webhook rejects invalid HMAC signature (401)
+    resetOrderRow('pix');
+    const invalidSigWebhook = await fetch(`${baseUrl}/api/webhooks/mercadopago`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': 'req-webhook-1',
+        'x-signature':
+          'ts=1714500000,v1=0000000000000000000000000000000000000000000000000000000000000000',
+      },
+      body: JSON.stringify({ type: 'payment', data: { id: '99887766' } }),
+    });
+    assert.equal(invalidSigWebhook.status, 401);
+
+    // 7. Webhook accepts valid HMAC signature, queries official MP API, verifies amount/currency/order, and calls confirm_order_payment
+    const ts = '1714500000';
+    const reqId = 'req-webhook-valid-1';
+    const manifest = `id:99887766;request-id:${reqId};ts:${ts};`;
+    const validHmac = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex');
+
+    const validWebhookRes = await fetch(`${baseUrl}/api/webhooks/mercadopago`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': reqId,
+        'x-signature': `ts=${ts},v1=${validHmac}`,
+      },
+      body: JSON.stringify({ type: 'payment', data: { id: '99887766' } }),
+    });
+    assert.equal(validWebhookRes.status, 200);
+    const validWebhookData = await validWebhookRes.json();
+    assert.equal(validWebhookData.ok, true);
+    assert.equal(validWebhookData.action, 'confirmed');
+    assert.equal(confirmedRpcCalls.length, 1);
+    assert.equal(confirmedRpcCalls[0].p_order_id, ORDER_UUID);
+    assert.equal(confirmedRpcCalls[0].p_mp_payment_id, '99887766');
+
+    // 8. Replay of the SAME mp_payment_id ('99887766') on already-paid order is idempotent (200) and does NOT call confirm_order_payment again
+    const replayWebhookRes = await fetch(`${baseUrl}/api/webhooks/mercadopago`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': reqId,
+        'x-signature': `ts=${ts},v1=${validHmac}`,
+      },
+      body: JSON.stringify({ type: 'payment', data: { id: '99887766' } }),
+    });
+    assert.equal(replayWebhookRes.status, 200);
+    const replayData = await replayWebhookRes.json();
+    assert.equal(replayData.idempotentReplay, true);
+    assert.equal(confirmedRpcCalls.length, 1);
+
+    // 9. Different mp_payment_id ('11223344') for an order already paid with '99887766' is rejected with 409 Conflict!
+    mockOfficialMpPaymentResponse = {
+      id: 11223344,
+      status: 'approved',
+      transaction_amount: 84.8,
+      currency_id: 'BRL',
+      external_reference: ORDER_UUID,
+      payment_method_id: 'pix',
+      payment_type_id: 'bank_transfer',
+    };
+    const conflictManifest = `id:11223344;request-id:${reqId};ts:${ts};`;
+    const conflictHmac = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(conflictManifest)
+      .digest('hex');
+
+    const conflictWebhookRes = await fetch(`${baseUrl}/api/webhooks/mercadopago`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-request-id': reqId,
+        'x-signature': `ts=${ts},v1=${conflictHmac}`,
+      },
+      body: JSON.stringify({ type: 'payment', data: { id: '11223344' } }),
+    });
+    assert.equal(conflictWebhookRes.status, 409);
+    assert.equal(confirmedRpcCalls.length, 1);
+  } finally {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+});

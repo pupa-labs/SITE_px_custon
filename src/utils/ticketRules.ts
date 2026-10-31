@@ -3264,4 +3264,547 @@ export function validateProfileSelfUpdateInput(input: {
   };
 }
 
+/**
+ * Definitive allowed payment methods for PX CUSTON:
+ * 1. PIX ('pix')
+ * 2. Credit Card ('credit_card')
+ * Debit card ('debit_card') and any other method are strictly disallowed to preserve schema and config compatibility.
+ */
+export const ALLOWED_PAYMENT_METHODS = ['pix', 'credit_card'] as const;
+
+export function isAllowedPaymentMethod(method: unknown): method is PaymentMethodType {
+  return method === 'pix' || method === 'credit_card';
+}
+
+/**
+ * Verifies that an order row from `public.orders` strictly obeys the definitive 6% service fee rule:
+ * - `subtotal === round(unit_price * quantity, 2)`
+ * - `convenience_fee === round(subtotal * 0.06, 2)`
+ * - `total_amount === round(subtotal + convenience_fee, 2)`
+ * Ensures the 6% fee is applied once and never duplicated across frontend, backend, database, and Mercado Pago.
+ */
+export function verifyOrderFinancialConsistency(order: {
+  unit_price: number | string;
+  quantity: number;
+  subtotal: number | string;
+  convenience_fee: number | string;
+  total_amount: number | string;
+}):
+  | {
+      ok: true;
+      unitPrice: number;
+      quantity: number;
+      subtotal: number;
+      convenienceFee: number;
+      totalAmount: number;
+    }
+  | {
+      ok: false;
+      errorMessage: string;
+    } {
+  const unitPrice = Number(order.unit_price);
+  const quantity = Number(order.quantity);
+  const subtotal = Number(order.subtotal);
+  const convenienceFee = Number(order.convenience_fee);
+  const totalAmount = Number(order.total_amount);
+
+  if (
+    !Number.isFinite(unitPrice) ||
+    unitPrice <= 0 ||
+    !Number.isInteger(quantity) ||
+    quantity <= 0 ||
+    !Number.isFinite(subtotal) ||
+    !Number.isFinite(convenienceFee) ||
+    !Number.isFinite(totalAmount) ||
+    totalAmount <= 0
+  ) {
+    return {
+      ok: false,
+      errorMessage: 'Valores financeiros do pedido inválidos ou não positivos.',
+    };
+  }
+
+  const expectedTotals = calculateOrderTotals(unitPrice, quantity);
+
+  if (
+    Math.round(subtotal * 100) !== Math.round(expectedTotals.subtotal * 100) ||
+    Math.round(convenienceFee * 100) !== Math.round(expectedTotals.convenienceFee * 100) ||
+    Math.round(totalAmount * 100) !== Math.round(expectedTotals.total * 100)
+  ) {
+    return {
+      ok: false,
+      errorMessage: `Inconsistência na regra financeira de 6%: esperado subtotal=${expectedTotals.subtotal.toFixed(
+        2
+      )}, taxa=${expectedTotals.convenienceFee.toFixed(
+        2
+      )}, total=${expectedTotals.total.toFixed(2)}, mas o pedido contém subtotal=${subtotal.toFixed(
+        2
+      )}, taxa=${convenienceFee.toFixed(2)}, total=${totalAmount.toFixed(2)}.`,
+    };
+  }
+
+  return {
+    ok: true,
+    unitPrice: expectedTotals.subtotal / quantity,
+    quantity,
+    subtotal: expectedTotals.subtotal,
+    convenienceFee: expectedTotals.convenienceFee,
+    totalAmount: expectedTotals.total,
+  };
+}
+
+/**
+ * Builds the official Mercado Pago API payload for PIX (`POST /v1/payments`) or
+ * Credit Card (`POST /checkout/preferences`), strictly using `orders.total_amount`
+ * (which already includes the single 6% service fee) without ever duplicating the fee,
+ * and explicitly excluding debit card (`debit_card`).
+ */
+export function buildMercadoPagoPaymentPayload(params: {
+  order: {
+    id: string;
+    order_code: string;
+    unit_price: number | string;
+    quantity: number;
+    subtotal: number | string;
+    convenience_fee: number | string;
+    total_amount: number | string;
+    payment_method: string;
+    buyer_name: string;
+    buyer_cpf: string;
+    buyer_email: string;
+  };
+  eventTitle?: string;
+  notificationUrl?: string;
+  backUrl?: string;
+}):
+  | {
+      ok: true;
+      paymentMethod: PaymentMethodType;
+      endpoint: '/v1/payments' | '/checkout/preferences';
+      idempotencyKey: string;
+      subtotal: number;
+      convenienceFee: number;
+      totalAmount: number;
+      body: Record<string, unknown>;
+    }
+  | {
+      ok: false;
+      errorMessage: string;
+    } {
+  if (!isAllowedPaymentMethod(params.order.payment_method)) {
+    return {
+      ok: false,
+      errorMessage: `Meio de pagamento "${params.order.payment_method}" não permitido. Apenas PIX ("pix") e Cartão de Crédito ("credit_card") são suportados.`,
+    };
+  }
+
+  const financialCheck = verifyOrderFinancialConsistency(params.order);
+  if (!financialCheck.ok) {
+    return {
+      ok: false,
+      errorMessage: financialCheck.errorMessage,
+    };
+  }
+
+  const cleanName = (params.order.buyer_name ?? '').trim();
+  const nameParts = cleanName.split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || 'Cliente';
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'PX CUSTON';
+  const cpfDigits = (params.order.buyer_cpf ?? '').replace(/\D/g, '');
+  const cleanEmail = (params.order.buyer_email ?? '').trim();
+
+  if (cpfDigits.length !== 11 || !cleanEmail.includes('@')) {
+    return {
+      ok: false,
+      errorMessage: 'CPF ou e-mail do comprador inválidos no pedido para envio ao Mercado Pago.',
+    };
+  }
+
+  const eventLabel = (params.eventTitle ?? 'Evento PX CUSTON').trim();
+  const description = `PX CUSTON - Pedido ${params.order.order_code} (${financialCheck.quantity}x ingresso - Subtotal R$ ${financialCheck.subtotal.toFixed(
+    2
+  )} + Taxa 6% R$ ${financialCheck.convenienceFee.toFixed(2)})`;
+
+  if (params.order.payment_method === 'pix') {
+    const body: Record<string, unknown> = {
+      transaction_amount: financialCheck.totalAmount,
+      description,
+      payment_method_id: 'pix',
+      external_reference: params.order.id,
+      payer: {
+        email: cleanEmail,
+        first_name: firstName,
+        last_name: lastName,
+        identification: {
+          type: 'CPF',
+          number: cpfDigits,
+        },
+      },
+    };
+
+    if (params.notificationUrl && params.notificationUrl.startsWith('https://')) {
+      body.notification_url = params.notificationUrl;
+    }
+
+    return {
+      ok: true,
+      paymentMethod: 'pix',
+      endpoint: '/v1/payments',
+      idempotencyKey: `px-pix-${params.order.id}`,
+      subtotal: financialCheck.subtotal,
+      convenienceFee: financialCheck.convenienceFee,
+      totalAmount: financialCheck.totalAmount,
+      body,
+    };
+  }
+
+  // Credit Card: Checkout Preference restricted strictly to credit_card (excludes debit_card, ticket, atm, bank_transfer, prepaid_card)
+  // Uses a single consolidated item with unit_price === orders.total_amount so the 6% service fee is never added twice.
+  const preferenceBody: Record<string, unknown> = {
+    items: [
+      {
+        id: params.order.id,
+        title: `${eventLabel} — Pedido ${params.order.order_code}`,
+        description,
+        quantity: 1,
+        currency_id: 'BRL',
+        unit_price: financialCheck.totalAmount,
+      },
+    ],
+    payer: {
+      name: firstName,
+      surname: lastName,
+      email: cleanEmail,
+      identification: {
+        type: 'CPF',
+        number: cpfDigits,
+      },
+    },
+    payment_methods: {
+      excluded_payment_types: [
+        { id: 'debit_card' },
+        { id: 'ticket' },
+        { id: 'atm' },
+        { id: 'bank_transfer' },
+        { id: 'prepaid_card' },
+      ],
+      installments: 12,
+    },
+    binary_mode: true,
+    external_reference: params.order.id,
+    statement_descriptor: 'PXCUSTON',
+  };
+
+  if (params.notificationUrl && params.notificationUrl.startsWith('https://')) {
+    preferenceBody.notification_url = params.notificationUrl;
+  }
+
+  if (params.backUrl && params.backUrl.startsWith('http')) {
+    preferenceBody.back_urls = {
+      success: params.backUrl,
+      pending: params.backUrl,
+      failure: params.backUrl,
+    };
+    if (params.backUrl.startsWith('https://')) {
+      preferenceBody.auto_return = 'approved';
+    }
+  }
+
+  return {
+    ok: true,
+    paymentMethod: 'credit_card',
+    endpoint: '/checkout/preferences',
+    idempotencyKey: `px-pref-${params.order.id}`,
+    subtotal: financialCheck.subtotal,
+    convenienceFee: financialCheck.convenienceFee,
+    totalAmount: financialCheck.totalAmount,
+    body: preferenceBody,
+  };
+}
+
+/**
+ * Parses the `x-signature` header sent by Mercado Pago Webhooks (`ts=...,v1=...`).
+ */
+export function parseMercadoPagoWebhookSignature(
+  xSignatureHeader: string | null | undefined
+): { ok: true; ts: string; v1: string } | { ok: false; errorMessage: string } {
+  const raw = (xSignatureHeader ?? '').trim();
+  if (!raw) {
+    return {
+      ok: false,
+      errorMessage: 'Cabeçalho x-signature ausente na notificação do webhook.',
+    };
+  }
+
+  let ts = '';
+  let v1 = '';
+
+  for (const part of raw.split(',')) {
+    const [key, ...rest] = part.split('=');
+    if (!key || rest.length === 0) continue;
+    const cleanKey = key.trim().toLowerCase();
+    const cleanVal = rest.join('=').trim();
+    if (cleanKey === 'ts') ts = cleanVal;
+    if (cleanKey === 'v1') v1 = cleanVal.toLowerCase();
+  }
+
+  if (!ts || !/^\d+$/.test(ts) || !v1 || !/^[0-9a-f]{64}$/.test(v1)) {
+    return {
+      ok: false,
+      errorMessage: 'Formato inválido no cabeçalho x-signature do Mercado Pago.',
+    };
+  }
+
+  return { ok: true, ts, v1 };
+}
+
+/**
+ * Builds the canonical manifest string required by Mercado Pago to verify HMAC-SHA256 webhook signatures:
+ * `id:[data.id_url];request-id:[x-request-id_header];ts:[ts_header];`
+ */
+export function buildMercadoPagoWebhookManifest(params: {
+  dataId: string;
+  requestId?: string | null;
+  ts: string;
+}): string {
+  const cleanId = (params.dataId ?? '').trim().toLowerCase();
+  const cleanReqId = (params.requestId ?? '').trim();
+  const cleanTs = (params.ts ?? '').trim();
+
+  let manifest = '';
+  if (cleanId) {
+    manifest += `id:${cleanId};`;
+  }
+  if (cleanReqId) {
+    manifest += `request-id:${cleanReqId};`;
+  }
+  if (cleanTs) {
+    manifest += `ts:${cleanTs};`;
+  }
+  return manifest;
+}
+
+/**
+ * Evaluates a payment object fetched directly from the official Mercado Pago API
+ * (`GET https://api.mercadopago.com/v1/payments/{id}`) against the authoritative database order row:
+ * - Blocks debit card (`payment_type_id === 'debit_card'`) and any method other than PIX or Credit Card.
+ * - Requires `currency_id === 'BRL'`.
+ * - Requires `external_reference` matching `order.id` or `order.order_code`.
+ * - Verifies `order` satisfies the 6% financial rule (`verifyOrderFinancialConsistency`) and that
+ *   `mpPayment.transaction_amount` equals `order.total_amount` to the cent (no double-charging).
+ * - If `mpPayment.status !== 'approved'`, instructs the webhook handler to acknowledge without issuing tickets.
+ * - If `order.order_status === 'paid'`, explicitly compares `order.mp_payment_id === String(mpPayment.id)`
+ *   (preventing the Migration 001 flaw where a different payment ID on a paid order was not rejected).
+ */
+export function evaluateOfficialMercadoPagoWebhookPayment(params: {
+  mpPayment: {
+    id: string | number;
+    status: string;
+    transaction_amount: number;
+    currency_id: string;
+    external_reference?: string | null;
+    payment_method_id?: string | null;
+    payment_type_id?: string | null;
+  };
+  order: {
+    id: string;
+    order_code: string;
+    unit_price: number | string;
+    quantity: number;
+    subtotal: number | string;
+    convenience_fee: number | string;
+    total_amount: number | string;
+    payment_method: string;
+    order_status: OrderStatus;
+    payment_status: PaymentStatus;
+    mp_payment_id: string | null;
+  };
+  paymentIdUsedByOtherOrder?: boolean;
+}): {
+  ok: boolean;
+  action:
+    | 'confirm_payment'
+    | 'idempotent_replay'
+    | 'ignore_unapproved'
+    | 'record_late_payment'
+    | 'reject_invalid';
+  statusCode: number;
+  errorMessage?: string;
+  confirmRpcArgs6?: {
+    p_order_id: string;
+    p_mp_payment_id: string;
+    p_mp_payment_status: 'approved';
+    p_verified_amount: number;
+    p_currency: 'BRL';
+    p_external_reference: string;
+  };
+  confirmRpcArgs2?: {
+    p_order_id: string;
+    p_mp_payment_id: string;
+  };
+} {
+  const cleanMpPaymentId = String(params.mpPayment.id ?? '').trim();
+  if (!cleanMpPaymentId) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 400,
+      errorMessage: 'Identificador de pagamento ausente na resposta da API do Mercado Pago.',
+    };
+  }
+
+  const paymentType = (params.mpPayment.payment_type_id ?? '').trim().toLowerCase();
+  const paymentMethodId = (params.mpPayment.payment_method_id ?? '').trim().toLowerCase();
+
+  if (
+    paymentType === 'debit_card' ||
+    paymentMethodId.startsWith('deb') ||
+    (paymentType !== '' &&
+      paymentType !== 'bank_transfer' &&
+      paymentType !== 'credit_card' &&
+      paymentMethodId !== 'pix')
+  ) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 422,
+      errorMessage: `Meio de pagamento "${
+        paymentType || paymentMethodId
+      }" bloqueado. Apenas PIX e Cartão de Crédito são aceitos.`,
+    };
+  }
+
+  const cleanCurrency = (params.mpPayment.currency_id ?? '').trim().toUpperCase();
+  if (cleanCurrency !== 'BRL') {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 422,
+      errorMessage: `Moeda inválida no pagamento do Mercado Pago ("${cleanCurrency}"). Esperado "BRL".`,
+    };
+  }
+
+  const cleanExtRef = (params.mpPayment.external_reference ?? '').trim();
+  if (
+    !cleanExtRef ||
+    (cleanExtRef !== params.order.id && cleanExtRef !== params.order.order_code)
+  ) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 422,
+      errorMessage: `Referência externa ("${cleanExtRef}") não corresponde ao pedido (${params.order.id} / ${params.order.order_code}).`,
+    };
+  }
+
+  const financialCheck = verifyOrderFinancialConsistency(params.order);
+  if (!financialCheck.ok) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 422,
+      errorMessage: financialCheck.errorMessage,
+    };
+  }
+
+  const gatewayAmount = Number(params.mpPayment.transaction_amount);
+  if (
+    !Number.isFinite(gatewayAmount) ||
+    gatewayAmount <= 0 ||
+    Math.round(gatewayAmount * 100) !== Math.round(financialCheck.totalAmount * 100)
+  ) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 422,
+      errorMessage: `Valor pago no Mercado Pago (${gatewayAmount.toFixed(
+        2
+      )}) diverge do orders.total_amount oficial (${financialCheck.totalAmount.toFixed(2)}).`,
+    };
+  }
+
+  if (params.paymentIdUsedByOtherOrder) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 409,
+      errorMessage: `Conflito de unicidade: o mp_payment_id "${cleanMpPaymentId}" já está vinculado a outro pedido.`,
+    };
+  }
+
+  const cleanStatus = (params.mpPayment.status ?? '').trim().toLowerCase();
+  if (cleanStatus !== 'approved') {
+    return {
+      ok: true,
+      action: 'ignore_unapproved',
+      statusCode: 200,
+    };
+  }
+
+  // Strict check when order is already 'paid': MUST compare stored mp_payment_id with incoming mp_payment_id
+  if (params.order.order_status === 'paid') {
+    const storedMpPaymentId = (params.order.mp_payment_id ?? '').trim();
+    if (!storedMpPaymentId || storedMpPaymentId !== cleanMpPaymentId) {
+      return {
+        ok: false,
+        action: 'reject_invalid',
+        statusCode: 409,
+        errorMessage: `Conflito de idempotência: o pedido ${params.order.order_code} já está pago com outro mp_payment_id ("${
+          storedMpPaymentId || 'NULL'
+        }" vs "${cleanMpPaymentId}").`,
+      };
+    }
+
+    return {
+      ok: true,
+      action: 'idempotent_replay',
+      statusCode: 200,
+    };
+  }
+
+  if (
+    params.order.order_status === 'expired' ||
+    params.order.order_status === 'cancelled'
+  ) {
+    return {
+      ok: false,
+      action: 'record_late_payment',
+      statusCode: 409,
+      errorMessage: `Pagamento aprovado recebido para pedido já encerrado (${params.order.order_code} / status=${params.order.order_status}). Nenhum ingresso emitido.`,
+    };
+  }
+
+  if (
+    params.order.order_status !== 'reserved' &&
+    params.order.order_status !== 'pending_payment'
+  ) {
+    return {
+      ok: false,
+      action: 'reject_invalid',
+      statusCode: 409,
+      errorMessage: `Pedido ${params.order.order_code} em estado inválido para confirmação (${params.order.order_status}).`,
+    };
+  }
+
+  return {
+    ok: true,
+    action: 'confirm_payment',
+    statusCode: 200,
+    confirmRpcArgs6: {
+      p_order_id: params.order.id,
+      p_mp_payment_id: cleanMpPaymentId,
+      p_mp_payment_status: 'approved',
+      p_verified_amount: financialCheck.totalAmount,
+      p_currency: 'BRL',
+      p_external_reference: cleanExtRef,
+    },
+    confirmRpcArgs2: {
+      p_order_id: params.order.id,
+      p_mp_payment_id: cleanMpPaymentId,
+    },
+  };
+}
+
+
+
 

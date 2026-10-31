@@ -638,14 +638,20 @@ export default function App() {
               event={currentEvent}
               selectedLot={currentLot}
               quantity={checkoutQty > 0 ? checkoutQty : 1}
+              isAuthenticated={authStatus === 'authenticated'}
               onQuantityChange={setCheckoutQty}
               onSelectLot={(lot) => setSelectedLotId(lot.id)}
               onCancelOrder={() => {
                 setCheckoutQty(0);
                 handleNavigate('event-detail');
               }}
-              onRegisterPendingOrder={(ord) => setOrders((prev) => [ord, ...prev])}
+              onRegisterPendingOrder={(ord) =>
+                setOrders((prev) => [ord, ...prev.filter((o) => o.id !== ord.id)])
+              }
               onGoToClientOrders={() => handleNavigate('client-area', 'orders')}
+              onGoToClientTickets={() => handleNavigate('client-area', 'tickets')}
+              onGoToLogin={() => handleNavigate('client-area', 'login')}
+              onRefreshUserData={loadAuthenticatedUserData}
               currentUserProfile={currentUserProfile}
               authenticatedEmail={authenticatedEmail}
             />

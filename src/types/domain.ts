@@ -418,6 +418,42 @@ export interface ConfirmOrderPaymentRpcPayload {
   idempotent_replay: boolean;
 }
 
+export interface MercadoPagoCreatePaymentRequest {
+  orderId: string;
+  paymentMethod: PaymentMethodType;
+}
+
+export interface MercadoPagoCreatePaymentResponse {
+  ok: boolean;
+  orderId?: string;
+  orderCode?: string;
+  paymentMethod?: PaymentMethodType;
+  subtotal?: number;
+  convenienceFee?: number;
+  totalAmount?: number;
+  mpPaymentId?: string;
+  preferenceId?: string;
+  mpPreferenceId?: string;
+  pixQrCode?: string;
+  pixQrCodeBase64?: string;
+  ticketUrl?: string;
+  initPoint?: string;
+  sandboxInitPoint?: string;
+  expiresAt?: string;
+  errorMessage?: string;
+}
+
+export interface MercadoPagoOfficialPaymentRecord {
+  id: string | number;
+  status: string;
+  status_detail?: string;
+  transaction_amount: number;
+  currency_id: string;
+  external_reference?: string | null;
+  payment_method_id?: string;
+  payment_type_id?: string;
+}
+
 export interface CancelTicketOrderRpcArgs {
   p_order_id: string;
   p_reason?: string | null;
