@@ -59,6 +59,9 @@ import {
   validateAdminCategoryFormInput,
   validateAdminBatchFormInput,
   calculateOrderTotals,
+  buildCameraConstraintCandidates,
+  shouldAbortCameraFallbackOnError,
+  classifyCameraError,
 } from '../utils/ticketRules';
 import {
   supabaseConfigState,
@@ -383,9 +386,22 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   } | null>(null);
   const [showCheckinHistory, setShowCheckinHistory] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [barcodeDetectorSupported, setBarcodeDetectorSupported] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanIntervalRef = useRef<number | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+  const activeModuleRef = useRef<AdminModule>(activeModule);
+  const cameraSessionIdRef = useRef<number>(0);
+  const isCheckingInRef = useRef<boolean>(false);
+  const lastScannedRef = useRef<{ code: string; timestamp: number }>({
+    code: '',
+    timestamp: 0,
+  });
+
+  activeModuleRef.current = activeModule;
 
   // Safe Supabase Connection Diagnostic State (Never stores or displays credentials)
   const [supabaseStatus, setSupabaseStatus] = useState<SupabaseConnectionStatus | null>(null);
@@ -407,54 +423,112 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
     }
   }, [activeModule]);
 
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
+  const releaseMediaStreamTracks = (stream: MediaStream | null) => {
+    if (!stream) return;
+    stream.getTracks().forEach((track) => {
+      try {
+        track.onended = null;
+        track.stop();
+      } catch {
+        // Ignore errors when stopping tracks
       }
-    };
-  }, []);
+    });
+  };
 
-  const handleToggleCamera = async () => {
-    if (cameraActive) {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-      }
-      setCameraActive(false);
-      return;
+  const stopCameraStream = () => {
+    cameraSessionIdRef.current += 1;
+    if (scanIntervalRef.current !== null) {
+      window.clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
     }
-
-    setCameraError(null);
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError(
-        'Câmera indisponível neste navegador/ambiente. Utilize a validação manual por código abaixo.'
-      );
-      return;
+    if (streamRef.current) {
+      releaseMediaStreamTracks(streamRef.current);
+      streamRef.current = null;
     }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+      } catch {
+        // Ignore cleanup errors on video element
       }
-    } catch {
-      setCameraError(
-        'Permissão de câmera não concedida ou dispositivo sem câmera ativa. Utilize a busca rápida por código.'
-      );
+    }
+    if (isMountedRef.current) {
       setCameraActive(false);
+      setIsStartingCamera(false);
+      setBarcodeDetectorSupported(true);
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const rawCode = checkinInput.trim();
-    if (!rawCode || isCheckingIn) return;
+  useEffect(() => {
+    activeModuleRef.current = activeModule;
+    if (activeModule !== 'checkin') {
+      stopCameraStream();
+    }
+  }, [activeModule]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      stopCameraStream();
+    };
+  }, []);
+
+  const attachStreamAndPlayVideo = async (
+    stream: MediaStream,
+    videoEl: HTMLVideoElement
+  ): Promise<void> => {
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+    videoEl.autoplay = true;
+    videoEl.setAttribute('playsinline', 'true');
+    videoEl.setAttribute('webkit-playsinline', 'true');
+    videoEl.setAttribute('muted', 'true');
+    videoEl.srcObject = stream;
+
+    if (videoEl.readyState < 1) {
+      await new Promise<void>((resolve) => {
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          videoEl.removeEventListener('loadedmetadata', finish);
+          videoEl.removeEventListener('canplay', finish);
+          window.clearTimeout(timer);
+          resolve();
+        };
+        const timer = window.setTimeout(finish, 2500);
+        videoEl.addEventListener('loadedmetadata', finish, { once: true });
+        videoEl.addEventListener('canplay', finish, { once: true });
+      });
+    }
+
+    await videoEl.play();
+  };
+
+  useEffect(() => {
+    if (!cameraActive || !streamRef.current || !videoRef.current) {
+      return;
+    }
+    const videoEl = videoRef.current;
+    if (videoEl.srcObject !== streamRef.current) {
+      attachStreamAndPlayVideo(streamRef.current, videoEl).catch((err) => {
+        stopCameraStream();
+        if (isMountedRef.current && activeModuleRef.current === 'checkin') {
+          setCameraError(classifyCameraError(err));
+        }
+      });
+    } else if (videoEl.paused) {
+      videoEl.play().catch(() => {
+        // Handled by primary activation flow
+      });
+    }
+  }, [cameraActive]);
+
+  const executeCheckinCode = async (rawCodeInput: string) => {
+    const rawCode = rawCodeInput.trim();
+    if (!rawCode || isCheckingInRef.current || isCheckingIn) return;
 
     const nowStr = new Date().toLocaleString('pt-BR', {
       day: '2-digit',
@@ -490,6 +564,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       return;
     }
 
+    isCheckingInRef.current = true;
     setIsCheckingIn(true);
     try {
       const rpcRes = await performCheckinInSupabase({
@@ -529,15 +604,211 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
             }
           : undefined;
 
-      setLastCheckinResult({
-        authorized: rpcRes.authorized,
-        statusReason: rpcRes.result,
-        record: checkinRecord,
-      });
+      if (isMountedRef.current) {
+        setLastCheckinResult({
+          authorized: rpcRes.authorized,
+          statusReason: rpcRes.result,
+          record: checkinRecord,
+        });
+      }
       onProcessCheckin(updatedTicket, checkinRecord);
     } finally {
-      setIsCheckingIn(false);
+      isCheckingInRef.current = false;
+      if (isMountedRef.current) {
+        setIsCheckingIn(false);
+      }
     }
+  };
+
+  const executeCheckinCodeRef = useRef(executeCheckinCode);
+  executeCheckinCodeRef.current = executeCheckinCode;
+
+  useEffect(() => {
+    if (!cameraActive) {
+      if (scanIntervalRef.current !== null) {
+        window.clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
+      return;
+    }
+
+    type BarcodeDetectorLike = {
+      detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>>;
+    };
+    const BarcodeDetectorCtor = (
+      window as unknown as {
+        BarcodeDetector?: new (options?: { formats?: string[] }) => BarcodeDetectorLike;
+      }
+    ).BarcodeDetector;
+
+    if (!BarcodeDetectorCtor) {
+      setBarcodeDetectorSupported(false);
+      return;
+    }
+
+    let detector: BarcodeDetectorLike | null = null;
+    try {
+      detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+      setBarcodeDetectorSupported(true);
+    } catch {
+      setBarcodeDetectorSupported(false);
+      return;
+    }
+
+    let scanningFrame = false;
+    scanIntervalRef.current = window.setInterval(async () => {
+      if (scanningFrame || isCheckingInRef.current) return;
+      const videoEl = videoRef.current;
+      if (!videoEl || videoEl.readyState < 2 || videoEl.videoWidth === 0) return;
+
+      scanningFrame = true;
+      try {
+        const codes = await detector!.detect(videoEl);
+        const firstValue = codes?.[0]?.rawValue?.trim();
+        if (firstValue && !isCheckingInRef.current) {
+          const now = Date.now();
+          if (
+            lastScannedRef.current.code !== firstValue ||
+            now - lastScannedRef.current.timestamp > 3500
+          ) {
+            lastScannedRef.current = { code: firstValue, timestamp: now };
+            if (isMountedRef.current) {
+              setCheckinInput(firstValue);
+            }
+            await executeCheckinCodeRef.current(firstValue);
+          }
+        }
+      } catch {
+        // Ignore transient frame detection errors
+      } finally {
+        scanningFrame = false;
+      }
+    }, 250);
+
+    return () => {
+      if (scanIntervalRef.current !== null) {
+        window.clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+      }
+    };
+  }, [cameraActive]);
+
+  const handleToggleCamera = async () => {
+    if (isStartingCamera) return;
+
+    if (cameraActive) {
+      stopCameraStream();
+      return;
+    }
+
+    setCameraError(null);
+
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      setCameraError(
+        'O acesso à câmera requer conexão segura (HTTPS). Utilize a validação manual por código abaixo.'
+      );
+      return;
+    }
+
+    if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
+      setCameraError(
+        'Câmera indisponível neste navegador/ambiente. Utilize a validação manual por código abaixo.'
+      );
+      return;
+    }
+
+    const sessionId = ++cameraSessionIdRef.current;
+    const isSessionStale = () =>
+      !isMountedRef.current ||
+      activeModuleRef.current !== 'checkin' ||
+      cameraSessionIdRef.current !== sessionId;
+
+    setIsStartingCamera(true);
+    let acquiredStream: MediaStream | null = null;
+    let lastError: unknown = null;
+
+    try {
+      const candidates = buildCameraConstraintCandidates();
+      for (const constraints of candidates) {
+        if (isSessionStale()) {
+          break;
+        }
+        try {
+          const candidateStream = await navigator.mediaDevices.getUserMedia(constraints);
+          if (isSessionStale()) {
+            releaseMediaStreamTracks(candidateStream);
+            return;
+          }
+          const videoTracks = candidateStream.getVideoTracks();
+          if (videoTracks.length > 0) {
+            acquiredStream = candidateStream;
+            break;
+          }
+          releaseMediaStreamTracks(candidateStream);
+        } catch (err) {
+          if (isSessionStale()) {
+            return;
+          }
+          lastError = err;
+          if (shouldAbortCameraFallbackOnError(err)) {
+            break;
+          }
+        }
+      }
+
+      if (isSessionStale()) {
+        releaseMediaStreamTracks(acquiredStream);
+        return;
+      }
+
+      if (!acquiredStream) {
+        throw lastError ?? new Error('Nenhuma câmera de vídeo disponível.');
+      }
+
+      const primaryVideoTrack = acquiredStream.getVideoTracks()[0];
+      if (primaryVideoTrack) {
+        primaryVideoTrack.onended = () => {
+          stopCameraStream();
+          if (isMountedRef.current && activeModuleRef.current === 'checkin') {
+            setCameraError(
+              'A transmissão da câmera foi interrompida pelo dispositivo. Clique em "Ativar Câmera QR" para reconectar.'
+            );
+          }
+        };
+      }
+
+      streamRef.current = acquiredStream;
+
+      if (!videoRef.current) {
+        throw new Error('Elemento de vídeo não encontrado para exibir a câmera.');
+      }
+
+      await attachStreamAndPlayVideo(acquiredStream, videoRef.current);
+
+      if (isSessionStale()) {
+        releaseMediaStreamTracks(acquiredStream);
+        stopCameraStream();
+        return;
+      }
+
+      setCameraActive(true);
+    } catch (err) {
+      releaseMediaStreamTracks(acquiredStream);
+      const stale = isSessionStale();
+      stopCameraStream();
+      if (!stale) {
+        setCameraError(classifyCameraError(err));
+      }
+    } finally {
+      if (isMountedRef.current && cameraSessionIdRef.current === sessionId) {
+        setIsStartingCamera(false);
+      }
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeCheckinCode(checkinInput);
   };
 
   const handleOpenCreateEventModal = () => {
@@ -1945,7 +2216,8 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                 <button
                   type="button"
                   onClick={handleToggleCamera}
-                  className="px-4 py-2 rounded-lg bg-[#171A24] hover:bg-[#212534] border border-[#2D3244] text-xs font-semibold text-white flex items-center gap-2 cursor-pointer"
+                  disabled={isStartingCamera}
+                  className="px-4 py-2 rounded-lg bg-[#171A24] hover:bg-[#212534] disabled:opacity-60 border border-[#2D3244] text-xs font-semibold text-white flex items-center gap-2 cursor-pointer"
                 >
                   {cameraActive ? (
                     <>
@@ -1955,7 +2227,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                   ) : (
                     <>
                       <Camera className="w-4 h-4 text-[#E50914]" />
-                      <span>Ativar Câmera QR</span>
+                      <span>{isStartingCamera ? 'Iniciando Câmera...' : 'Ativar Câmera QR'}</span>
                     </>
                   )}
                 </button>
@@ -1967,31 +2239,42 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                 </div>
               )}
 
+              {cameraActive && !barcodeDetectorSupported && (
+                <div className="rounded-xl bg-[#161924] border border-amber-500/40 p-3 text-xs text-amber-200">
+                  Visualização da câmera ativa, porém este navegador não possui suporte nativo à leitura automática de QR Code (BarcodeDetector). Utilize o Google Chrome no Android ou informe o código manualmente no campo ao lado.
+                </div>
+              )}
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
                 <div className="lg:col-span-5 rounded-2xl bg-[#11131C] border border-[#232736] p-6 flex flex-col items-center justify-center space-y-4">
                   <p className="text-xs font-semibold text-neutral-300">
                     Escaneie o QR Code do ingresso
                   </p>
 
-                  <div className="relative w-52 h-52 flex items-center justify-center bg-[#090A0E] rounded-xl p-4">
-                    <span className="absolute top-2 left-2 w-7 h-7 border-t-4 border-l-4 border-[#E50914] rounded-tl-md" />
-                    <span className="absolute top-2 right-2 w-7 h-7 border-t-4 border-r-4 border-[#E50914] rounded-tr-md" />
-                    <span className="absolute bottom-2 left-2 w-7 h-7 border-b-4 border-l-4 border-[#E50914] rounded-bl-md" />
-                    <span className="absolute bottom-2 right-2 w-7 h-7 border-b-4 border-r-4 border-[#E50914] rounded-br-md" />
+                  <div className="relative w-52 h-52 flex items-center justify-center bg-[#090A0E] rounded-xl p-4 overflow-hidden">
+                    <span className="absolute top-2 left-2 z-20 w-7 h-7 border-t-4 border-l-4 border-[#E50914] rounded-tl-md pointer-events-none" />
+                    <span className="absolute top-2 right-2 z-20 w-7 h-7 border-t-4 border-r-4 border-[#E50914] rounded-tr-md pointer-events-none" />
+                    <span className="absolute bottom-2 left-2 z-20 w-7 h-7 border-b-4 border-l-4 border-[#E50914] rounded-bl-md pointer-events-none" />
+                    <span className="absolute bottom-2 right-2 z-20 w-7 h-7 border-b-4 border-r-4 border-[#E50914] rounded-br-md pointer-events-none" />
 
-                    {cameraActive ? (
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      data-testid="checkin-camera-video"
+                      className={`w-full h-full object-cover rounded-lg transition-opacity duration-150 ${
+                        cameraActive
+                          ? 'opacity-100 z-10'
+                          : 'opacity-0 pointer-events-none absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)]'
+                      }`}
+                    />
+
+                    {!cameraActive && (
                       <QRCodeVisual value={checkinInput || 'PX-CONTROL-SCANNER'} size={140} />
                     )}
 
-                    <div className="absolute left-3 right-3 top-1/2 h-0.5 bg-[#E50914] shadow-[0_0_12px_#E50914]" />
+                    <div className="absolute left-3 right-3 top-1/2 z-20 h-0.5 bg-[#E50914] shadow-[0_0_12px_#E50914] pointer-events-none" />
                   </div>
 
                   {tickets.length > 0 && (

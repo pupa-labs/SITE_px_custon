@@ -56,6 +56,9 @@ import {
   resolveAdminHeaderAction,
   validateAdminCategoryFormInput,
   validateAdminBatchFormInput,
+  buildCameraConstraintCandidates,
+  shouldAbortCameraFallbackOnError,
+  classifyCameraError,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -3409,4 +3412,56 @@ test('validateAdminCategoryFormInput and validateAdminBatchFormInput enforce req
     assert.ok(invalidBatchDates.fieldErrors.endsAt);
   }
 });
+
+test('Check-in camera scanner: prioritizes rear camera constraints, classifies WebRTC errors, and keeps <video> persistently mounted in DOM before srcObject attachment', () => {
+  const candidates = buildCameraConstraintCandidates();
+  assert.equal(candidates.length, 3);
+  assert.deepEqual(candidates[0], {
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+    },
+    audio: false,
+  });
+  assert.deepEqual(candidates[1], {
+    video: {
+      facingMode: 'environment',
+    },
+    audio: false,
+  });
+  assert.deepEqual(candidates[2], {
+    video: true,
+    audio: false,
+  });
+
+  // Permission denial and security block must abort fallback retries immediately
+  assert.equal(shouldAbortCameraFallbackOnError({ name: 'NotAllowedError' }), true);
+  assert.equal(shouldAbortCameraFallbackOnError({ name: 'PermissionDeniedError' }), true);
+  assert.equal(shouldAbortCameraFallbackOnError({ name: 'SecurityError' }), true);
+  assert.equal(shouldAbortCameraFallbackOnError({ name: 'OverconstrainedError' }), false);
+  assert.equal(shouldAbortCameraFallbackOnError({ name: 'NotFoundError' }), false);
+
+  // Error classification messages
+  assert.ok(classifyCameraError({ name: 'NotAllowedError' }).includes('Permissão de câmera negada'));
+  assert.ok(classifyCameraError({ name: 'NotFoundError' }).includes('Nenhuma câmera compatível'));
+  assert.ok(classifyCameraError({ name: 'NotReadableError' }).includes('em uso por outro aplicativo'));
+  assert.ok(classifyCameraError({ name: 'OverconstrainedError' }).includes('não suportou os parâmetros'));
+  assert.ok(classifyCameraError({ name: 'SecurityError' }).includes('HTTPS'));
+
+  // Verify AdminPanelView.tsx keeps <video> persistently mounted, calls videoEl.play(), and guards pending getUserMedia / single-flight check-in
+  const adminViewPath = path.resolve(process.cwd(), 'src/components/AdminPanelView.tsx');
+  const adminCode = fs.readFileSync(adminViewPath, 'utf8');
+  assert.equal(adminCode.includes('{cameraActive ? (\n                      <video'), false);
+  assert.ok(adminCode.includes('data-testid="checkin-camera-video"'));
+  assert.ok(adminCode.includes('await videoEl.play()'));
+  assert.ok(adminCode.includes("videoEl.setAttribute('playsinline', 'true')"));
+  assert.ok(adminCode.includes("videoEl.setAttribute('webkit-playsinline', 'true')"));
+  assert.ok(adminCode.includes('stopCameraStream()'));
+  assert.ok(adminCode.includes('cameraSessionIdRef'));
+  assert.ok(adminCode.includes('releaseMediaStreamTracks'));
+  assert.ok(adminCode.includes('isCheckingInRef'));
+  assert.ok(adminCode.includes('barcodeDetectorSupported'));
+});
+
 

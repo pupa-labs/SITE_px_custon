@@ -4076,3 +4076,90 @@ export function validateAdminBatchFormInput(input: {
     },
   };
 }
+
+/**
+ * Builds ordered `MediaStreamConstraints` candidates for the PX CONTROL QR Code check-in scanner.
+ * Prioritizes the rear camera (`environment`) with ideal HD resolution on mobile devices,
+ * falling back progressively to standard `environment` and finally any available video camera.
+ */
+export function buildCameraConstraintCandidates(): MediaStreamConstraints[] {
+  return [
+    {
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+      audio: false,
+    },
+    {
+      video: {
+        facingMode: 'environment',
+      },
+      audio: false,
+    },
+    {
+      video: true,
+      audio: false,
+    },
+  ];
+}
+
+/**
+ * Determines whether a `getUserMedia` error should immediately stop fallback attempts
+ * (e.g. explicit permission denial or security policy block).
+ */
+export function shouldAbortCameraFallbackOnError(err: unknown): boolean {
+  const errName =
+    err && typeof err === 'object' && 'name' in err && typeof (err as { name?: unknown }).name === 'string'
+      ? (err as { name: string }).name
+      : '';
+
+  return (
+    errName === 'NotAllowedError' ||
+    errName === 'PermissionDeniedError' ||
+    errName === 'SecurityError'
+  );
+}
+
+/**
+ * Translates browser / WebRTC camera errors (`DOMException` / `Error`) into clear, actionable
+ * messages in Portuguese for the check-in operator.
+ */
+export function classifyCameraError(err: unknown): string {
+  const errName =
+    err && typeof err === 'object' && 'name' in err && typeof (err as { name?: unknown }).name === 'string'
+      ? (err as { name: string }).name
+      : '';
+  const errMsg =
+    err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string'
+      ? (err as { message: string }).message
+      : '';
+
+  if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+    return 'Permissão de câmera negada. Autorize o acesso à câmera nas configurações do navegador/celular e tente novamente, ou utilize a validação manual por código.';
+  }
+
+  if (errName === 'SecurityError') {
+    return 'O acesso à câmera foi bloqueado pelas políticas de segurança do navegador (requer contexto seguro HTTPS). Utilize a validação manual por código.';
+  }
+
+  if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+    return 'Nenhuma câmera compatível foi encontrada neste dispositivo. Utilize a validação manual por código abaixo.';
+  }
+
+  if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+    return 'Não foi possível iniciar o vídeo da câmera (o dispositivo pode estar em uso por outro aplicativo). Feche outros apps que utilizam a câmera e tente novamente.';
+  }
+
+  if (errName === 'OverconstrainedError' || errName === 'ConstraintNotSatisfiedError') {
+    return 'A câmera do dispositivo não suportou os parâmetros de vídeo solicitados. Tente novamente ou utilize a validação manual por código.';
+  }
+
+  if (errName === 'AbortError' || errMsg.toLowerCase().includes('timeout')) {
+    return 'A inicialização do vídeo da câmera demorou além do esperado ou foi interrompida. Tente reativar a câmera ou valide pelo código.';
+  }
+
+  return 'Não foi possível exibir a imagem da câmera neste dispositivo. Utilize a busca rápida por código abaixo.';
+}
+
