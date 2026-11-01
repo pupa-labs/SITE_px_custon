@@ -16,6 +16,8 @@ import type {
   DbEventRow,
   AdminEventFormInput,
   DbEventWritePayload,
+  AdminSaveTicketCategoryInput,
+  AdminSaveTicketBatchInput,
 } from '../types/domain';
 
 export const CONVENIENCE_FEE_RATE = 0.06; // 6% convenience fee (e.g., R$ 80,00 -> R$ 4,80)
@@ -3805,6 +3807,272 @@ export function evaluateOfficialMercadoPagoWebhookPayment(params: {
   };
 }
 
+/**
+ * Formats a CPF with LGPD/privacy masking for administrative listings (`***.456.789-**`).
+ * Preserves the middle 6 digits so operators can distinguish homonyms without exposing the full document in tables.
+ */
+export function maskCpfForPrivacy(cpf: string | null | undefined): string {
+  const digits = (cpf ?? '').replace(/\D/g, '');
+  if (digits.length !== 11) {
+    return digits.length > 0 ? '***.***.***-**' : 'Não informado';
+  }
+  return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
+}
 
+/**
+ * Formats an 11-digit CPF into standard Brazilian notation (`123.456.789-00`).
+ */
+export function formatCpfDisplay(cpf: string | null | undefined): string {
+  const digits = (cpf ?? '').replace(/\D/g, '');
+  if (digits.length !== 11) {
+    return (cpf ?? '').trim() || 'Não informado';
+  }
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+}
 
+/**
+ * Resolves the contextual primary creation button for the PX CONTROL header based on the active module:
+ * - 'events' or 'dashboard' -> "Novo Evento"
+ * - 'categories' -> "Nova Categoria"
+ * - 'lots' -> "Novo Lote"
+ * - 'tickets', 'orders', 'payments', 'customers', 'operators', 'checkin', 'reports', 'settings' -> no creation button
+ * Guarantees that "Novo Evento" NEVER appears in Categories, Batches, Tickets, Orders, Payments, or Customers.
+ */
+export function resolveAdminHeaderAction(activeModule: string): {
+  showNewEvent: boolean;
+  showNewCategory: boolean;
+  showNewBatch: boolean;
+  primaryLabel: 'Novo Evento' | 'Nova Categoria' | 'Novo Lote' | null;
+} {
+  if (activeModule === 'events' || activeModule === 'dashboard') {
+    return {
+      showNewEvent: true,
+      showNewCategory: false,
+      showNewBatch: false,
+      primaryLabel: 'Novo Evento',
+    };
+  }
+  if (activeModule === 'categories') {
+    return {
+      showNewEvent: false,
+      showNewCategory: true,
+      showNewBatch: false,
+      primaryLabel: 'Nova Categoria',
+    };
+  }
+  if (activeModule === 'lots') {
+    return {
+      showNewEvent: false,
+      showNewCategory: false,
+      showNewBatch: true,
+      primaryLabel: 'Novo Lote',
+    };
+  }
+  return {
+    showNewEvent: false,
+    showNewCategory: false,
+    showNewBatch: false,
+    primaryLabel: null,
+  };
+}
 
+/**
+ * Validates and builds the payload for `public.admin_save_ticket_category`.
+ */
+export function validateAdminCategoryFormInput(input: {
+  id?: string | null;
+  eventId: string;
+  name: string;
+  slug?: string;
+  description?: string | null;
+  maxPerOrder: number | string;
+  sortOrder: number | string;
+  active?: boolean;
+}):
+  | {
+      ok: true;
+      payload: AdminSaveTicketCategoryInput;
+    }
+  | {
+      ok: false;
+      errorMessage: string;
+      fieldErrors: Record<string, string>;
+    } {
+  const fieldErrors: Record<string, string> = {};
+
+  const cleanEventId = (input.eventId ?? '').trim();
+  if (!cleanEventId) {
+    fieldErrors.eventId = 'Selecione o evento ao qual a categoria pertence.';
+  }
+
+  const cleanName = (input.name ?? '').trim();
+  if (cleanName.length < 2) {
+    fieldErrors.name = 'Informe o nome da categoria (mínimo de 2 caracteres).';
+  }
+
+  const rawSlugSource = input.slug?.trim() ? input.slug.trim() : cleanName;
+  const normalizedSlug = rawSlugSource
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  if (normalizedSlug.length < 2) {
+    fieldErrors.slug = 'O identificador (slug) da categoria deve ter pelo menos 2 caracteres.';
+  }
+
+  const parsedMaxPerOrder = Number(input.maxPerOrder);
+  if (
+    !Number.isInteger(parsedMaxPerOrder) ||
+    parsedMaxPerOrder < 1 ||
+    parsedMaxPerOrder > 50
+  ) {
+    fieldErrors.maxPerOrder = 'O limite por pedido deve ser um número inteiro entre 1 e 50.';
+  }
+
+  const parsedSortOrder = Number(input.sortOrder);
+  if (!Number.isInteger(parsedSortOrder) || parsedSortOrder < 1) {
+    fieldErrors.sortOrder = 'A ordem de exibição deve ser um número inteiro maior ou igual a 1.';
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    const firstMsg = Object.values(fieldErrors)[0] ?? 'Verifique os campos da categoria.';
+    return {
+      ok: false,
+      errorMessage: firstMsg,
+      fieldErrors,
+    };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      id: input.id?.trim() ? input.id.trim() : null,
+      eventId: cleanEventId,
+      name: cleanName,
+      slug: normalizedSlug,
+      description: input.description?.trim() ? input.description.trim() : null,
+      maxPerOrder: parsedMaxPerOrder,
+      sortOrder: parsedSortOrder,
+      active: input.active ?? true,
+    },
+  };
+}
+
+/**
+ * Validates and builds the payload for `public.admin_save_ticket_batch`.
+ */
+export function validateAdminBatchFormInput(input: {
+  id?: string | null;
+  eventId: string;
+  categoryId: string;
+  name: string;
+  batchNumber: number | string;
+  description?: string | null;
+  price: number | string;
+  totalQuantity: number | string;
+  thumbnailUrl?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  active?: boolean;
+}):
+  | {
+      ok: true;
+      payload: AdminSaveTicketBatchInput;
+    }
+  | {
+      ok: false;
+      errorMessage: string;
+      fieldErrors: Record<string, string>;
+    } {
+  const fieldErrors: Record<string, string> = {};
+
+  const cleanEventId = (input.eventId ?? '').trim();
+  if (!cleanEventId) {
+    fieldErrors.eventId = 'Selecione o evento ao qual o lote pertence.';
+  }
+
+  const cleanCategoryId = (input.categoryId ?? '').trim();
+  if (!cleanCategoryId) {
+    fieldErrors.categoryId = 'Selecione a categoria de ingresso vinculada a este lote.';
+  }
+
+  const cleanName = (input.name ?? '').trim();
+  if (cleanName.length < 2) {
+    fieldErrors.name = 'Informe o nome do lote (mínimo de 2 caracteres).';
+  }
+
+  const parsedBatchNumber = Number(input.batchNumber);
+  if (!Number.isInteger(parsedBatchNumber) || parsedBatchNumber < 1) {
+    fieldErrors.batchNumber = 'O número do lote deve ser um inteiro maior ou igual a 1.';
+  }
+
+  const rawPrice = String(input.price ?? '').replace(',', '.').trim();
+  const parsedPrice = Number(rawPrice);
+  if (rawPrice === '' || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+    fieldErrors.price = 'Informe um preço válido para o lote (maior ou igual a R$ 0,00).';
+  }
+
+  const parsedTotalQty = Number(input.totalQuantity);
+  if (!Number.isInteger(parsedTotalQty) || parsedTotalQty <= 0) {
+    fieldErrors.totalQuantity = 'A quantidade total do lote deve ser um inteiro maior que zero.';
+  }
+
+  let normalizedStartsAt: string | null = null;
+  let normalizedEndsAt: string | null = null;
+
+  const rawStarts = (input.startsAt ?? '').trim();
+  if (rawStarts) {
+    const dtStart = new Date(rawStarts);
+    if (Number.isNaN(dtStart.getTime())) {
+      fieldErrors.startsAt = 'Data/hora de início das vendas inválida.';
+    } else {
+      normalizedStartsAt = dtStart.toISOString();
+    }
+  }
+
+  const rawEnds = (input.endsAt ?? '').trim();
+  if (rawEnds) {
+    const dtEnd = new Date(rawEnds);
+    if (Number.isNaN(dtEnd.getTime())) {
+      fieldErrors.endsAt = 'Data/hora de encerramento das vendas inválida.';
+    } else {
+      normalizedEndsAt = dtEnd.toISOString();
+    }
+  }
+
+  if (normalizedStartsAt && normalizedEndsAt) {
+    if (new Date(normalizedEndsAt).getTime() <= new Date(normalizedStartsAt).getTime()) {
+      fieldErrors.endsAt = 'O fim das vendas deve ser posterior ao início das vendas.';
+    }
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    const firstMsg = Object.values(fieldErrors)[0] ?? 'Verifique os campos do lote.';
+    return {
+      ok: false,
+      errorMessage: firstMsg,
+      fieldErrors,
+    };
+  }
+
+  return {
+    ok: true,
+    payload: {
+      id: input.id?.trim() ? input.id.trim() : null,
+      eventId: cleanEventId,
+      categoryId: cleanCategoryId,
+      name: cleanName,
+      batchNumber: parsedBatchNumber,
+      description: input.description?.trim() ?? '',
+      price: Number(parsedPrice.toFixed(2)),
+      totalQuantity: parsedTotalQty,
+      thumbnailUrl: input.thumbnailUrl?.trim() ? input.thumbnailUrl.trim() : null,
+      startsAt: normalizedStartsAt,
+      endsAt: normalizedEndsAt,
+      active: input.active ?? true,
+    },
+  };
+}

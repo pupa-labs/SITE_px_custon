@@ -8,11 +8,17 @@ import {
   supabase,
   INITIAL_CATEGORIES,
   fetchPublishedEventsFromSupabase,
-  fetchAdminEventsFromSupabase,
+  fetchAdminWorkspaceDataFromSupabase,
   createEventInSupabase,
   updateEventInSupabase,
   updateEventStatusInSupabase,
   deleteEventInSupabase,
+  saveTicketCategoryInSupabase,
+  deleteTicketCategoryInSupabase,
+  saveTicketBatchInSupabase,
+  deleteTicketBatchInSupabase,
+  cancelOrderInSupabase,
+  refundOrderInSupabase,
   computeCategoriesWithEventCounts,
   fetchAuthenticatedUserProfileFromSupabase,
   fetchOwnTicketsFromSupabase,
@@ -26,9 +32,14 @@ import type {
   Order,
   CheckinRecord,
   Profile,
+  AuditLogEntry,
   AuthStatus,
   EventStatus,
   AdminEventFormInput,
+  DbTicketCategoryRow,
+  DbTicketBatchRow,
+  AdminSaveTicketCategoryInput,
+  AdminSaveTicketBatchInput,
 } from './types/domain';
 import { Navbar, type AppView, type ClientSubTab } from './components/Navbar';
 import { HomeView } from './components/HomeView';
@@ -49,6 +60,12 @@ export default function App() {
   const [eventsLoading, setEventsLoading] = useState<boolean>(true);
   const [eventsError, setEventsError] = useState<string | null>(null);
   const [adminEvents, setAdminEvents] = useState<EventItem[]>([]);
+  const [adminTicketCategories, setAdminTicketCategories] = useState<DbTicketCategoryRow[]>([]);
+  const [adminTicketBatches, setAdminTicketBatches] = useState<DbTicketBatchRow[]>([]);
+  const [adminOrders, setAdminOrders] = useState<Order[]>([]);
+  const [adminTickets, setAdminTickets] = useState<Ticket[]>([]);
+  const [adminCustomers, setAdminCustomers] = useState<Profile[]>([]);
+  const [adminAuditLogs, setAdminAuditLogs] = useState<AuditLogEntry[]>([]);
   const [adminEventsLoading, setAdminEventsLoading] = useState<boolean>(false);
   const [adminEventsError, setAdminEventsError] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -265,6 +282,12 @@ export default function App() {
   const loadAdminEvents = useCallback(async () => {
     if (!adminAccess.allowed) {
       setAdminEvents([]);
+      setAdminTicketCategories([]);
+      setAdminTicketBatches([]);
+      setAdminOrders([]);
+      setAdminTickets([]);
+      setAdminCustomers([]);
+      setAdminAuditLogs([]);
       setAdminEventsError(null);
       return;
     }
@@ -272,19 +295,22 @@ export default function App() {
     setAdminEventsLoading(true);
     setAdminEventsError(null);
     try {
-      const result = await fetchAdminEventsFromSupabase();
-      if (!result.ok) {
-        setAdminEventsError(
-          result.errorMessage ?? 'Não foi possível carregar os eventos administrativos do Supabase.'
-        );
-        return;
-      }
+      const result = await fetchAdminWorkspaceDataFromSupabase();
       setAdminEvents(result.events);
+      setAdminTicketCategories(result.ticketCategories);
+      setAdminTicketBatches(result.ticketBatches);
+      setAdminOrders(result.orders);
+      setAdminTickets(result.tickets);
+      setAdminCustomers(result.customers);
+      setAdminAuditLogs(result.auditLogs);
+      if (!result.ok && result.errorMessage) {
+        setAdminEventsError(result.errorMessage);
+      }
     } catch (err) {
       setAdminEventsError(
         err instanceof Error
           ? err.message
-          : 'Erro inesperado ao consultar eventos administrativos no Supabase.'
+          : 'Erro inesperado ao consultar dados administrativos no Supabase.'
       );
     } finally {
       setAdminEventsLoading(false);
@@ -296,6 +322,12 @@ export default function App() {
       loadAdminEvents();
     } else {
       setAdminEvents([]);
+      setAdminTicketCategories([]);
+      setAdminTicketBatches([]);
+      setAdminOrders([]);
+      setAdminTickets([]);
+      setAdminCustomers([]);
+      setAdminAuditLogs([]);
       setAdminEventsError(null);
     }
   }, [adminAccess.allowed, loadAdminEvents]);
@@ -395,9 +427,76 @@ export default function App() {
     [loadAdminEvents, loadPublishedEvents]
   );
 
+  const handleSaveTicketCategory = useCallback(
+    async (input: AdminSaveTicketCategoryInput) => {
+      const result = await saveTicketCategoryInSupabase(input);
+      if (result.ok) {
+        await Promise.all([loadAdminEvents(), loadPublishedEvents()]);
+      }
+      return result;
+    },
+    [loadAdminEvents, loadPublishedEvents]
+  );
+
+  const handleDeleteTicketCategory = useCallback(
+    async (categoryId: string) => {
+      const result = await deleteTicketCategoryInSupabase(categoryId);
+      if (result.ok) {
+        await Promise.all([loadAdminEvents(), loadPublishedEvents()]);
+      }
+      return result;
+    },
+    [loadAdminEvents, loadPublishedEvents]
+  );
+
+  const handleSaveTicketBatch = useCallback(
+    async (input: AdminSaveTicketBatchInput) => {
+      const result = await saveTicketBatchInSupabase(input);
+      if (result.ok) {
+        await Promise.all([loadAdminEvents(), loadPublishedEvents()]);
+      }
+      return result;
+    },
+    [loadAdminEvents, loadPublishedEvents]
+  );
+
+  const handleDeleteTicketBatch = useCallback(
+    async (batchId: string) => {
+      const result = await deleteTicketBatchInSupabase(batchId);
+      if (result.ok) {
+        await Promise.all([loadAdminEvents(), loadPublishedEvents()]);
+      }
+      return result;
+    },
+    [loadAdminEvents, loadPublishedEvents]
+  );
+
+  const handleCancelOrderAdmin = useCallback(
+    async (params: { orderId: string; reason?: string }) => {
+      const result = await cancelOrderInSupabase(params);
+      if (result.ok) {
+        await Promise.all([loadAdminEvents(), loadPublishedEvents(), loadAuthenticatedUserData()]);
+      }
+      return result;
+    },
+    [loadAdminEvents, loadPublishedEvents, loadAuthenticatedUserData]
+  );
+
+  const handleRefundOrderAdmin = useCallback(
+    async (params: { orderId: string; mpPaymentId: string; reason?: string }) => {
+      const result = await refundOrderInSupabase(params);
+      if (result.ok) {
+        await Promise.all([loadAdminEvents(), loadPublishedEvents(), loadAuthenticatedUserData()]);
+      }
+      return result;
+    },
+    [loadAdminEvents, loadPublishedEvents, loadAuthenticatedUserData]
+  );
+
   const handleProcessCheckin = (updatedTicket: Ticket | undefined, record: CheckinRecord) => {
     if (updatedTicket) {
       setTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t)));
+      setAdminTickets((prev) => prev.map((t) => (t.id === updatedTicket.id ? updatedTicket : t)));
     }
     setCheckins((prev) => [record, ...prev]);
   };
@@ -698,11 +797,13 @@ export default function App() {
           <AdminPanelView
             events={adminAccess.allowed ? adminEvents : events}
             categories={categoriesWithCounts}
-            tickets={tickets}
-            orders={orders}
+            ticketCategories={adminTicketCategories}
+            ticketBatches={adminTicketBatches}
+            tickets={adminAccess.allowed ? adminTickets : tickets}
+            orders={adminAccess.allowed ? adminOrders : orders}
             checkins={checkins}
-            customers={[]}
-            auditLogs={[]}
+            customers={adminCustomers}
+            auditLogs={adminAuditLogs}
             adminAccess={adminAccess}
             currentUserProfile={currentUserProfile}
             authenticatedEmail={authenticatedEmail}
@@ -718,6 +819,12 @@ export default function App() {
             onUpdateEvent={handleUpdateEvent}
             onToggleEventStatus={handleToggleEventStatus}
             onDeleteEvent={handleDeleteEvent}
+            onSaveTicketCategory={handleSaveTicketCategory}
+            onDeleteTicketCategory={handleDeleteTicketCategory}
+            onSaveTicketBatch={handleSaveTicketBatch}
+            onDeleteTicketBatch={handleDeleteTicketBatch}
+            onCancelOrder={handleCancelOrderAdmin}
+            onRefundOrder={handleRefundOrderAdmin}
             onProcessCheckin={handleProcessCheckin}
             onSelectEventPublic={handleOpenEvent}
           />

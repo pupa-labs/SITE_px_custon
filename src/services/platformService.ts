@@ -13,6 +13,8 @@ import type {
   DbOrderRow,
   DbTicketRow,
   DbProfileRow,
+  DbAuditLogRow,
+  UserRole,
   PaymentMethodType,
   OrderStatus,
   PaymentStatus,
@@ -1856,6 +1858,320 @@ export async function fetchAdminEventsFromSupabase(): Promise<{
       (categoriesResult.data as DbTicketCategoryRow[]) ?? [],
       (batchesResult.data as DbTicketBatchRow[]) ?? []
     ),
+  };
+}
+
+export interface AdminWorkspaceDataResult {
+  ok: boolean;
+  events: EventItem[];
+  ticketCategories: DbTicketCategoryRow[];
+  ticketBatches: DbTicketBatchRow[];
+  orders: Order[];
+  tickets: Ticket[];
+  customers: Profile[];
+  auditLogs: AuditLogEntry[];
+  errorMessage?: string;
+}
+
+/**
+ * Fetches the complete administrative dataset for PX CONTROL directly from Supabase:
+ * - `public.events` (all statuses)
+ * - `public.ticket_categories` (active and inactive)
+ * - `public.ticket_batches` (active and inactive)
+ * - `public.orders` (all orders across all customers via admin RLS)
+ * - `public.tickets` (all issued tickets across all customers via admin RLS)
+ * - `public.profiles` (all registered customers, operators, and admins via admin RLS)
+ * - `public.audit_logs` (recent audit entries via admin RLS)
+ * Never returns mock or demo data.
+ */
+export async function fetchAdminWorkspaceDataFromSupabase(): Promise<AdminWorkspaceDataResult> {
+  if (!supabaseConfigState.isConfigured || !supabase) {
+    return {
+      ok: false,
+      events: [],
+      ticketCategories: [],
+      ticketBatches: [],
+      orders: [],
+      tickets: [],
+      customers: [],
+      auditLogs: [],
+      errorMessage: supabaseConfigState.reason,
+    };
+  }
+
+  const adminCheck = await verifyAuthorizedAdminSession();
+  if (!adminCheck.ok) {
+    return {
+      ok: false,
+      events: [],
+      ticketCategories: [],
+      ticketBatches: [],
+      orders: [],
+      tickets: [],
+      customers: [],
+      auditLogs: [],
+      errorMessage: adminCheck.errorMessage,
+    };
+  }
+
+  const [
+    eventsRes,
+    categoriesRes,
+    batchesRes,
+    ordersRes,
+    ticketsRes,
+    profilesRes,
+    auditRes,
+  ] = await Promise.all([
+    supabase.from('events').select('*').order('event_date', { ascending: true }),
+    supabase
+      .from('ticket_categories')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('ticket_batches')
+      .select('*')
+      .order('batch_number', { ascending: true })
+      .order('created_at', { ascending: true }),
+    supabase.from('orders').select('*').order('created_at', { ascending: false }),
+    supabase.from('tickets').select('*').order('issued_at', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('id, full_name, cpf, email, phone, city, role, created_at, updated_at')
+      .order('created_at', { ascending: false }),
+    supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(100),
+  ]);
+
+  if (eventsRes.error) {
+    return {
+      ok: false,
+      events: [],
+      ticketCategories: [],
+      ticketBatches: [],
+      orders: [],
+      tickets: [],
+      customers: [],
+      auditLogs: [],
+      errorMessage: translateEventDatabaseError(eventsRes.error, 'fetch'),
+    };
+  }
+
+  if (categoriesRes.error) {
+    return {
+      ok: false,
+      events: [],
+      ticketCategories: [],
+      ticketBatches: [],
+      orders: [],
+      tickets: [],
+      customers: [],
+      auditLogs: [],
+      errorMessage: `Erro ao consultar categorias de ingressos: ${categoriesRes.error.message}`,
+    };
+  }
+
+  if (batchesRes.error) {
+    return {
+      ok: false,
+      events: [],
+      ticketCategories: [],
+      ticketBatches: [],
+      orders: [],
+      tickets: [],
+      customers: [],
+      auditLogs: [],
+      errorMessage: `Erro ao consultar lotes de ingressos: ${batchesRes.error.message}`,
+    };
+  }
+
+  const typedEvents = (eventsRes.data as DbEventRow[]) ?? [];
+  const typedCategories = (categoriesRes.data as DbTicketCategoryRow[]) ?? [];
+  const typedBatches = (batchesRes.data as DbTicketBatchRow[]) ?? [];
+  const typedOrders = (ordersRes.data as DbOrderRow[]) ?? [];
+  const typedTickets = (ticketsRes.data as DbTicketRow[]) ?? [];
+  const typedProfiles = (profilesRes.data as DbProfileRow[]) ?? [];
+  const typedAuditRows = !auditRes.error ? ((auditRes.data as DbAuditLogRow[]) ?? []) : [];
+
+  const eventById = new Map<string, DbEventRow>();
+  for (const ev of typedEvents) {
+    eventById.set(ev.id, ev);
+  }
+
+  const categoryById = new Map<string, DbTicketCategoryRow>();
+  for (const cat of typedCategories) {
+    categoryById.set(cat.id, cat);
+  }
+
+  const batchById = new Map<string, DbTicketBatchRow>();
+  for (const bt of typedBatches) {
+    batchById.set(bt.id, bt);
+  }
+
+  const profileById = new Map<string, DbProfileRow>();
+  for (const prof of typedProfiles) {
+    profileById.set(prof.id, prof);
+  }
+
+  const mappedEvents = assembleAdminEventsCatalog(typedEvents, typedCategories, typedBatches);
+
+  const mappedOrders: Order[] = typedOrders.map((row) => {
+    const ev = eventById.get(row.event_id);
+    const bt = batchById.get(row.ticket_batch_id);
+    const evDateObj = ev?.event_date ? new Date(ev.event_date) : null;
+    const formattedEvDate =
+      evDateObj && !Number.isNaN(evDateObj.getTime())
+        ? `${String(evDateObj.getUTCDate()).padStart(2, '0')}/${String(
+            evDateObj.getUTCMonth() + 1
+          ).padStart(2, '0')}/${evDateObj.getUTCFullYear()}`
+        : '—';
+    const createdObj = row.created_at ? new Date(row.created_at) : null;
+    const formattedCreatedAt =
+      createdObj && !Number.isNaN(createdObj.getTime())
+        ? createdObj.toLocaleString('pt-BR')
+        : row.created_at || '—';
+    const paidObj = row.paid_at ? new Date(row.paid_at) : null;
+    const formattedPaidAt =
+      paidObj && !Number.isNaN(paidObj.getTime())
+        ? paidObj.toLocaleString('pt-BR')
+        : row.paid_at ?? undefined;
+    const cancelledObj = row.cancelled_at ? new Date(row.cancelled_at) : null;
+    const formattedCancelledAt =
+      cancelledObj && !Number.isNaN(cancelledObj.getTime())
+        ? cancelledObj.toLocaleString('pt-BR')
+        : row.cancelled_at ?? undefined;
+
+    return {
+      id: row.id,
+      orderCode: row.order_code,
+      userId: row.user_id,
+      buyerName: row.buyer_name,
+      buyerCpf: row.buyer_cpf,
+      buyerEmail: row.buyer_email,
+      buyerPhone: row.buyer_phone,
+      eventId: row.event_id,
+      eventTitle: ev?.title ?? 'Evento PX CUSTON',
+      eventDate: formattedEvDate,
+      eventLocation: ev?.city ?? '—',
+      items: [
+        {
+          id: `${row.id}-item-1`,
+          lotId: row.ticket_batch_id,
+          lotName: bt?.name ?? 'Ingresso PX CUSTON',
+          unitPrice: Number(row.unit_price),
+          quantity: Number(row.quantity),
+          subtotal: Number(row.subtotal),
+        },
+      ],
+      subtotal: Number(row.subtotal),
+      convenienceFee: Number(row.convenience_fee),
+      totalAmount: Number(row.total_amount),
+      paymentMethod: row.payment_method,
+      status: row.order_status,
+      paymentStatus: row.payment_status,
+      reservationExpiresAt: row.reservation_expires_at ?? undefined,
+      paidAt: formattedPaidAt,
+      cancelledAt: formattedCancelledAt,
+      mpPreferenceId: row.mp_preference_id ?? undefined,
+      mpPaymentId: row.mp_payment_id ?? undefined,
+      createdAt: formattedCreatedAt,
+    };
+  });
+
+  const mappedTickets: Ticket[] = typedTickets.map((row) => {
+    const ev = eventById.get(row.event_id);
+    const bt = batchById.get(row.batch_id);
+    const cat = categoryById.get(row.category_id);
+    const operatorProf = row.used_by_operator_id
+      ? profileById.get(row.used_by_operator_id)
+      : undefined;
+    const evDateObj = ev?.event_date ? new Date(ev.event_date) : null;
+    const formattedEvDate =
+      evDateObj && !Number.isNaN(evDateObj.getTime())
+        ? `${String(evDateObj.getUTCDate()).padStart(2, '0')}/${String(
+            evDateObj.getUTCMonth() + 1
+          ).padStart(2, '0')}/${evDateObj.getUTCFullYear()}`
+        : '—';
+    const issuedObj = row.issued_at ? new Date(row.issued_at) : null;
+    const formattedIssuedAt =
+      issuedObj && !Number.isNaN(issuedObj.getTime())
+        ? issuedObj.toLocaleString('pt-BR')
+        : row.issued_at || '—';
+    const usedObj = row.used_at ? new Date(row.used_at) : null;
+    const formattedUsedAt =
+      usedObj && !Number.isNaN(usedObj.getTime())
+        ? usedObj.toLocaleString('pt-BR')
+        : row.used_at ?? undefined;
+
+    return {
+      id: row.id,
+      code: row.code,
+      qrPayload: row.qr_payload,
+      orderId: row.order_id,
+      itemSequence: row.item_sequence,
+      paymentId: row.mp_payment_id ?? '',
+      userId: row.user_id,
+      holderName: row.holder_name,
+      holderCpf: row.holder_cpf,
+      eventId: row.event_id,
+      eventTitle: ev?.title ?? 'Evento PX CUSTON',
+      eventDate: formattedEvDate,
+      eventLocation: ev?.city ?? '—',
+      eventImageUrl: ev?.card_image_url ?? '/assets/events/ev-rebaixados.jpg',
+      ticketTypeId: row.batch_id,
+      ticketCategoryId: row.category_id,
+      categoryName: cat?.name ?? 'Ingresso',
+      ticketTypeName: bt?.name ?? 'Ingresso PX CUSTON',
+      pricePaid: Number(row.price_paid),
+      status: row.status,
+      usedAt: formattedUsedAt,
+      usedByOperator: operatorProf?.full_name ?? row.used_by_operator_id ?? undefined,
+      issuedAt: formattedIssuedAt,
+    };
+  });
+
+  const mappedCustomers: Profile[] = typedProfiles.map(mapDbProfileRowToProfile);
+
+  const mappedAuditLogs: AuditLogEntry[] = typedAuditRows.map((row) => {
+    const actorProf = row.actor_id ? profileById.get(row.actor_id) : undefined;
+    const createdObj = row.created_at ? new Date(row.created_at) : null;
+    const formattedTs =
+      createdObj && !Number.isNaN(createdObj.getTime())
+        ? createdObj.toLocaleString('pt-BR')
+        : row.created_at;
+    const safeRole: UserRole =
+      row.actor_role === 'SUPER_ADMIN' ||
+      row.actor_role === 'admin' ||
+      row.actor_role === 'checkin_operator' ||
+      row.actor_role === 'customer'
+        ? row.actor_role
+        : 'admin';
+
+    return {
+      id: row.id,
+      actorName: actorProf?.full_name ?? (row.actor_role === 'service_role' ? 'Webhook / Backend Oficial' : 'Sistema PX CONTROL'),
+      actorRole: safeRole,
+      action: `${row.action} (${row.entity_type}: ${row.entity_id})`,
+      targetEntity: row.entity_type,
+      timestamp: formattedTs,
+    };
+  });
+
+  const secondaryError =
+    ordersRes.error?.message || ticketsRes.error?.message || profilesRes.error?.message;
+
+  return {
+    ok: !secondaryError,
+    events: mappedEvents,
+    ticketCategories: typedCategories,
+    ticketBatches: typedBatches,
+    orders: mappedOrders,
+    tickets: mappedTickets,
+    customers: mappedCustomers,
+    auditLogs: mappedAuditLogs,
+    errorMessage: secondaryError
+      ? `Aviso parcial ao carregar dados administrativos: ${secondaryError}`
+      : undefined,
   };
 }
 

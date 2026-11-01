@@ -161,6 +161,7 @@ export interface Ticket {
   code: string;
   qrPayload: string;
   orderId: string;
+  itemSequence?: number;
   paymentId: string;
   userId: string;
   holderName: string;
@@ -172,6 +173,7 @@ export interface Ticket {
   eventImageUrl: string;
   ticketTypeId: string;
   ticketCategoryId?: string;
+  categoryName?: string;
   ticketTypeName: string;
   pricePaid: number;
   status: TicketStatus;
@@ -209,6 +211,8 @@ export interface Order {
   status: OrderStatus;
   paymentStatus?: PaymentStatus;
   reservationExpiresAt?: string;
+  paidAt?: string;
+  cancelledAt?: string;
   mpPreferenceId?: string;
   mpPaymentId?: string;
   createdAt: string;

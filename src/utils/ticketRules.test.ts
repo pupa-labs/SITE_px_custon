@@ -51,6 +51,11 @@ import {
   parseMercadoPagoWebhookSignature,
   buildMercadoPagoWebhookManifest,
   evaluateOfficialMercadoPagoWebhookPayment,
+  maskCpfForPrivacy,
+  formatCpfDisplay,
+  resolveAdminHeaderAction,
+  validateAdminCategoryFormInput,
+  validateAdminBatchFormInput,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -3275,3 +3280,133 @@ test('Express server.js Mercado Pago endpoints enforce 6% fee, PIX & Credit Card
     await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 });
+
+test('resolveAdminHeaderAction returns section-specific creation buttons and never shows Novo Evento on Categories, Batches, Tickets, Orders, Payments, or Customers', () => {
+  assert.deepEqual(resolveAdminHeaderAction('events'), {
+    showNewEvent: true,
+    showNewCategory: false,
+    showNewBatch: false,
+    primaryLabel: 'Novo Evento',
+  });
+  assert.deepEqual(resolveAdminHeaderAction('dashboard'), {
+    showNewEvent: true,
+    showNewCategory: false,
+    showNewBatch: false,
+    primaryLabel: 'Novo Evento',
+  });
+  assert.deepEqual(resolveAdminHeaderAction('categories'), {
+    showNewEvent: false,
+    showNewCategory: true,
+    showNewBatch: false,
+    primaryLabel: 'Nova Categoria',
+  });
+  assert.deepEqual(resolveAdminHeaderAction('lots'), {
+    showNewEvent: false,
+    showNewCategory: false,
+    showNewBatch: true,
+    primaryLabel: 'Novo Lote',
+  });
+
+  // None of these sections should display a header creation button (especially not "Novo Evento")
+  for (const mod of [
+    'tickets',
+    'orders',
+    'payments',
+    'customers',
+    'operators',
+    'checkin',
+    'reports',
+    'settings',
+  ]) {
+    assert.deepEqual(resolveAdminHeaderAction(mod), {
+      showNewEvent: false,
+      showNewCategory: false,
+      showNewBatch: false,
+      primaryLabel: null,
+    });
+  }
+});
+
+test('maskCpfForPrivacy and formatCpfDisplay protect customer CPF in listings while formatting full CPF when authorized', () => {
+  assert.equal(maskCpfForPrivacy('123.456.789-01'), '***.456.789-**');
+  assert.equal(maskCpfForPrivacy('12345678901'), '***.456.789-**');
+  assert.equal(maskCpfForPrivacy(''), 'Não informado');
+  assert.equal(maskCpfForPrivacy(null), 'Não informado');
+
+  assert.equal(formatCpfDisplay('12345678901'), '123.456.789-01');
+  assert.equal(formatCpfDisplay('123.456.789-01'), '123.456.789-01');
+  assert.equal(formatCpfDisplay(''), 'Não informado');
+});
+
+test('validateAdminCategoryFormInput and validateAdminBatchFormInput enforce required fields, slug generation, limits, and batch dates', () => {
+  const validCat = validateAdminCategoryFormInput({
+    eventId: 'evt-100',
+    name: 'Box VIP Paddock',
+    slug: '',
+    description: 'Acesso exclusivo aos boxes',
+    maxPerOrder: '4',
+    sortOrder: '2',
+    active: true,
+  });
+  assert.equal(validCat.ok, true);
+  if (validCat.ok) {
+    assert.equal(validCat.payload.eventId, 'evt-100');
+    assert.equal(validCat.payload.name, 'Box VIP Paddock');
+    assert.equal(validCat.payload.slug, 'box-vip-paddock');
+    assert.equal(validCat.payload.maxPerOrder, 4);
+    assert.equal(validCat.payload.sortOrder, 2);
+    assert.equal(validCat.payload.active, true);
+  }
+
+  const invalidCat = validateAdminCategoryFormInput({
+    eventId: '',
+    name: 'A',
+    maxPerOrder: '0',
+    sortOrder: '0',
+  });
+  assert.equal(invalidCat.ok, false);
+  if (!invalidCat.ok) {
+    assert.ok(invalidCat.fieldErrors.eventId);
+    assert.ok(invalidCat.fieldErrors.name);
+    assert.ok(invalidCat.fieldErrors.maxPerOrder);
+    assert.ok(invalidCat.fieldErrors.sortOrder);
+  }
+
+  const validBatch = validateAdminBatchFormInput({
+    eventId: 'evt-100',
+    categoryId: 'cat-100',
+    name: 'Box VIP (1º Lote)',
+    batchNumber: '1',
+    description: 'Lote promocional de abertura',
+    price: '120,50',
+    totalQuantity: '250',
+    startsAt: '2026-05-01T10:00:00Z',
+    endsAt: '2026-06-01T22:00:00Z',
+    active: true,
+  });
+  assert.equal(validBatch.ok, true);
+  if (validBatch.ok) {
+    assert.equal(validBatch.payload.eventId, 'evt-100');
+    assert.equal(validBatch.payload.categoryId, 'cat-100');
+    assert.equal(validBatch.payload.batchNumber, 1);
+    assert.equal(validBatch.payload.price, 120.5);
+    assert.equal(validBatch.payload.totalQuantity, 250);
+    assert.equal(validBatch.payload.active, true);
+  }
+
+  const invalidBatchDates = validateAdminBatchFormInput({
+    eventId: 'evt-100',
+    categoryId: 'cat-100',
+    name: 'Box VIP (2º Lote)',
+    batchNumber: '2',
+    price: '150',
+    totalQuantity: '100',
+    startsAt: '2026-07-01T10:00:00Z',
+    endsAt: '2026-06-01T10:00:00Z',
+  });
+  assert.equal(invalidBatchDates.ok, false);
+  if (!invalidBatchDates.ok) {
+    assert.ok(invalidBatchDates.fieldErrors.endsAt);
+  }
+});
+
