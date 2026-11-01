@@ -59,6 +59,10 @@ import {
   buildCameraConstraintCandidates,
   shouldAbortCameraFallbackOnError,
   classifyCameraError,
+  generateRealQrCodeMatrix,
+  renderQrCodeMatrixToRgbaBuffer,
+  decodeQrCodeFromRgbaFrame,
+  shouldProcessScannedQrPayload,
 } from './ticketRules';
 import type { Ticket } from '../types/domain';
 
@@ -3463,5 +3467,203 @@ test('Check-in camera scanner: prioritizes rear camera constraints, classifies W
   assert.ok(adminCode.includes('isCheckingInRef'));
   assert.ok(adminCode.includes('barcodeDetectorSupported'));
 });
+
+test('ISO/IEC 18004 QR Code generation + Canvas/jsQR optical decoding round-trip, duplicate-scan prevention, and Supabase check-in validation integration', () => {
+  // 1. Real ticket qrPayload round-trip: generateRealQrCodeMatrix -> renderQrCodeMatrixToRgbaBuffer -> decodeQrCodeFromRgbaFrame (jsQR)
+  const samplePayloads = [
+    'PX-948271',
+    'PXCUSTON|TKT|9f8e7d6c-5b4a-4321-8765-123456789abc|EVT|c20ad4d7-6fe9-4759-aa27-a0c99bff6710|PX-948271',
+    '00020126580014br.gov.bcb.pix0136123e4567-e89b-12d3-a456-426614174000520400005303986540584.805802BR5909PXCUSTON6009SAOPAULO62070503***6304ABCD',
+  ];
+
+  for (const exactPayload of samplePayloads) {
+    const matrix = generateRealQrCodeMatrix(exactPayload, { errorCorrectionLevel: 'M', margin: 2 });
+    // Preserves exact payload without modifying or regenerating ticket codes
+    assert.equal(matrix.payload, exactPayload);
+    assert.ok(matrix.size >= 21);
+    assert.equal(matrix.totalSize, matrix.size + 4);
+
+    // Render into RGBA buffer (simulating Canvas getImageData) and decode with jsQR
+    const rgbaFrame = renderQrCodeMatrixToRgbaBuffer(matrix, 6);
+    const decoded = decodeQrCodeFromRgbaFrame(rgbaFrame);
+    assert.equal(decoded, exactPayload);
+  }
+
+  // 2. Invalid or blank frames must return null cleanly without throwing
+  const blankFrame = {
+    data: new Uint8ClampedArray(100 * 100 * 4).fill(255),
+    width: 100,
+    height: 100,
+  };
+  assert.equal(decodeQrCodeFromRgbaFrame(blankFrame), null);
+  assert.equal(
+    decodeQrCodeFromRgbaFrame({ data: new Uint8ClampedArray(10), width: 0, height: 0 }),
+    null
+  );
+
+  // 3. Concurrency and duplicate-scan prevention (shouldProcessScannedQrPayload)
+  const t0 = 1_700_000_000_000;
+
+  // Empty payload -> blocked
+  assert.deepEqual(
+    shouldProcessScannedQrPayload({
+      rawValue: '   ',
+      isCheckingIn: false,
+      lastScannedCode: '',
+      lastScannedTimestamp: 0,
+      now: t0,
+    }),
+    { allow: false, normalizedCode: '', reason: 'empty' }
+  );
+
+  // First valid scan when idle -> allowed
+  assert.deepEqual(
+    shouldProcessScannedQrPayload({
+      rawValue: '  PX-948271  ',
+      isCheckingIn: false,
+      lastScannedCode: '',
+      lastScannedTimestamp: 0,
+      now: t0,
+    }),
+    { allow: true, normalizedCode: 'PX-948271' }
+  );
+
+  // Scan while validation is in progress (isCheckingIn = true) -> blocked
+  assert.deepEqual(
+    shouldProcessScannedQrPayload({
+      rawValue: 'PX-948271',
+      isCheckingIn: true,
+      lastScannedCode: 'PX-948271',
+      lastScannedTimestamp: t0,
+      now: t0 + 200,
+    }),
+    { allow: false, normalizedCode: 'PX-948271', reason: 'checking_in' }
+  );
+
+  // Same code scanned again within 3500ms cooldown -> blocked
+  assert.deepEqual(
+    shouldProcessScannedQrPayload({
+      rawValue: 'PX-948271',
+      isCheckingIn: false,
+      lastScannedCode: 'PX-948271',
+      lastScannedTimestamp: t0,
+      now: t0 + 2000,
+      cooldownMs: 3500,
+    }),
+    { allow: false, normalizedCode: 'PX-948271', reason: 'duplicate_cooldown' }
+  );
+
+  // Different ticket code scanned immediately after first finishes -> allowed
+  assert.deepEqual(
+    shouldProcessScannedQrPayload({
+      rawValue: 'PX-948272',
+      isCheckingIn: false,
+      lastScannedCode: 'PX-948271',
+      lastScannedTimestamp: t0,
+      now: t0 + 800,
+      cooldownMs: 3500,
+    }),
+    { allow: true, normalizedCode: 'PX-948272' }
+  );
+
+  // Same code scanned after cooldown (> 3500ms) -> allowed for re-verification (which Supabase RPC will report as already_used)
+  assert.deepEqual(
+    shouldProcessScannedQrPayload({
+      rawValue: 'PX-948271',
+      isCheckingIn: false,
+      lastScannedCode: 'PX-948271',
+      lastScannedTimestamp: t0,
+      now: t0 + 4000,
+      cooldownMs: 3500,
+    }),
+    { allow: true, normalizedCode: 'PX-948271' }
+  );
+
+  // 4. Integration with Supabase check-in validation & demo code protection
+  const demoMatrix = generateRealQrCodeMatrix('PX-784592');
+  const decodedDemo = decodeQrCodeFromRgbaFrame(renderQrCodeMatrixToRgbaBuffer(demoMatrix, 6));
+  assert.equal(decodedDemo, 'PX-784592');
+  assert.equal(isKnownDemoTicketCode(decodedDemo!), true);
+
+  const realQrPayload = 'PXCUSTON|TKT|9f8e7d6c-5b4a-4321-8765-123456789abc|PX-948271';
+  const realMatrix = generateRealQrCodeMatrix(realQrPayload);
+  const decodedReal = decodeQrCodeFromRgbaFrame(renderQrCodeMatrixToRgbaBuffer(realMatrix, 6));
+  assert.equal(decodedReal, realQrPayload);
+  assert.equal(isKnownDemoTicketCode(decodedReal!), false);
+
+  const normalizedRpc = normalizeCheckinRpcResponse({
+    authorized: true,
+    result: 'authorized',
+    ticket_id: 'tkt-948271',
+    ticket_code: 'PX-948271',
+    holder_name: 'Carlos Mendes',
+    used_at: '2026-11-01T14:00:00Z',
+    message: 'Check-in autorizado com sucesso.',
+  });
+  assert.equal(normalizedRpc.authorized, true);
+  assert.equal(normalizedRpc.result, 'authorized');
+  assert.equal(normalizedRpc.ticketCode, 'PX-948271');
+
+  const sampleTicket: Ticket = {
+    id: 'tkt-948271',
+    code: 'PX-948271',
+    qrPayload: realQrPayload,
+    orderId: 'ord-948271',
+    paymentId: 'pay-948271',
+    userId: 'usr-948271',
+    holderName: 'Carlos Mendes',
+    holderCpf: '123.456.789-01',
+    eventId: 'evt-948271',
+    eventTitle: 'PX CUSTON Night Meet',
+    eventDate: '15/11/2026',
+    eventLocation: 'São Paulo - SP',
+    eventImageUrl: '/assets/events/ev-rebaixados.jpg',
+    ticketTypeId: 'batch-1',
+    ticketCategoryId: 'cat-1',
+    ticketTypeName: 'Pista Premium (1º Lote)',
+    pricePaid: 100,
+    status: 'paid',
+    issuedAt: '01/11/2026',
+  };
+
+  // First check-in with decoded QR payload -> authorized
+  const firstCheckin = verifyAndProcessCheckin(
+    decodedReal!,
+    [sampleTicket],
+    'Operador Portaria',
+    'PX-CONTROL-WEB'
+  );
+  assert.equal(firstCheckin.authorized, true);
+  assert.equal(firstCheckin.statusReason, 'authorized');
+  assert.equal(firstCheckin.updatedTicket?.status, 'used');
+
+  // Second check-in with the same decoded QR payload -> blocked as already_used
+  const secondCheckin = verifyAndProcessCheckin(
+    decodedReal!,
+    [firstCheckin.updatedTicket!],
+    'Operador Portaria',
+    'PX-CONTROL-WEB'
+  );
+  assert.equal(secondCheckin.authorized, false);
+  assert.equal(secondCheckin.statusReason, 'already_used');
+
+  // Verify BrandLogo.tsx uses generateRealQrCodeMatrix (not fake FNV-1a hash) and AdminPanelView.tsx uses Canvas + jsQR
+  const brandLogoCode = fs.readFileSync(
+    path.resolve(process.cwd(), 'src/components/BrandLogo.tsx'),
+    'utf8'
+  );
+  assert.ok(brandLogoCode.includes('generateRealQrCodeMatrix'));
+  assert.equal(brandLogoCode.includes('2166136261'), false);
+
+  const adminViewCode = fs.readFileSync(
+    path.resolve(process.cwd(), 'src/components/AdminPanelView.tsx'),
+    'utf8'
+  );
+  assert.ok(adminViewCode.includes('decodeQrCodeFromRgbaFrame'));
+  assert.ok(adminViewCode.includes('shouldProcessScannedQrPayload'));
+  assert.ok(adminViewCode.includes('scanCanvasRef'));
+  assert.ok(adminViewCode.includes('performCheckinInSupabase'));
+});
+
 
 

@@ -62,6 +62,8 @@ import {
   buildCameraConstraintCandidates,
   shouldAbortCameraFallbackOnError,
   classifyCameraError,
+  decodeQrCodeFromRgbaFrame,
+  shouldProcessScannedQrPayload,
 } from '../utils/ticketRules';
 import {
   supabaseConfigState,
@@ -389,8 +391,11 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
   const [isStartingCamera, setIsStartingCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [barcodeDetectorSupported, setBarcodeDetectorSupported] = useState(true);
+  const [detectedQrFeedback, setDetectedQrFeedback] = useState<string | null>(null);
+  const [scannerDecodeWarning, setScannerDecodeWarning] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const scanIntervalRef = useRef<number | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const activeModuleRef = useRef<AdminModule>(activeModule);
@@ -457,6 +462,8 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       setCameraActive(false);
       setIsStartingCamera(false);
       setBarcodeDetectorSupported(true);
+      setDetectedQrFeedback(null);
+      setScannerDecodeWarning(null);
     }
   };
 
@@ -560,6 +567,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
         statusReason: 'invalid',
         record: blockedRecord,
       });
+      setDetectedQrFeedback(null);
       onProcessCheckin(undefined, blockedRecord);
       return;
     }
@@ -616,6 +624,7 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       isCheckingInRef.current = false;
       if (isMountedRef.current) {
         setIsCheckingIn(false);
+        setDetectedQrFeedback(null);
       }
     }
   };
@@ -632,8 +641,12 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       return;
     }
 
+    if (!scanCanvasRef.current && typeof document !== 'undefined') {
+      scanCanvasRef.current = document.createElement('canvas');
+    }
+
     type BarcodeDetectorLike = {
-      detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>>;
+      detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue?: string }>>;
     };
     const BarcodeDetectorCtor = (
       window as unknown as {
@@ -641,49 +654,109 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
       }
     ).BarcodeDetector;
 
-    if (!BarcodeDetectorCtor) {
-      setBarcodeDetectorSupported(false);
-      return;
-    }
-
     let detector: BarcodeDetectorLike | null = null;
-    try {
-      detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
-      setBarcodeDetectorSupported(true);
-    } catch {
+    if (BarcodeDetectorCtor) {
+      try {
+        detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+        setBarcodeDetectorSupported(true);
+      } catch {
+        detector = null;
+        setBarcodeDetectorSupported(false);
+      }
+    } else {
       setBarcodeDetectorSupported(false);
-      return;
     }
 
     let scanningFrame = false;
+    let consecutiveFrameErrors = 0;
+
     scanIntervalRef.current = window.setInterval(async () => {
       if (scanningFrame || isCheckingInRef.current) return;
       const videoEl = videoRef.current;
-      if (!videoEl || videoEl.readyState < 2 || videoEl.videoWidth === 0) return;
+      if (
+        !videoEl ||
+        videoEl.readyState < 2 ||
+        videoEl.videoWidth === 0 ||
+        videoEl.videoHeight === 0
+      ) {
+        return;
+      }
+
+      const canvas = scanCanvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return;
 
       scanningFrame = true;
       try {
-        const codes = await detector!.detect(videoEl);
-        const firstValue = codes?.[0]?.rawValue?.trim();
-        if (firstValue && !isCheckingInRef.current) {
-          const now = Date.now();
-          if (
-            lastScannedRef.current.code !== firstValue ||
-            now - lastScannedRef.current.timestamp > 3500
-          ) {
-            lastScannedRef.current = { code: firstValue, timestamp: now };
-            if (isMountedRef.current) {
-              setCheckinInput(firstValue);
-            }
-            await executeCheckinCodeRef.current(firstValue);
+        const maxDim = 640;
+        const scale = Math.min(1, maxDim / Math.max(videoEl.videoWidth, videoEl.videoHeight));
+        const frameWidth = Math.max(1, Math.floor(videoEl.videoWidth * scale));
+        const frameHeight = Math.max(1, Math.floor(videoEl.videoHeight * scale));
+
+        if (canvas.width !== frameWidth || canvas.height !== frameHeight) {
+          canvas.width = frameWidth;
+          canvas.height = frameHeight;
+        }
+
+        ctx.drawImage(videoEl, 0, 0, frameWidth, frameHeight);
+        const imageData = ctx.getImageData(0, 0, frameWidth, frameHeight);
+
+        // 1. Primary universal decoder: Canvas + jsQR (works on Android, iPhone/iOS, and Desktop)
+        let detectedValue = decodeQrCodeFromRgbaFrame({
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height,
+        });
+
+        // 2. Complementary native BarcodeDetector fallback (only if jsQR did not match this frame)
+        if (!detectedValue && detector) {
+          try {
+            const nativeCodes = await detector.detect(canvas);
+            detectedValue = nativeCodes?.[0]?.rawValue?.trim() || null;
+          } catch {
+            // Native BarcodeDetector failed at runtime; disable it and rely on jsQR
+            detector = null;
           }
         }
-      } catch {
-        // Ignore transient frame detection errors
+
+        consecutiveFrameErrors = 0;
+        if (scannerDecodeWarning && isMountedRef.current) {
+          setScannerDecodeWarning(null);
+        }
+
+        const decision = shouldProcessScannedQrPayload({
+          rawValue: detectedValue,
+          isCheckingIn: isCheckingInRef.current,
+          lastScannedCode: lastScannedRef.current.code,
+          lastScannedTimestamp: lastScannedRef.current.timestamp,
+          now: Date.now(),
+          cooldownMs: 3500,
+        });
+
+        if (decision.allow) {
+          lastScannedRef.current = {
+            code: decision.normalizedCode,
+            timestamp: Date.now(),
+          };
+          if (isMountedRef.current) {
+            setCheckinInput(decision.normalizedCode);
+            setDetectedQrFeedback(decision.normalizedCode);
+          }
+          await executeCheckinCodeRef.current(decision.normalizedCode);
+        }
+      } catch (err) {
+        consecutiveFrameErrors += 1;
+        if (consecutiveFrameErrors >= 6 && isMountedRef.current) {
+          const msg = err instanceof Error ? err.message : 'Falha ao capturar frames de vídeo';
+          setScannerDecodeWarning(
+            `Não foi possível processar os quadros de vídeo da câmera (${msg}). Reinicie a câmera ou utilize o campo de código manual ao lado.`
+          );
+        }
       } finally {
         scanningFrame = false;
       }
-    }, 250);
+    }, 200);
 
     return () => {
       if (scanIntervalRef.current !== null) {
@@ -2239,9 +2312,9 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                 </div>
               )}
 
-              {cameraActive && !barcodeDetectorSupported && (
+              {scannerDecodeWarning && (
                 <div className="rounded-xl bg-[#161924] border border-amber-500/40 p-3 text-xs text-amber-200">
-                  Visualização da câmera ativa, porém este navegador não possui suporte nativo à leitura automática de QR Code (BarcodeDetector). Utilize o Google Chrome no Android ou informe o código manualmente no campo ao lado.
+                  {scannerDecodeWarning}
                 </div>
               )}
 
@@ -2252,10 +2325,26 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                   </p>
 
                   <div className="relative w-52 h-52 flex items-center justify-center bg-[#090A0E] rounded-xl p-4 overflow-hidden">
-                    <span className="absolute top-2 left-2 z-20 w-7 h-7 border-t-4 border-l-4 border-[#E50914] rounded-tl-md pointer-events-none" />
-                    <span className="absolute top-2 right-2 z-20 w-7 h-7 border-t-4 border-r-4 border-[#E50914] rounded-tr-md pointer-events-none" />
-                    <span className="absolute bottom-2 left-2 z-20 w-7 h-7 border-b-4 border-l-4 border-[#E50914] rounded-bl-md pointer-events-none" />
-                    <span className="absolute bottom-2 right-2 z-20 w-7 h-7 border-b-4 border-r-4 border-[#E50914] rounded-br-md pointer-events-none" />
+                    <span
+                      className={`absolute top-2 left-2 z-20 w-7 h-7 border-t-4 border-l-4 rounded-tl-md pointer-events-none transition-colors ${
+                        detectedQrFeedback ? 'border-emerald-400' : 'border-[#E50914]'
+                      }`}
+                    />
+                    <span
+                      className={`absolute top-2 right-2 z-20 w-7 h-7 border-t-4 border-r-4 rounded-tr-md pointer-events-none transition-colors ${
+                        detectedQrFeedback ? 'border-emerald-400' : 'border-[#E50914]'
+                      }`}
+                    />
+                    <span
+                      className={`absolute bottom-2 left-2 z-20 w-7 h-7 border-b-4 border-l-4 rounded-bl-md pointer-events-none transition-colors ${
+                        detectedQrFeedback ? 'border-emerald-400' : 'border-[#E50914]'
+                      }`}
+                    />
+                    <span
+                      className={`absolute bottom-2 right-2 z-20 w-7 h-7 border-b-4 border-r-4 rounded-br-md pointer-events-none transition-colors ${
+                        detectedQrFeedback ? 'border-emerald-400' : 'border-[#E50914]'
+                      }`}
+                    />
 
                     <video
                       ref={videoRef}
@@ -2274,8 +2363,31 @@ export const AdminPanelView: React.FC<AdminPanelViewProps> = ({
                       <QRCodeVisual value={checkinInput || 'PX-CONTROL-SCANNER'} size={140} />
                     )}
 
-                    <div className="absolute left-3 right-3 top-1/2 z-20 h-0.5 bg-[#E50914] shadow-[0_0_12px_#E50914] pointer-events-none" />
+                    <div
+                      className={`absolute left-3 right-3 top-1/2 z-20 h-0.5 pointer-events-none transition-colors ${
+                        detectedQrFeedback
+                          ? 'bg-emerald-400 shadow-[0_0_12px_#34d399]'
+                          : 'bg-[#E50914] shadow-[0_0_12px_#E50914]'
+                      }`}
+                    />
                   </div>
+
+                  {cameraActive && (
+                    <div
+                      data-testid="checkin-scanner-status"
+                      className={`w-full rounded-lg border px-3 py-2 text-center text-[11px] font-medium ${
+                        detectedQrFeedback || isCheckingIn
+                          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
+                          : 'bg-[#151824] border-[#262B3D] text-neutral-300'
+                      }`}
+                    >
+                      {detectedQrFeedback || isCheckingIn
+                        ? `QR Code detectado (${detectedQrFeedback || checkinInput}) — validando no Supabase...`
+                        : `Leitor óptico ativo (${
+                            barcodeDetectorSupported ? 'Canvas + jsQR + Nativo' : 'Canvas + jsQR'
+                          }) — aponte para o QR Code`}
+                    </div>
+                  )}
 
                   {tickets.length > 0 && (
                     <div className="w-full pt-2 space-y-1.5">

@@ -19,6 +19,8 @@ import type {
   AdminSaveTicketCategoryInput,
   AdminSaveTicketBatchInput,
 } from '../types/domain';
+import QRCode from 'qrcode';
+import jsQR from 'jsqr';
 
 export const CONVENIENCE_FEE_RATE = 0.06; // 6% convenience fee (e.g., R$ 80,00 -> R$ 4,80)
 
@@ -4162,4 +4164,161 @@ export function classifyCameraError(err: unknown): string {
 
   return 'Não foi possível exibir a imagem da câmera neste dispositivo. Utilize a busca rápida por código abaixo.';
 }
+
+export interface RealQrCodeMatrix {
+  payload: string;
+  size: number;
+  margin: number;
+  totalSize: number;
+  modules: boolean[][];
+}
+
+/**
+ * Generates a real, standards-compliant ISO/IEC 18004 QR Code bit matrix synchronously
+ * using the `qrcode` library (with Reed-Solomon error correction, format info, and masking).
+ * Preserves the exact `payload` provided without modifying or regenerating ticket codes.
+ */
+export function generateRealQrCodeMatrix(
+  payload: string,
+  options?: {
+    errorCorrectionLevel?: 'L' | 'M' | 'Q' | 'H';
+    margin?: number;
+  }
+): RealQrCodeMatrix {
+  const safePayload = typeof payload === 'string' && payload.length > 0 ? payload : ' ';
+  const errorCorrectionLevel = options?.errorCorrectionLevel ?? 'M';
+  const margin = typeof options?.margin === 'number' && options.margin >= 0 ? Math.floor(options.margin) : 2;
+
+  const qr = QRCode.create(safePayload, { errorCorrectionLevel });
+  const size = qr.modules.size;
+  const data = qr.modules.data;
+
+  const modules: boolean[][] = [];
+  for (let r = 0; r < size; r++) {
+    const row: boolean[] = [];
+    for (let c = 0; c < size; c++) {
+      row.push(Boolean(data[r * size + c]));
+    }
+    modules.push(row);
+  }
+
+  return {
+    payload: safePayload,
+    size,
+    margin,
+    totalSize: size + margin * 2,
+    modules,
+  };
+}
+
+/**
+ * Renders a `RealQrCodeMatrix` into an RGBA `Uint8ClampedArray` pixel buffer (including quiet zone),
+ * allowing deterministic round-trip optical decoding tests with `jsQR` in Node.js or Canvas.
+ */
+export function renderQrCodeMatrixToRgbaBuffer(
+  matrix: RealQrCodeMatrix,
+  scale = 6
+): {
+  data: Uint8ClampedArray;
+  width: number;
+  height: number;
+} {
+  const safeScale = Math.max(2, Math.floor(scale));
+  const quietMargin = Math.max(4, matrix.margin);
+  const totalModules = matrix.size + quietMargin * 2;
+  const width = totalModules * safeScale;
+  const height = totalModules * safeScale;
+  const data = new Uint8ClampedArray(width * height * 4);
+
+  // Fill entire buffer with white (#FFFFFF, alpha 255)
+  data.fill(255);
+
+  for (let r = 0; r < matrix.size; r++) {
+    for (let c = 0; c < matrix.size; c++) {
+      if (!matrix.modules[r]?.[c]) continue;
+      const startY = (r + quietMargin) * safeScale;
+      const startX = (c + quietMargin) * safeScale;
+      for (let dy = 0; dy < safeScale; dy++) {
+        const rowOffset = (startY + dy) * width;
+        for (let dx = 0; dx < safeScale; dx++) {
+          const idx = (rowOffset + startX + dx) * 4;
+          data[idx] = 7;     // R (#070709)
+          data[idx + 1] = 7; // G
+          data[idx + 2] = 9; // B
+          data[idx + 3] = 255;
+        }
+      }
+    }
+  }
+
+  return { data, width, height };
+}
+
+/**
+ * Decodes a QR Code payload from an RGBA frame (`ImageData`-compatible `{ data, width, height }`)
+ * using `jsQR` (works universally across Android, iPhone/iOS Safari, and Desktop browsers).
+ */
+export function decodeQrCodeFromRgbaFrame(frame: {
+  data: Uint8ClampedArray;
+  width: number;
+  height: number;
+}): string | null {
+  if (
+    !frame ||
+    !frame.data ||
+    frame.width <= 0 ||
+    frame.height <= 0 ||
+    frame.data.length < frame.width * frame.height * 4
+  ) {
+    return null;
+  }
+
+  try {
+    const decoded = jsQR(frame.data, frame.width, frame.height, {
+      inversionAttempts: 'attemptBoth',
+    });
+    const raw = decoded?.data?.trim();
+    return raw ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pure concurrency and deduplication guard for the camera QR scanner.
+ * Blocks empty values, concurrent check-in executions (`isCheckingIn`), and duplicate
+ * scans of the same code within `cooldownMs` (default 3500ms).
+ */
+export function shouldProcessScannedQrPayload(params: {
+  rawValue: string | null | undefined;
+  isCheckingIn: boolean;
+  lastScannedCode: string;
+  lastScannedTimestamp: number;
+  now: number;
+  cooldownMs?: number;
+}): {
+  allow: boolean;
+  normalizedCode: string;
+  reason?: 'empty' | 'checking_in' | 'duplicate_cooldown';
+} {
+  const normalizedCode = (params.rawValue ?? '').trim();
+  if (!normalizedCode) {
+    return { allow: false, normalizedCode: '', reason: 'empty' };
+  }
+
+  if (params.isCheckingIn) {
+    return { allow: false, normalizedCode, reason: 'checking_in' };
+  }
+
+  const cooldownMs = params.cooldownMs ?? 3500;
+  if (
+    params.lastScannedCode === normalizedCode &&
+    params.now - params.lastScannedTimestamp <= cooldownMs
+  ) {
+    return { allow: false, normalizedCode, reason: 'duplicate_cooldown' };
+  }
+
+  return { allow: true, normalizedCode };
+}
+
 
