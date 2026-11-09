@@ -1,839 +1,484 @@
 Gemini 4 Argon
-Ran for 22m 16s
+Ran for 5m 51s
 
 Action history
-Thought for 16 seconds
-Ran command
-mkdir -p .gmp_cache && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/index.json?client=aistudio-agent" -o .gmp_cache/index.json
-Installed 1 package
-Package @vis.gl/react-google-maps
-Thought for 20 seconds
+Thought for 1 minute 19 seconds
 Read file
-Read 8 files: .gmp_cache/index.json from line 0 to line 212,src/App.tsx from line 0 to line 128,src/components/common/Header.tsx from line 0 to line 377,src/pages/HomePage.tsx from line 0 to line 236,src/pages/RadarFretesPage.tsx from line 0 to line 486,src/services/supabaseClient.ts from line 0 to line 636,src/utils/logistics.ts from line 0 to line 118, and server.ts from line 0 to line 213
-Thought for 22 seconds
-Ran command
-curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/gmp-framework-react/SKILL.md?client=aistudio-agent" -o .gmp_cache/gmp-framework-react.md && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/routes-api-web-api/SKILL.md?client=aistudio-agent" -o .gmp_cache/routes-api-web-api.md && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/compliance-review/SKILL.md?client=aistudio-agent" -o .gmp_cache/compliance-review.md
+Read 4 files: supabase/seed.sql from line 0 to line 15,src/pages/CompanyDashboardPage.tsx from line 0 to line 947,src/pages/CarrierDashboardPage.tsx from line 0 to line 737, and src/pages/AuthPage.tsx
 Read file
-Read 5 files: src/types/index.ts from line 0 to line 199,src/pages/CompanyDashboardPage.tsx from line 0 to line 885,src/pages/CarrierDashboardPage.tsx from line 0 to line 737,src/components/common/Footer.tsx from line 0 to line 148, and .env.example from line 0 to line 18
-Thought for 19 seconds
-Read file
-Read 8 files: .gmp_cache/gmp-framework-react.md from line 0 to line 418,.gmp_cache/routes-api-web-api.md from line 0 to line 246,.gmp_cache/compliance-review.md from line 0 to line 170,src/pages/AuthPage.tsx from line 0 to line 562,src/pages/SubscriptionsPage.tsx from line 0 to line 512,src/pages/ProposalsContractsPage.tsx from line 0 to line 273,src/pages/DocsPage.tsx from line 0 to line 311, and src/pages/NexIAPage.tsx from line 0 to line 237
-Thought for 15 seconds
-Ran command
-curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/gmp-framework-react/references/example_directions.md?client=aistudio-agent" -o .gmp_cache/example_directions.md && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/gmp-framework-react/references/example_markers.md?client=aistudio-agent" -o .gmp_cache/example_markers.md
-Read file
-Read 5 files: src/pages/NexIAVerifyPage.tsx from line 0 to line 211,src/pages/AdminControlPage.tsx from line 0 to line 313,src/pages/PartnersPage.tsx from line 0 to line 105,.gmp_cache/example_directions.md from line 0 to line 220, and .gmp_cache/example_markers.md from line 0 to line 294
-Read file
-Read 2 files: vite.config.ts from line 0 to line 22, and src/main.tsx from line 0 to line 5
-Thought for 14 seconds
-Explored codebase
-Scanned public/assets/references/carrossel and found 5 files: 01-pagina-assinaturas.png, 02-carrossel-frontend-completo.png, 03-carrossel-slide-empresa.png, 04-carrossel-slide-conexao-nexcarga.png and 05-carrossel-slide-motorista-oportunidades.png.
-Explored codebase
-Scanned public/assets/references/design_pack and found 9 files: 01-login-exclusive-dark.png, 02-dashboard-empresa-dark.png, 03-dashboard-empresa-white.png, 04-dashboard-transportador-dark.png, 05-dashboard-transportador-white.png, 06-seletor-tema-white-dark.png, 07-selo-verificado-uso-funcional.png, 08-nexia-e-nexia-verify.png and 09-dashboards-mobile-white-dark.png.
-Explored codebase
-Scanned public/assets/aistudio and found 5 files: Paste_November_07__2026_-_7_25PM_c7537b89, Screenshot_2026-11-07-20-48-48-647_com.android.chrome_8e66345c.jpg, file_000000008a10820e846cc7ecd1c4f67f_5c3ec0bc.png, nexcarga_assinatura_carrossel_pack_f2abd158.zip and nexcarga_white_dark_design_pack_41f3a0d3.zip.
-Thought for 54 seconds
-Edited 4 files
-vite.config.ts
-.env.example
-server.ts
-src/main.tsx
-Thought for 46 seconds
-Edited 2 files
-src/utils/logistics.ts
-src/utils/logistics.test.ts
-Thought for 23 seconds
-Edited 2 files
-src/services/supabaseClient.ts
-src/services/supabaseClient.ts
-Thought for 44 seconds
-Edited 4 files
-src/services/mapsService.ts
-src/services/routeService.ts
-src/services/domainServices.ts
-supabase/migrations/20261107_v2_evolution.sql
-Thought for 1 minute 15 seconds
-Edited 2 files
-src/App.tsx
-src/components/common/Header.tsx
-Thought for 1 minute 38 seconds
-Edited 1 file
-src/pages/HomePage.tsx
-Thought for 1 minute 40 seconds
-Edited 1 file
-src/pages/RadarFretesPage.tsx
-Thought for 34 seconds
-Edited 2 files
-src/pages/CompanyDashboardPage.tsx
-src/pages/CompanyDashboardPage.tsx
-Thought for 13 seconds
-Read file
-Read 4 files: src/pages/SubscriptionsPage.tsx from line 0 to line 512,src/pages/AdminControlPage.tsx from line 0 to line 313,src/pages/PartnersPage.tsx from line 0 to line 105, and src/pages/NexIAPage.tsx from line 0 to line 237
-Explored codebase
-Scanned src/pages and found 12 files: AdminControlPage.tsx, AuthPage.tsx, CarrierDashboardPage.tsx, CompanyDashboardPage.tsx, DocsPage.tsx, HomePage.tsx, NexIAPage.tsx, NexIAVerifyPage.tsx, PartnersPage.tsx, ProposalsContractsPage.tsx, RadarFretesPage.tsx and SubscriptionsPage.tsx.
-Ran command
-grep -rnE "text-white|bg-\[#0d0e12\]|bg-\[#16181f\]" src/pages/DocsPage.tsx src/pages/NexIAVerifyPage.tsx src/pages/ProposalsContractsPage.tsx src/pages/CarrierDashboardPage.tsx src/pages/AuthPage.tsx
-<truncated 24 bytes>
-hboardPage.tsx:593:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-[#FF8A00]"src/pages/CarrierDashboardPage.tsx:605:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-[#FF8A00]"src/pages/CarrierDashboardPage.tsx:612:                  className="w-full py-3.5 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-lg shadow-[#FF8A00]/30 transition-all flex items-center justify-center gap-2"src/pages/CarrierDashboardPage.tsx:630:            className="relative w-full max-w-md bg-[#16181f] text-white border border-[#272a34] rounded-3xl p-7 shadow-2xl"src/pages/CarrierDashboardPage.tsx:635:              className="absolute top-5 right-5 text-gray-400 hover:text-white p-1 rounded-lg"src/pages/CarrierDashboardPage.tsx:640:            <h3 className="text-lg font-bold text-white mb-4">src/pages/CarrierDashboardPage.tsx:653:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs uppercase"src/pages/CarrierDashboardPage.tsx:663:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:677:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:696:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:706:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:718:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:725:                  className="w-full py-3 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-md shadow-[#FF8A00]/30 transition-all"src/pages/AuthPage.tsx:106:    <div className="relative min-h-screen w-full bg-[#0a0b0e] text-white flex flex-col justify-between overflow-x-hidden">src/pages/AuthPage.tsx:134:        <div className="bg-[#16181f]/95 backdrop-blur-xl border-2 border-[#FF8A00] rounded-3xl p-7 shadow-[0_0_40px_rgba(255,138,0,0.35)] transition-all">src/pages/AuthPage.tsx:138:            <h1 className="text-2xl font-extrabold text-white tracking-tight">src/pages/AuthPage.tsx:173:                    className="w-full pl-10 pr-4 py-3 bg-[#0d0e12] border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#FF8A00] transition-colors"src/pages/AuthPage.tsx:191:                    className="w-full pl-10 pr-10 py-3 bg-[#0d0e12] border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#FF8A00] transition-colors"src/pages/AuthPage.tsx:196:                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white"src/pages/AuthPage.tsx:211:                    className="rounded border-gray-600 text-[#FF8A00] focus:ring-0 focus:ring-offset-0 bg-[#0d0e12]"src/pages/AuthPage.tsx:228:                className="w-full py-3.5 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] active:scale-[0.99] text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-[#FF8A00]/30 flex items-center justify-center gap-2 mt-2"src/pages/AuthPage.tsx:239:                <span className="relative px-3 bg-[#16181f] text-[11px] text-gray-400">src/pages/AuthPage.tsx:252:                  className="py-2.5 px-3 rounded-xl bg-[#0d0e12] border border-white/10 hover:border-white/20 text-xs font-semibold text-gray-200 flex items-center justify-center gap-2 transition-colors"src/pages/AuthPage.tsx:269:                  className="py-2.5 px-3 rounded-xl bg-[#0d0e12] border border-white/10 hover:border-white/20 text-xs font-semibold text-gray-200 flex items-center justify-center gap-2 transition-colors"src/pages/AuthPage.tsx:296:              <div className="flex rounded-xl bg-[#0d0e12] p-1 border border-white/10 mb-2">src/pages/AuthPage.tsx:299:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-[#FF8A00] text-white"src/pages/AuthPage.tsx:306:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white"src/pages/AuthPage.tsx:319:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:329:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:340:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:351:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:362:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:369:                className="w-full py-3 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-lg shadow-[#FF8A00]/30 transition-all"src/pages/AuthPage.tsx:390:              <div className="flex rounded-xl bg-[#0d0e12] p-1 border border-white/10 mb-2">src/pages/AuthPage.tsx:394:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white"src/pages/AuthPage.tsx:400:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-[#FF8A00] text-white"src/pages/AuthPage.tsx:413:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:424:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:432:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:447:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:458:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:465:                className="w-full py-3 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-lg shadow-[#FF8A00]/30 transition-all"src/pages/AuthPage.tsx:495:                className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-[#FF8A00]/20 text-[11px] font-medium text-gray-300 hover:text-white border border-white/10 transition-colors"src/pages/AuthPage.tsx:505:                className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-[#FF8A00]/20 text-[11px] font-medium text-gray-300 hover:text-white border border-white/10 transition-colors"src/pages/AuthPage.tsx:533:            <span className="text-xs font-bold text-white">Publique Fretes</span>src/pages/AuthPage.tsx:540:            <span className="text-xs font-bold text-white">Encontre Oportunidades</span>src/pages/AuthPage.tsx:547:            <span className="text-xs font-bold text-white">Perfil Verificado</span>src/pages/AuthPage.tsx:554:            <span className="text-xs font-bold text-white">Gestão e Resultados</span>
-Thought for 2 minutes 7 seconds
-Edited 4 files
-src/pages/SubscriptionsPage.tsx
-src/pages/AdminControlPage.tsx
-src/pages/PartnersPage.tsx
-src/pages/NexIAPage.tsx
-Thought for 30 seconds
-Edited 1 file
-README.md
-Ran command
-npx --yes tsx --test src/utils/logistics.test.ts
-TAP version 13# Subtest: NexCarga Logistics & Financial Pure Logic Suite (V2.0)    # Subtest: calculates highway road distance between Manhuaçu/MG and Belo Horizonte/MG accurately    ok 1 - calculates highway road distance between Manhuaçu/MG and Belo Horizonte/MG accurately      ---      duration_ms: 1.531512      type: 'test'      ...    # Subtest: splits the 3.5% platform fee equally (1.75% company + 1.75% carrier)    ok 2 - splits the 3.5% platform fee equally (1.75% company + 1.75% carrier)      ---      duration_ms: 0.411943      type: 'test'      ...    # Subtest: throws on negative freight value    ok 3 - throws on negative freight value      ---      duration_ms: 0.793781      type: 'test'      ...    # Subtest: validates Brazilian CNPJ check digits properly    ok 4 - validates Brazilian CNPJ check digits properly      ---      duration_ms: 0.774087      type: 'test'      ...    # Subtest: formats BRL currency values consistently    ok 5 - formats BRL currency values consistently      ---      duration_ms: 21.555381      type: 'test'      ...    # Subtest: calculates operational cost, cost/km, net profit, and profitability rating accurately    ok 6 - calculates operational cost, cost/km, net profit, and profitability rating accurately      ---      duration_ms: 0.732251      type: 'test'      ...    # Subtest: resolves Brazilian city hub coordinates accurately    ok 7 - resolves Brazilian city hub coordinates accurately      ---      duration_ms: 0.490554      type: 'test'      ...    1..7ok 1 - NexCarga Logistics & Financial Pure Logic Suite (V2.0)  ---  duration_ms: 28.129639  type: 'suite'  ...1..1# tests 7# suites 1# pass 7# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 514.656661
-Built
-Ran quality control
-Read file
-Read 1 file: src/types/index.ts from line 0 to line 199
-Thought for 13 seconds
-Edited 1 file
-src/types/index.ts
-Built
-Ran quality control
-Edited 1 file
-src/types/index.ts
-Built
-Ran quality control
-Thought for 1 minute 20 seconds
-Read file
-Read 1 file: skills/system_skills/computer_use/SKILL.md from line 0 to line 322
-Restarted dev server
-Thought for 48 seconds
-Used browser, took 3 screenshots
-trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-desktop-dark.png && \ playwright-cli resize 390 844 && \ sleep 0.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-mobile-dark.png && \ playwright-cli resize 1440 900 && \ playwright-cli goto http://localhost:3000/#radar && \ sleep 1.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-radar-desktop-dark.png && \ playwright-cli console
-### Browser `default` opened with pid 1761.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-28-43-588Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-28-41-636Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Result- [Screenshot of viewport](.playwright-cli/v2-home-desktop-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-desktop-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-home-desktop-dark.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.setViewportSize({ width: 390, height: 844 });```### Result- [Screenshot of viewport](.playwright-cli/v2-home-mobile-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-mobile-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-home-mobile-dark.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Ran Playwright code```jsawait page.goto('http://localhost:3000/#radar');```### Page- Page URL: http://localhost:3000/#radar- Page Title: NexCarga — Sua carga. Nossa conexão.- Console: 3 errors, 1 warnings### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-28-55-967Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-28-55-912Z.log#L1-L26### Result- [Screenshot of viewport](.playwright-cli/v2-radar-desktop-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-radar-desktop-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-radar-desktop-dark.png',  scale: 'css',  type: 'png'});```### ResultTotal messages: 7 (Errors: 3, Warnings: 1)Returning 5 messages for level "info"[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:15801[ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:1. You might have mismatching versions of React and the renderer (such as React DOM)2. You might be breaking the Rules of Hooks3. You might have more than one copy of React in the same appSee https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11[ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:1. You might have mismatching versions of React and the renderer (such as React DOM)2. You might be breaking the Rules of Hooks3. You might have more than one copy of React in the same appSee https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11[WARNING] %s%s An error occurred in the <APIProvider> component. Consider adding an error boundary to your tree to customize error handling behavior.Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5447TypeError: Cannot read properties of null (reading 'useState')    at exports.useState (http://localhost:3000/node_modules/.vite/deps/react-D57lpOvP.js?v=701c33fa:799:30)    at useMapInstances (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:262:68)    at APIProvider (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:430:81)    at Object.react_stack_bottom_frame (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:14139:12)    at renderWithHooks (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:4397:19)    at updateFunctionComponent (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5772:16)    at beginWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:6388:20)    at runWithFiberInDEV (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:941:66)    at performUnitOfWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9145:92)    at workLoopSync (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9041:37)Browser 'default' closed
-
-### Latest snapshot (.playwright-cli/page-2026-11-08T00-28-55-967Z.yml)
-```yaml
-
-```
-
-### Log (.playwright-cli/console-2026-11-08T00-28-41-636Z.log#L1-L1)
-```
-[    1456ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:15801
-```
-
-### Log (.playwright-cli/console-2026-11-08T00-28-55-912Z.log#L1-L26)
-```
-[      23ms] [ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
-1. You might have mismatching versions of React and the renderer (such as React DOM)
-2. You might be breaking the Rules of Hooks
-3. You might have more than one copy of React in the same app
-See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11
-[      43ms] [ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
-1. You might have mismatching versions of React and the renderer (such as React DOM)
-2. You might be breaking the Rules of Hooks
-3. You might have more than one copy of React in the same app
-See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11
-[      49ms] TypeError: Cannot read properties of null (reading 'useState')
-    at exports.useState (http://localhost:3000/node_modules/.vite/deps/react-D57lpOvP.js?v=701c33fa:799:30)
-    at useMapInstances (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:262:68)
-    at APIProvider (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:430:81)
-    at Object.react_stack_bottom_frame (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:14139:12)
-    at renderWithHooks (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:4397:19)
-    at updateFunctionComponent (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5772:16)
-    at beginWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:6388:20)
-    at runWithFiberInDEV (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:941:66)
-    at performUnitOfWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9145:92)
-    at workLoopSync (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9041:37)
-[      48ms] [WARNING] %s
-
-%s
- An error occurred in the <APIProvider> component. Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5447
-```
-Thought for 10 seconds
-Read file
-Read 1 file: vite.config.ts from line 0 to line 27
-Thought for 9 seconds
-Read file
-Read 2 files: src/pages/HomePage.tsx from line 84 to line 209, and src/pages/HomePage.tsx from line 210 to line 289
-Thought for 55 seconds
-Edited 2 files
-vite.config.ts
-src/pages/HomePage.tsx
-Thought for 10 seconds
-Ran command
-rm -rf node_modules/.vite node_modules/@vis.gl/react-google-maps/node_modules/react node_modules/@vis.gl/react-google-maps/node_modules/react-dom
-Restarted dev server
-Thought for 9 seconds
-Used browser, took 3 screenshots
-trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-desktop-refined.png && \ playwright-cli goto http://localhost:3000/#radar && \ sleep 2 && \ playwright-cli screenshot --filename=.playwright-cli/v2-radar-fixed.png && \ playwright-cli eval "() => { localStorage.setItem('nexcarga_theme_preference', 'white'); location.hash = '#planos'; location.reload(); }" && \ sleep 1.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-planos-white.png && \ playwright-cli console
-### Browser `default` opened with pid 2015.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-31-10-933Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-31-08-760Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Result- [Screenshot of viewport](.playwright-cli/v2-home-desktop-refined.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-desktop-refined.pngawait page.screenshot({  path: '.playwright-cli/v2-home-desktop-refined.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.goto('http://localhost:3000/#radar');```### Page- Page URL: http://localhost:3000/#radar- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-31-22-231Z.yml)### Result- [Screenshot of viewport](.playwright-cli/v2-radar-fixed.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-radar-fixed.pngawait page.screenshot({  path: '.playwright-cli/v2-radar-fixed.png',  scale: 'css',  type: 'png'});```### Resultundefined### Ran Playwright code```jsawait page.evaluate('() => { localStorage.setItem(\'nexcarga_theme_preference\', \'white\'); location.hash = \'#planos\'; location.reload(); }');```### Page- Page URL: http://localhost:3000/#planos- Page Title: Loading http://localhost:3000/### Result- [Screenshot of viewport](.playwright-cli/v2-planos-white.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-planos-white.pngawait page.screenshot({  path: '.playwright-cli/v2-planos-white.png',  scale: 'css',  type: 'png'});```### Page- Page URL: http://localhost:3000/#planos- Page Title: NexCarga — Sua carga. Nossa conexão.### Events- New console entries: .playwright-cli/console-2026-11-08T00-31-21-958Z.log#L1### ResultTotal messages: 3 (Errors: 0, Warnings: 0)Returning 1 messages for level "info"[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=18c5d2ba:15801Browser 'default' closed
-
-### Latest snapshot (.playwright-cli/page-2026-11-08T00-31-22-231Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e13] [cursor=pointer]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: NexCarga
-          - generic [ref=e16]: ®
-        - generic [ref=e17]: — OFICIAL —
-      - navigation [ref=e18]:
-        - button "Início" [ref=e19]
-        - button "Soluções" [ref=e22]
-        - button "Plataforma" [ref=e26]
-        - button "Planos" [ref=e27]
-        - button "Destaques" [ref=e28]
-        - button "NexRadar" [ref=e29]
-        - button "NexControl" [ref=e30]
-      - generic [ref=e31]:
-        - generic [ref=e32]:
-          - button "Tema Dark" [ref=e33]
-          - button "Tema White" [ref=e36]
-        - button "Notificações" [ref=e44]:
-          - generic [ref=e48]: "2"
-        - generic [ref=e49]:
-          - button "Entrar" [ref=e50]
-          - button "Criar Conta" [ref=e51]
-        - button "Menu do Usuário" [ref=e53]:
-          - generic [ref=e54]: CO
-  - generic [ref=e559]:
-    - generic [ref=e560]:
-      - generic [ref=e561]:
-        - generic [ref=e562]: NexRadar V2.0 • Google Maps Platform & Routes API
-        - heading "NexRadar — Fretes e Rotas em Tempo Real" [level=1] [ref=e566]
-        - paragraph [ref=e567]: Geolocalização de cargas, traçado rodoviário oficial e simulador de custos operacionais e margem líquida.
-      - generic [ref=e568]:
-        - generic [ref=e569]: 6 Carga(s) no Radar
-        - button "Modo Radar Tático" [ref=e570] [cursor=pointer]
-        - button "Meu Painel" [ref=e571] [cursor=pointer]
-    - generic [ref=e572]:
-      - button "Todo o Brasil" [ref=e573] [cursor=pointer]
-      - button "Próximos de mim" [ref=e574] [cursor=pointer]
-      - button "Mesma cidade" [ref=e575] [cursor=pointer]
-      - button "Mesmo estado" [ref=e576] [cursor=pointer]
-      - button "Rotas de retorno" [ref=e577] [cursor=pointer]
-      - button "Compatíveis com meu veículo" [ref=e578] [cursor=pointer]
-    - generic [ref=e580]:
-      - textbox "Buscar Cidade / Rota..." [ref=e585]
-      - combobox [ref=e587]:
-        - option "Todos os Estados (UF)" [selected]
-        - option "Minas Gerais (MG)"
-        - option "São Paulo (SP)"
-        - option "Rio de Janeiro (RJ)"
-        - option "Espírito Santo (ES)"
-        - option "Paraná (PR)"
-        - option "Goiás (GO)"
-        - option "Bahia (BA)"
-      - combobox [ref=e589]:
-        - option "Todos os Veículos" [selected]
-        - option "Truck"
-        - option "Carreta LS"
-        - option "Bitruck"
-        - option "Cavalo Mecânico"
-        - option "VUC"
-      - combobox [ref=e591]:
-        - option "Todos os Implementos" [selected]
-        - option "Baú"
-        - option "Grade Baixa"
-        - option "Sider"
-        - option "Graneleiro"
-        - option "Prancha"
-        - option "Frigorífico"
-      - combobox [ref=e593]:
-        - option "Raio até 300 km"
-        - option "Raio até 500 km"
-        - option "Raio até 1.000 km"
-        - option "Todo o Brasil (5.000 km)" [selected]
-    - generic [ref=e594]:
-      - generic [ref=e595]:
-        - generic [ref=e596]:
-          - generic:
-            - generic: NexRadar GPS Ativo
-            - generic: "Rota: Manhuaçu – BH (285 km • 4h 35min)"
-          - generic [ref=e597]: "Motor de Rotas: Google Routes API • Estimativa sujeita às condições da via"
-          - generic [ref=e599]:
-            - generic [ref=e600]:
-              - generic [ref=e601]:
-                - generic [ref=e602]: Manhuaçu – BH
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e604] [cursor=pointer]
-              - generic [ref=e607]: "Alimentos (18.000 kg) • Coleta: 2026-11-10 • Truck (Baú)"
-            - generic [ref=e608]:
-              - generic [ref=e609]:
-                - generic [ref=e610]: Valor Ofertado
-                - text: R$ 2.450,00
-              - button "Enviar Proposta" [ref=e611] [cursor=pointer]
-        - generic [ref=e615]:
-          - generic [ref=e616]:
-            - generic [ref=e621]:
-              - heading "Simulador de Custos Operacionais e Viabilidade da Rota" [level=3] [ref=e622]
-              - paragraph [ref=e623]: Calcule consumo de diesel, pedágios, custo/km e margem líquida antes de fechar o frete.
-            - generic [ref=e624]: ALTA RENTABILIDADE
-          - generic [ref=e628]:
-            - generic [ref=e629]:
-              - generic [ref=e630]: Consumo (km/L)
-              - spinbutton [ref=e631]: "2.8"
-            - generic [ref=e632]:
-              - generic [ref=e633]: Diesel (R$/L)
-              - spinbutton [ref=e634]: "6.15"
-            - generic [ref=e635]:
-              - generic [ref=e636]: Pedágio Est. (R$)
-              - spinbutton "120" [ref=e637]
-            - generic [ref=e638]:
-              - generic [ref=e639]: Custos Extras (R$)
-              - spinbutton [ref=e640]: "180"
-            - generic [ref=e641]:
-              - generic [ref=e642]: Margem Alvo (%)
-              - spinbutton [ref=e643]: "20"
-          - generic [ref=e644]:
-            - generic [ref=e645]:
-              - generic [ref=e646]: Combustível (101.8 L)
-              - generic [ref=e650]: R$ 626,07
-              - generic [ref=e651]: "+ Pedágio: R$ 119,70"
-            - generic [ref=e652]:
-              - generic [ref=e653]: Custo Operacional Total
-              - generic [ref=e658]: R$ 968,65
-              - generic [ref=e659]: "Custo/km: R$ 3,40/km"
-            - generic [ref=e660]:
-              - generic [ref=e661]: Lucro Líquido Estimado
-              - generic [ref=e665]: R$ 1.481,35
-              - generic [ref=e666]: "Margem real: 60.5%"
-            - generic [ref=e667]:
-              - generic [ref=e668]: Frete Recomendado (20%)
-              - generic [ref=e669]: R$ 1.183,09
-              - generic [ref=e670]: "Receita/km atual: R$ 8,60"
-      - generic [ref=e671]:
-        - generic [ref=e672]:
-          - heading "Oportunidades Sincronizadas (6)" [level=3] [ref=e673]
-          - generic [ref=e674]: Clique para traçar rota e custos
-        - generic [ref=e675]:
-          - generic [ref=e676] [cursor=pointer]:
-            - generic [ref=e677]:
-              - generic [ref=e678]:
-                - generic [ref=e679]: Manhuaçu – BH
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e681]
-              - generic [ref=e684]: R$ 2.450,00
-            - generic [ref=e685]:
-              - generic [ref=e686]: Manhuaçu/MG ➔ Belo Horizonte/MG
-              - generic [ref=e691]: "Carga: Alimentos (18.000 kg)"
-              - generic [ref=e692]:
-                - text: "Veículo:"
-                - strong [ref=e693]: Truck (Baú)
-              - generic [ref=e694]:
-                - generic [ref=e695]: 285 km
-                - generic [ref=e698]: •
-                - generic [ref=e699]: Est. 4.6h
-                - generic [ref=e703]: •
-                - generic [ref=e704]: "Lucro Est.: R$ 1.476,10"
-            - generic [ref=e705]:
-              - generic [ref=e706]: Construtora Alfa
-              - generic [ref=e707]: Traçar Rota no Mapa
-          - generic [ref=e710] [cursor=pointer]:
-            - generic [ref=e711]:
-              - generic [ref=e712]:
-                - generic [ref=e713]: Manhuaçu – Vitória
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e715]
-              - generic [ref=e718]: R$ 3.180,00
-            - generic [ref=e719]:
-              - generic [ref=e720]: Manhuaçu/MG ➔ Vitória/ES
-              - generic [ref=e725]: "Carga: Materiais diversos (24.000 kg)"
-              - generic [ref=e726]:
-                - text: "Veículo:"
-                - strong [ref=e727]: Carreta LS (Grade Baixa)
-              - generic [ref=e728]:
-                - generic [ref=e729]: 240 km
-                - generic [ref=e732]: •
-                - generic [ref=e733]: Est. 3.9h
-                - generic [ref=e737]: •
-                - generic [ref=e738]: "Lucro Est.: R$ 2.340,49"
-            - generic [ref=e739]:
-              - generic [ref=e740]: Construtora Alfa
-              - generic [ref=e741]: Traçar Rota no Mapa
-          - generic [ref=e744] [cursor=pointer]:
-            - generic [ref=e745]:
-              - generic [ref=e746]:
-                - generic [ref=e747]: Manhuaçu – RJ
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e749]
-              - generic [ref=e752]: R$ 4.890,00
-            - generic [ref=e753]:
-              - generic [ref=e754]: Manhuaçu/MG ➔ Rio de Janeiro/RJ
-              - generic [ref=e759]: "Carga: Equipamentos (30.000 kg)"
-              - generic [ref=e760]:
-                - text: "Veículo:"
-                - strong [ref=e761]: Cavalo Mecânico (Prancha)
-              - generic [ref=e762]:
-                - generic [ref=e763]: 420 km
-                - generic [ref=e766]: •
-                - generic [ref=e767]: Est. 6.8h
-                - generic [ref=e771]: •
-                - generic [ref=e772]: "Lucro Est.: R$ 3.432,52"
-            - generic [ref=e773]:
-              - generic [ref=e774]: Construtora Alfa
-              - generic [ref=e775]: Traçar Rota no Mapa
-          - generic [ref=e778] [cursor=pointer]:
-            - generic [ref=e779]:
-              - generic [ref=e780]:
-                - generic [ref=e781]: São Paulo – Curitiba
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e783]
-              - generic [ref=e786]: R$ 3.950,00
-            - generic [ref=e787]:
-              - generic [ref=e788]: São Paulo/SP ➔ Curitiba/PR
-              - generic [ref=e793]: "Carga: Autopeças (14.500 kg)"
-              - generic [ref=e794]:
-                - text: "Veículo:"
-                - strong [ref=e795]: Bitruck (Sider)
-              - generic [ref=e796]:
-                - generic [ref=e797]: 408 km
-                - generic [ref=e800]: •
-                - generic [ref=e801]: Est. 6.6h
-                - generic [ref=e805]: •
-                - generic [ref=e806]: "Lucro Est.: R$ 2.548,26"
-            - generic [ref=e807]:
-              - generic [ref=e808]: Construtora Alfa
-              - generic [ref=e809]: Traçar Rota no Mapa
-          - generic [ref=e812] [cursor=pointer]:
-            - generic [ref=e813]:
-              - generic [ref=e814]:
-                - generic [ref=e815]: Belo Horizonte – Manhuaçu (Retorno)
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e817]
-              - generic [ref=e820]: R$ 2.380,00
-            - generic [ref=e821]:
-              - generic [ref=e822]: Belo Horizonte/MG ➔ Manhuaçu/MG
-              - generic [ref=e827]: "Carga: Insumos Agrícolas (16.500 kg)"
-              - generic [ref=e828]:
-                - text: "Veículo:"
-                - strong [ref=e829]: Truck (Baú)
-              - generic [ref=e830]:
-                - generic [ref=e831]: 285 km
-                - generic [ref=e834]: •
-                - generic [ref=e835]: Est. 4.6h
-                - generic [ref=e839]: •
-                - generic [ref=e840]: "Lucro Est.: R$ 1.407,33"
-            - generic [ref=e841]:
-              - generic [ref=e842]: Construtora Alfa
-              - generic [ref=e843]: Traçar Rota no Mapa
-          - generic [ref=e846] [cursor=pointer]:
-            - generic [ref=e847]:
-              - generic [ref=e848]:
-                - generic [ref=e849]: Goiânia – Salvador
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e851]
-              - generic [ref=e854]: R$ 11.850,00
-            - generic [ref=e855]:
-              - generic [ref=e856]: Goiânia/GO ➔ Salvador/BA
-              - generic [ref=e861]: "Carga: Grãos & Soja (32.000 kg)"
-              - generic [ref=e862]:
-                - text: "Veículo:"
-                - strong [ref=e863]: Carreta LS (Graneleiro)
-              - generic [ref=e864]:
-                - generic [ref=e865]: 1640 km
-                - generic [ref=e868]: •
-                - generic [ref=e869]: Est. 26.5h
-                - generic [ref=e873]: •
-                - generic [ref=e874]: "Lucro Est.: R$ 6.285,76"
-            - generic [ref=e875]:
-              - generic [ref=e876]: Construtora Alfa
-              - generic [ref=e877]: Traçar Rota no Mapa
-  - contentinfo [ref=e481]:
-    - generic [ref=e482]:
-      - generic [ref=e483]:
-        - generic [ref=e484]:
-          - generic [ref=e491]:
-            - generic [ref=e492]:
-              - generic [ref=e493]: NexCarga
-              - generic [ref=e494]: ®
-            - generic [ref=e495]: — OFICIAL —
-          - paragraph [ref=e496]:
-            - strong [ref=e497]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e498]:
-            - generic [ref=e499]: Homologação NexIA Verify
-            - generic [ref=e503]: Criptografia 256-bit
-            - generic [ref=e507]: Mercado Pago Protegido
-        - generic [ref=e510]:
-          - heading "Plataforma" [level=4] [ref=e511]
-          - list [ref=e512]:
-            - listitem [ref=e513]:
-              - button "Início" [ref=e514]
-            - listitem [ref=e515]:
-              - button "Radar de Fretes" [ref=e516]
-            - listitem [ref=e517]:
-              - button "Para Empresas" [ref=e518]
-            - listitem [ref=e519]:
-              - button "Para Transportadores" [ref=e520]
-            - listitem [ref=e521]:
-              - button "Planos e Assinaturas" [ref=e522]
-        - generic [ref=e523]:
-          - heading "Tecnologia & IA" [level=4] [ref=e524]
-          - list [ref=e525]:
-            - listitem [ref=e526]:
-              - button "NexIA Assistente" [ref=e527]
-            - listitem [ref=e531]:
-              - button "NexIA Verify (Homologação)" [ref=e532]
-            - listitem [ref=e533]:
-              - button "NexCarga Docs" [ref=e534]
-            - listitem [ref=e535]:
-              - button "Programa de Parceiros" [ref=e536]
-            - listitem [ref=e537]:
-              - button "NexCarga Control" [ref=e538]
-        - generic [ref=e539]:
-          - heading "Segurança & Suporte" [level=4] [ref=e540]
-          - generic [ref=e541]:
-            - paragraph [ref=e542]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e543]:
-              - generic [ref=e544]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e545]:
-              - generic [ref=e546]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e547]:
-        - generic [ref=e548]:
-          - text: © 2026
-          - strong [ref=e549]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e550]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e551]: Pupa Labs
-            - text: .
-        - generic [ref=e552]:
-          - generic [ref=e553]: Termos de Uso
-          - generic [ref=e554]: Política de Privacidade
-          - generic [ref=e555]: Regras ANTT
-          - generic [ref=e556]: Taxa Transparente (3,5%)
-```
-
-### Log (.playwright-cli/console-2026-11-08T00-31-08-760Z.log#L1-L1)
-```
-[    1493ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=18c5d2ba:15801
-```
-
-### Log (.playwright-cli/console-2026-11-08T00-31-21-958Z.log#L1-L1)
-```
-[    8471ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=18c5d2ba:15801
-```
-Thought for 14 seconds
-Edited 1 file
-src/pages/SubscriptionsPage.tsx
-Restarted dev server
-Thought for 11 seconds
-Used browser, took 2 screenshots
-trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli mousewheel 0 850 && \ sleep 0.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-sections-dark.png && \ playwright-cli mousewheel 0 -850 && \ playwright-cli eval "() => { document.querySelector('button[aria-label=\"Tema White\"]')?.click(); }" && \ sleep 0.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-desktop-white.png
-### Browser `default` opened with pid 2251.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-32-22-460Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-32-20-493Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Ran Playwright code```js// Scroll mouse wheelawait page.mouse.wheel(0, 850);```### Result- [Screenshot of viewport](.playwright-cli/v2-home-sections-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-sections-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-home-sections-dark.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```js// Scroll mouse wheelawait page.mouse.wheel(0, -850);```### Resultundefined### Ran Playwright code```jsawait page.evaluate('() => { document.querySelector(\'button[aria-label="Tema White"]\')?.click(); }');```### Result- [Screenshot of viewport](.playwright-cli/v2-home-desktop-white.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-desktop-white.pngawait page.screenshot({  path: '.playwright-cli/v2-home-desktop-white.png',  scale: 'css',  type: 'png'});```Browser 'default' closed
-
-### Latest snapshot (.playwright-cli/page-2026-11-08T00-32-22-460Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e13] [cursor=pointer]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: NexCarga
-          - generic [ref=e16]: ®
-        - generic [ref=e17]: — OFICIAL —
-      - navigation [ref=e18]:
-        - button "Início" [ref=e19]
-        - button "Soluções" [ref=e22]
-        - button "Plataforma" [ref=e26]
-        - button "Planos" [ref=e27]
-        - button "Destaques" [ref=e28]
-        - button "NexRadar" [ref=e29]
-        - button "NexControl" [ref=e30]
-      - generic [ref=e31]:
-        - generic [ref=e32]:
-          - button "Tema Dark" [ref=e33]
-          - button "Tema White" [ref=e36]
-        - button "Notificações" [ref=e44]:
-          - generic [ref=e48]: "2"
-        - generic [ref=e49]:
-          - button "Entrar" [ref=e50]
-          - button "Criar Conta" [ref=e51]
-        - button "Menu do Usuário" [ref=e53]:
-          - generic [ref=e54]: CO
-  - generic [ref=e58]:
-    - generic [ref=e59]:
-      - generic:
-        - img "NexCarga Rodovia Brasileira"
-      - generic [ref=e60]:
-        - generic [ref=e61]:
-          - generic [ref=e62]:
-            - generic [ref=e63]: Plataforma SaaS B2B LogTech
-            - heading "Conectamos Cargas, Empresas e Transportadores" [level=1] [ref=e70]
-            - paragraph [ref=e71]: O ecossistema logístico completo para contratar, transportar e gerir fretes com segurança, agilidade e inteligência.
-            - generic [ref=e72]:
-              - button "Acessar Plataforma" [ref=e73] [cursor=pointer]
-              - button "Ver como Funciona" [ref=e77] [cursor=pointer]
-            - generic [ref=e82]:
-              - generic [ref=e88]:
-                - generic [ref=e89]: + Segurança
-                - generic [ref=e90]: Operação confiável
-              - generic [ref=e95]:
-                - generic [ref=e96]: + Agilidade
-                - generic [ref=e97]: Contratações rápidas
-              - generic [ref=e102]:
-                - generic [ref=e103]: + Resultado
-                - generic [ref=e104]: Mais eficiência no frete
-          - generic [ref=e106]:
-            - img "Caminhão Oficial NexCarga" [ref=e107]
-            - generic [ref=e109]:
-              - generic [ref=e110]: NexRadar Nacional Ativo • Rotas Homologadas ANTT
-              - button "Abrir Mapa" [ref=e113]
-        - button "Rolar para recursos" [ref=e117]
-    - generic [ref=e121]:
-      - button "Publicação de Fretes" [ref=e122] [cursor=pointer]
-      - button "Contratação Segura" [ref=e131] [cursor=pointer]
-      - button "NexRadar Fretes em Tempo Real" [ref=e140] [cursor=pointer]:
-        - generic [ref=e145]:
-          - generic [ref=e146]: NexRadar
-          - generic [ref=e147]: Fretes em Tempo Real
-      - button "Gestão e Indicadores" [ref=e148] [cursor=pointer]
-      - button "Conformidade LGPD" [ref=e154] [cursor=pointer]
-      - button "Ecossistema Integrado" [ref=e161] [cursor=pointer]
-    - generic [ref=e170]:
-      - generic [ref=e172]:
-        - generic [ref=e173] [cursor=pointer]:
-          - generic [ref=e174]:
-            - generic [ref=e181]:
-              - generic [ref=e182]:
-                - generic [ref=e183]: NexCarga
-                - generic [ref=e184]: ®
-              - generic [ref=e185]: — OFICIAL —
-            - generic [ref=e186]: 🔍 Buscar operação, contrato ou rota...
-          - generic [ref=e187]:
-            - generic [ref=e188]:
-              - generic [ref=e189]: Dashboard
-              - generic [ref=e193]: Fretes
-              - generic [ref=e199]: NexRadar
-              - generic [ref=e203]: Financeiro
-              - generic [ref=e207]: Relatórios
-              - generic [ref=e210]: Equipe
-              - generic [ref=e216]: Configurações
-            - generic [ref=e219]:
-              - generic [ref=e220]: Dashboard Empresa
-              - generic [ref=e221]:
-                - generic [ref=e222]:
-                  - generic [ref=e223]: "12"
-                  - generic [ref=e224]: Fretes Ativos
-                - generic [ref=e225]:
-                  - generic [ref=e226]: "5"
-                  - generic [ref=e227]: Concluídos
-                - generic [ref=e228]:
-                  - generic [ref=e229]: R$ 487.230
-                  - generic [ref=e230]: Valor Movimentado
-              - generic [ref=e231]:
-                - generic [ref=e232]: Movimentação de Fretes
-                - generic [ref=e243]:
-                  - generic [ref=e244]: 42%
-                  - generic [ref=e245]: Concluídos
-        - generic [ref=e246] [cursor=pointer]:
-          - generic [ref=e247]: N NexRadar
-          - generic [ref=e250]: 6 Cargas no Radar
-      - generic [ref=e259]:
-        - generic [ref=e260]: NexCarga na Prática
-        - heading "Mais controle, visibilidade e resultado no seu frete" [level=2] [ref=e265]
-        - paragraph [ref=e266]: Acompanhe sua operação em tempo real, analise indicadores, gerencie contratos e conecte-se ao mercado de forma simples e poderosa.
-        - list [ref=e267]:
-          - listitem [ref=e268]:
-            - generic [ref=e273]: Painéis completos por perfil (Empresa, Transportador, Motorista e +)
-          - listitem [ref=e274]:
-            - generic [ref=e279]: Indicadores e relatórios em tempo real
-          - listitem [ref=e280]:
-            - generic [ref=e285]: Rastreamento e status da operação (NexRadar)
-          - listitem [ref=e286]:
-            - generic [ref=e291]: Gestão de taxas, documentos e conformidade
-        - generic [ref=e292]:
-          - button "Explorar Dashboard Empresa" [ref=e293] [cursor=pointer]
-          - button "Painel Transportador" [ref=e297] [cursor=pointer]
-    - generic [ref=e301]:
-      - generic [ref=e302]:
-        - generic [ref=e303]: Para quem é a NexCarga
-        - heading "Soluções para todo o ecossistema logístico" [level=2] [ref=e305]
-      - generic [ref=e306]:
-        - generic [ref=e307] [cursor=pointer]:
-          - img "Empresas" [ref=e309]
-          - generic [ref=e312]:
-            - heading "Empresas" [level=3] [ref=e313]
-            - paragraph [ref=e314]: Contrate fretes com segurança e melhor custo.
-        - generic [ref=e318] [cursor=pointer]:
-          - img "Transportadoras" [ref=e320]
-          - generic [ref=e323]:
-            - heading "Transportadoras" [level=3] [ref=e324]
-            - paragraph [ref=e325]: Amplie sua operação e conquiste mais cargas.
-        - generic [ref=e329] [cursor=pointer]:
-          - img "Motoristas" [ref=e331]
-          - generic [ref=e334]:
-            - heading "Motoristas" [level=3] [ref=e335]
-            - paragraph [ref=e336]: Encontre fretes, organize rotas e aumente seus ganhos.
-        - generic [ref=e340] [cursor=pointer]:
-          - img "Autônomos e Parceiros" [ref=e342]
-          - generic [ref=e345]:
-            - heading "Autônomos e Parceiros" [level=3] [ref=e346]
-            - paragraph [ref=e347]: Participe do mercado com mais oportunidades.
-    - generic [ref=e352]:
-      - generic [ref=e360]:
-        - generic [ref=e361]: + 5.005
-        - generic [ref=e362]: Profissionais na plataforma
-      - generic [ref=e370]:
-        - generic [ref=e371]: + 12.006
-        - generic [ref=e372]: Fretes publicados
-      - generic [ref=e379]:
-        - generic [ref=e380]: + 1.201
-        - generic [ref=e381]: Empresas ativas
-      - generic [ref=e387]:
-        - generic [ref=e388]: Todo o Brasil
-        - generic [ref=e389]: Cobertura nacional (27 UFs)
-    - generic [ref=e390]:
-      - generic [ref=e391]:
-        - text: Destaques & Inteligência Operacional
-        - heading "Experiência Interativa e Homologação com IA" [level=2] [ref=e392]
-      - generic [ref=e393]:
-        - generic [ref=e394]:
-          - button "Slide anterior" [ref=e395]
-          - button "Próximo slide" [ref=e398]
-          - generic [ref=e401]:
-            - generic [ref=e403] [cursor=pointer]:
-              - img "Conecte sua empresa" [ref=e404]
-              - generic [ref=e405]: Conecte sua empresa - Publique fretes e encontre transportadores verificados em todo o Brasil.
-              - button "Publicar Frete Agora" [ref=e407]
-            - generic [ref=e411] [cursor=pointer]:
-              - img "Sua carga. Nossa conexão." [ref=e412]
-              - generic [ref=e413]: Sua carga. Nossa conexão. - A plataforma que conecta empresas, transportadoras e motoristas.
-              - button "Acessar Radar de Fretes" [ref=e415]
-            - generic [ref=e419] [cursor=pointer]:
-              - img "Mais oportunidades" [ref=e420]
-              - generic [ref=e421]: Mais oportunidades - Encontre fretes, negocie diretamente e aumente seus ganhos.
-              - button "Buscar Oportunidades" [ref=e423]
-        - generic [ref=e426]:
-          - button "Pausar" [ref=e427]
-          - generic [ref=e431]:
-            - button "Ir para slide 1" [ref=e432]
-            - button "Ir para slide 2" [ref=e433]
-            - button "Ir para slide 3" [ref=e434]
-      - generic [ref=e435]:
-        - generic [ref=e436]:
-          - generic [ref=e442]:
-            - heading "NexIA" [level=4] [ref=e443]
-            - text: Assistente Operacional Inteligente
-          - paragraph [ref=e444]: Consulte pisos mínimos da ANTT, simule custos por quilômetro, encontre cargas por linguagem natural e tire dúvidas sobre veículos e implementos.
-          - button "Conversar com a NexIA" [ref=e445] [cursor=pointer]
-        - generic [ref=e449]:
-          - generic [ref=e455]:
-            - heading [level=4] [ref=e456]:
-              - text: NexIA Verify
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e458]
-            - text: Homologação Documental e Conformidade LGPD
-          - paragraph [ref=e461]: Auditoria documental automatizada de CNH com EAR, CRLV, RNTRC/ANTT e CNPJ para concessão do Selo Azul Verificado com máxima segurança jurídica.
-          - button "Acessar Central de Homologação" [ref=e462] [cursor=pointer]
-    - generic [ref=e467]:
-      - generic: "N"
-      - generic [ref=e468]:
-        - generic [ref=e469]:
-          - heading "Pronto para levar sua operação a outro nível?" [level=2] [ref=e470]
-          - paragraph [ref=e471]: Junte-se ao ecossistema NexCarga e tenha mais controle, segurança e oportunidades no transporte de cargas.
-        - generic [ref=e472]:
-          - button "Criar Conta Gratuitamente" [ref=e473] [cursor=pointer]
-          - button "Falar com um Especialista" [ref=e477] [cursor=pointer]
-  - contentinfo [ref=e481]:
-    - generic [ref=e482]:
-      - generic [ref=e483]:
-        - generic [ref=e484]:
-          - generic [ref=e491]:
-            - generic [ref=e492]:
-              - generic [ref=e493]: NexCarga
-              - generic [ref=e494]: ®
-            - generic [ref=e495]: — OFICIAL —
-          - paragraph [ref=e496]:
-            - strong [ref=e497]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e498]:
-            - generic [ref=e499]: Homologação NexIA Verify
-            - generic [ref=e503]: Criptografia 256-bit
-            - generic [ref=e507]: Mercado Pago Protegido
-        - generic [ref=e510]:
-          - heading "Plataforma" [level=4] [ref=e511]
-          - list [ref=e512]:
-            - listitem [ref=e513]:
-              - button "Início" [ref=e514]
-            - listitem [ref=e515]:
-              - button "Radar de Fretes" [ref=e516]
-            - listitem [ref=e517]:
-              - button "Para Empresas" [ref=e518]
-            - listitem [ref=e519]:
-              - button "Para Transportadores" [ref=e520]
-            - listitem [ref=e521]:
-              - button "Planos e Assinaturas" [ref=e522]
-        - generic [ref=e523]:
-          - heading "Tecnologia & IA" [level=4] [ref=e524]
-          - list [ref=e525]:
-            - listitem [ref=e526]:
-              - button "NexIA Assistente" [ref=e527]
-            - listitem [ref=e531]:
-              - button "NexIA Verify (Homologação)" [ref=e532]
-            - listitem [ref=e533]:
-              - button "NexCarga Docs" [ref=e534]
-            - listitem [ref=e535]:
-              - button "Programa de Parceiros" [ref=e536]
-            - listitem [ref=e537]:
-              - button "NexCarga Control" [ref=e538]
-        - generic [ref=e539]:
-          - heading "Segurança & Suporte" [level=4] [ref=e540]
-          - generic [ref=e541]:
-            - paragraph [ref=e542]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e543]:
-              - generic [ref=e544]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e545]:
-              - generic [ref=e546]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e547]:
-        - generic [ref=e548]:
-          - text: © 2026
-          - strong [ref=e549]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e550]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e551]: Pupa Labs
-            - text: .
-        - generic [ref=e552]:
-          - generic [ref=e553]: Termos de Uso
-          - generic [ref=e554]: Política de Privacidade
-          - generic [ref=e555]: Regras ANTT
-          - generic [ref=e556]: Taxa Transparente (3,5%)
-```
-
-### Log (.playwright-cli/console-2026-11-08T00-32-20-493Z.log#L1-L1)
-```
-[    1291ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=4df30e51:15801
-```
-Thought for 8 seconds
-Built
-Ran quality control
-A plataforma NexCarga — Evolução Definitiva V2.0 (SaaS B2B LogTech) foi auditada, evoluída e verificada, preservando integralmente os módulos funcionais da V1.0 e incorporando a nova arquitetura visual e operacional V2.0.
-1. Diagnóstico da Auditoria Técnica (V1.0 
- V2.0)
-Funcionalidades Implementadas e Preservadas (V1.0):
-Autenticação multi-perfil (COMPANY, CARRIER, DRIVER, SUPER_ADMIN), Carrossel Hero oficial (HeroCarousel.tsx), NexIA e NexIA Verify (via Google Gemini API gemini-2.5-flash), NexCarga Docs, Contratos Digitais com rateio da taxa de 3,5% dividida igualmente (1,75% contratante / 1,75% transportador), Checkout Mercado Pago com 15 dias grátis (SubscriptionsPage.tsx), NexControl (AdminControlPage.tsx) e suporte PWA (manifest.webmanifest e sw.js).
-Limitações Identificadas na V1.0 e Resolvidas na V2.0:
-Mapa estático em SVG no NexRadar: Substituído pela integração oficial com Google Maps Platform (@vis.gl/react-google-maps) e Google Routes API (Route.computeRoutes()), renderizando rodovias reais (BR-262, BR-381, BR-116), marcadores interativos (<AdvancedMarker>, <Pin>, <InfoWindow>) e cálculo real de distância e tempo de viagem.
-Ausência de simulador de viabilidade financeira por rota: Criado o motor de cálculo de custos operacionais e rentabilidade (calculateFreightCostAndProfitability em src/utils/logistics.ts e src/services/routeService.ts).
-Contraste em White Mode: Corrigidos elementos que possuíam classes fixas escuras em SubscriptionsPage.tsx, AdminControlPage.tsx, PartnersPage.tsx e NexIAPage.tsx, garantindo contraste elevado nos modos Dark (#0a0b0e / #16181f) e White (#F8FAFC / #FFFFFF).
-Schema SQL e Serviços: Adicionada a migration incremental /supabase/migrations/20261107_v2_evolution.sql (sem sobrescrever /supabase/schema.sql) e modularizados os serviços em /src/services/mapsService.ts, /src/services/routeService.ts e /src/services/domainServices.ts.
-2. Principais Entregas da Evolução V2.0
-Nova Home Page Cinematográfica & Header Oficial (HomePage.tsx e Header.tsx):
-Header V2.0: Navegação estruturada com Início, dropdown Soluções ⌄ (Para Empresas, Para Transportadoras, Para Motoristas, Autônomos e Parceiros, NexIA & Homologação), Plataforma, Planos, Destaques, NexRadar, NexControl, seletor Dark / White, central de notificações, Entrar, Criar Conta e alternador rápido de perfil.
-Hero Cinematográfico: Selo "Plataforma SaaS B2B LogTech", título "Conectamos Cargas, Empresas e Transportadores", CTAs (Acessar Plataforma e Ver como Funciona), indicadores (+ Segurança, + Agilidade, + Resultado), mapa luminoso do Brasil conectado por rotas e portal laranja com o caminhão oficial NexCarga.
-6 Cards de Recursos: Publicação de Fretes, Contratação Segura, NexRadar — Fretes em Tempo Real, Gestão e Indicadores, Conformidade LGPD e Ecossistema Integrado.
-Seção "NexCarga na Prática": Vitrine dupla com notebook (Dashboard Empresa) e smartphone (NexRadar) sincronizados com os indicadores reais da plataforma.
-Seção "Para quem é a NexCarga" + Barra de Indicadores Reais + Destaques (Carrossel V1.0 & NexIA) + CTA Final.
-NexRadar V2.0 (RadarFretesPage.tsx) + Google Maps & Routes API:
-Filtros inteligentes com 1 clique: Todo o Brasil, Próximos de mim, Mesma cidade, Mesmo estado, Rotas de retorno e Compatíveis com meu veículo.
-Traçado rodoviário real com Route.computeRoutes() e sincronização bidirecional entre os pinos do mapa e os cards de frete.
-Calculadora de Custo Operacional e Rentabilidade (RadarFretesPage.tsx & CompanyDashboardPage.tsx):
-Calcula consumo total de combustível (litros e R$), pedágio estimado, custos extras, taxa NexCarga (1,75%), custo operacional total, custo por km, lucro líquido estimado, margem líquida (%), classificação de rentabilidade (ALTA / MEDIA / BAIXA) e frete mínimo recomendado.
-3. Google Maps Platform — Informações de Conformidade e Uso
-Aviso de Custos e Faturamento: O uso das APIs da Google Maps Platform está sujeito às tarifas e cotas do Google Cloud. Consulte a tabela oficial em Google Maps Platform Pricing.
-APIs Utilizadas nesta Aplicação:
-Maps JavaScript API (renderização do mapa vetorial interativo DEMO_MAP_ID, <AdvancedMarker>, <Pin> e <InfoWindow> via @vis.gl/react-google-maps).
-Routes API (Route.computeRoutes() via biblioteca routes para traçado de polilinhas rodoviárias e cálculo de distância/tempo).
-Places API (New) (AutocompleteSuggestion.fetchAutocompleteSuggestions para busca e geocodificação de municípios logísticos).
-Restrições e Segurança de Chave de API: Para ambientes de produção, restrinja sua chave de API por referenciador HTTP (domínio) e pelas APIs listadas acima seguindo o guia oficial de Restrições de Chave de API da Google Maps Platform.
-Escopo de Licença: O código-fonte da aplicação segue a licença Apache 2.0, aplicável exclusivamente ao código da aplicação e não aos serviços, mapas ou dados proprietários da Google Maps Platform.
-Termos de Serviço: O uso dos mapas e rotas segue os Termos de Serviço da Google Maps Platform.
-Confirmação de Revisão de Conformidade: A sub-skill de revisão de conformidade (Google Maps Platform ToS Compliance Review) foi integralmente verificada (incluindo internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}, ausência de pré-busca em lote fora da ação do usuário e aviso de estimativa sujeita às condições da via).
+Read 2 files: src/pages/AuthPage.tsx from line 0 to line 562, and src/components/common/Header.tsx from line 0 to line 522
+Thought for 3 minutes 41 seconds
+NEXCARGA — PLATAFORMA DEFINITIVA
+RELATÓRIO TÉCNICO DE AUDITORIA FULL STACK, ARQUITETURA ENTERPRISE, SUPER ADMIN & PARTNER CONTROL (VERSÃO 3.0)
+Status da Execução: SOMENTE LEITURA (READ-ONLY AUDIT) — Nenhum arquivo, pacote, banco de dados, variável de ambiente, Secret ou configuração foi alterado.
+SÍNTESE EXECUTIVA — SEPARAÇÃO OFICIAL DOS 6 ESTADOS DO SISTEMA
+Classificação	Resumo Técnico Baseado em Evidências do Repositório
+1. O que foi encontrado	Aplicação Full Stack TypeScript (React 19 + Vite 8 + Tailwind CSS v4 + Express 4) com 12 páginas em src/pages/, 6 camadas de serviços/utilitários (supabaseClient.ts, domainServices.ts, mapsService.ts, routeService.ts, logistics.ts, logistics.test.ts), servidor Express (server.ts) com rotas para Gemini AI e Mercado Pago, e scripts SQL (supabase/schema.sql, supabase/seed.sql, supabase/migrations/20261107_v2_evolution.sql).
+2. O que foi comprovado como funcional	Motor matemático e financeiro (src/utils/logistics.ts validado por 7/7 testes unitários em logistics.test.ts), mapa vetorial interativo real (@vis.gl/react-google-maps) com cálculo de rotas reais via google.maps.routes.Route.computeRoutes(), geocodificação e Places Autocomplete (New) em mapsService.ts, endpoints de IA (POST /api/gemini/nexia e POST /api/gemini/verify com gemini-2.5-flash), fluxo local de publicação de frete → envio de proposta → aceite e geração de contrato digital (acceptProposalAndCreateContract), alternância de tema Dark/White e proteção contra estouro de cota da Google Maps API.
+3. O que está parcialmente implementado	Camada de dados (src/services/supabaseClient.ts instancia @supabase/supabase-js, mas 100% dos métodos de DataService leem/gravam apenas no localStorage); Autenticação (AuthContext.tsx ignora senha e não usa JWT/Supabase Auth); Taxa configurável no AdminControlPage.tsx (salva no localStorage, mas acceptProposalAndCreateContract ignora o valor salvo e aplica 3.5% fixo); Atualização de status de contratos (ProposalsContractsPage.tsx altera apenas o useState local sem persistir); Checkout Mercado Pago (server.ts retorna ID mock MP-... e webhook não valida assinatura HMAC).
+4. O que existe apenas visualmente	Painel de Afiliados (PartnersPage.tsx exibe métricas estáticas 18, R$ 1.420,50, R$ 380,00 e link sem captura de ?ref=); Cards de KPIs e gráficos SVG nos Dashboards (CompanyDashboardPage.tsx e CarrierDashboardPage.tsx exibem números fixos 12, 38, 6, 24 e 217, 28, 5, 156); Logs de auditoria em AdminControlPage.tsx (3 linhas HTML estáticas); Upload de documentos em DocsPage.tsx (salva apenas o texto do nome do arquivo e aponta fileUrl para um PNG estático); Seletor de contas de demonstração no Header.tsx e AuthPage.tsx (permite trocar para SUPER_ADMIN sem senha).
+5. O que está ausente	Central Enterprise NexCarga Control com 12 módulos; NexCarga Impersonate (Acesso Assistido auditado com isolamento de sessão); NexCarga Partner Control completo (níveis PARTNER START, PRO, ELITE, MASTER, VIP, cargo PARTNER MANAGER, rastreamento real de cliques/indicações/conversões, máquina de 8 estados de comissão, livro-razão imutável affiliate_commission_ledger e fluxo de saques PIX); RBAC no backend (server.ts não possui middleware de autenticação); Políticas RLS (CREATE POLICY) para 9 tabelas no PostgreSQL; Google Cloud Storage para documentos privados; telemetria de cotas Google Maps no banco.
+6. O que deverá ser desenvolvido	Migração completa do DataService e AuthContext para Supabase Auth + PostgreSQL real com RLS; construção dos 12 módulos do NexCarga Control; implementação do NexCarga Impersonate; construção do ecossistema Partner Control (5 níveis comerciais + PARTNER MANAGER + Ledger imutável + Antifraude); integração real de Webhooks Mercado Pago com HMAC; e armazenamento seguro de documentos.
+A. ARQUITETURA ATUAL
+1. Estrutura de Pastas e Arquivos Relevantes
+Text
+/
+├── .env.example                                   # Variáveis de ambiente documentadas
+├── index.html                                     # Entrypoint HTML + Meta tags SEO + Fontes Inter/Space Grotesk/JetBrains Mono
+├── metadata.json                                  # Metadados da aplicação no Google AI Studio
+├── package.json                                   # Dependências e scripts (dev, build, start, lint)
+├── server.ts                                      # Backend Node.js + Express (API routes + Vite middleware / SPA static)
+├── tsconfig.json                                  # Configuração TypeScript
+├── vite.config.ts                                 # Configuração Vite + Tailwind v4 + dedupe React + injection VITE_GOOGLE_MAPS_API_KEY
+├── public/
+│   ├── manifest.webmanifest                       # Configuração PWA
+│   ├── sw.js                                      # Service Worker PWA
+│   └── assets/                                    # Imagens extraídas dos pacotes oficiais e referências V2.0
+├── supabase/
+│   ├── schema.sql                                 # DDL inicial com 13 tabelas, 6 ENUMs, índices e triggers
+│   ├── seed.sql                                   # Seed SQL básico de configuração
+│   └── migrations/
+│       └── 20261107_v2_evolution.sql              # Migration V2.0 (colunas de custo/lucro e tabela route_cache)
+└── src/
+    ├── App.tsx                                    # Roteamento client-side baseado em estado + GoogleMapsProvider condicional
+    ├── main.tsx                                   # Bootstrap React + interceptador global de erros de cota Google Maps
+    ├── index.css                                  # Design tokens e utilitários Tailwind CSS v4
+    ├── types/index.ts                             # Interfaces TypeScript e tipagens globais google.maps
+    ├── contexts/
+    │   ├── AuthContext.tsx                        # Contexto de sessão de usuário (baseado em localStorage)
+    │   └── ThemeContext.tsx                       # Contexto de tema Dark / White
+    ├── components/common/
+    │   ├── Header.tsx                             # Cabeçalho global, navegação, notificações e seletor de perfil demo
+    │   ├── Footer.tsx                             # Rodapé institucional
+    │   └── VerifiedBadge.tsx                      # Componente oficial do Selo Azul Verificado
+    ├── services/
+    │   ├── supabaseClient.ts                      # Cliente Supabase + Seed local + DataService (localStorage)
+    │   ├── domainServices.ts                      # Facade modular (FreightService, ProposalService, etc.)
+    │   ├── mapsService.ts                         # Geocoding, Reverse Geocoding e Places Autocomplete (New)
+    │   └── routeService.ts                        # Cálculo de rotas via Google Routes API + cache local de 24h
+    ├── utils/
+    │   ├── logistics.ts                           # Motor matemático (Haversine, taxas 3,5%, CNPJ, custos e lucro líquido)
+    │   └── logistics.test.ts                      # Suíte de 7 testes unitários automatizados (node:test)
+    └── pages/
+        ├── HomePage.tsx                           # Landing Page SaaS B2B LogTech V2.0
+        ├── AuthPage.tsx                           # Login e Cadastro multi-perfil (4 etapas)
+        ├── CompanyDashboardPage.tsx               # Painel da Empresa / Embarcador
+        ├── CarrierDashboardPage.tsx               # Painel da Transportadora / Motorista Autônomo
+        ├── RadarFretesPage.tsx                    # NexRadar com Google Maps vetorial + Simulador de Rentabilidade
+        ├── ProposalsContractsPage.tsx             # Gestão de Propostas e Contratos Digitais
+        ├── DocsPage.tsx                           # NexCarga Docs (gestão documental)
+        ├── NexIAPage.tsx                          # Assistente operacional inteligente com Gemini
+        ├── NexIAVerifyPage.tsx                    # Validação documental e concessão do Selo Azul
+        ├── SubscriptionsPage.tsx                  # Planos de Assinatura + Modal Checkout
+        ├── AdminControlPage.tsx                   # NexCarga Control (versão inicial simplificada)
+        └── PartnersPage.tsx                       # NexCarga Partners (versão inicial visual)
+2. Fluxo Atual de Dados e Separação Frontend / Backend
+Roteamento Client-Side (src/App.tsx): A aplicação não utiliza react-router-dom; o roteamento é controlado pelo estado currentPage em App.tsx (home, auth, company-dashboard, carrier-dashboard, radar, proposals, docs, nexia, verify, subscriptions, admin, partners).
+Persistência Client-Side (src/services/supabaseClient.ts): Apesar de instanciar createClient(supabaseUrl, supabaseAnonKey) nas linhas 28–30, todos os métodos de DataService (linhas 476–733) operam exclusivamente sobre window.localStorage (STORAGE_KEYS). Não há chamadas await supabase.from(...) implementadas no código atual.
+Backend (server.ts): Servidor Express na porta 3000 fornecendo 5 rotas de API (/api/health, /api/gemini/nexia, /api/gemini/verify, /api/mercadopago/checkout, /api/mercadopago/webhook) e servindo o frontend via vite.middlewares (desenvolvimento) ou dist/ (produção).
+B. MAPA DE PÁGINAS E MÓDULOS
+ID da Rota (currentPage)	Arquivo Principal	Perfis que Acessam Atualmente	Status Real na Auditoria
+home	src/pages/HomePage.tsx	Público / Todos	Funcional (V2.0): Hero LogTech, busca rápida integrada ao RadarFretesPage, vitrine de fretes reais do DataService, 4 cards de ecossistema e estatísticas.
+auth	src/pages/AuthPage.tsx	Público / Todos	Parcial: Cadastro em 4 etapas cria perfil no localStorage; Login valida apenas e-mail/CPF/CNPJ ignorando a senha (_pass); possui botões de acesso rápido demo.
+company-dashboard	src/pages/CompanyDashboardPage.tsx	COMPANY (mas acessível via menu sem bloqueio de rota)	Misto (Funcional + Visual): Publicação de frete real com Autocomplete Google Places e aceite de propostas funcionais; porém os 4 KPIs superiores (12, 38, 6, 24) e gráficos SVG são estáticos.
+carrier-dashboard	src/pages/CarrierDashboardPage.tsx	CARRIER, DRIVER	Misto (Funcional + Visual): Envio de proposta/contra-proposta e cadastro de veículo funcionais no localStorage; porém os 4 KPIs superiores (217, 28, 5, 156) e barras do gráfico são estáticos.
+radar	src/pages/RadarFretesPage.tsx	Todos	Funcional (V2.0): Mapa Google Maps real (DEMO_MAP_ID), marcadores avançados, cálculo de rota real (Route.computeRoutes), filtros multi-critério e Simulador de Custos e Lucro Líquido.
+proposals	src/pages/ProposalsContractsPage.tsx	Todos	Parcial: Listagem de propostas, aceite e criação de contrato funcionam e persistem no localStorage; porém a atualização de status do contrato (EM_TRANSITO, ENTREGUE) altera apenas o estado local do React e se perde ao recarregar.
+docs	src/pages/DocsPage.tsx	Todos	Parcial / Visual: Filtra documentos por perfil e cria registros no localStorage, mas não faz upload de arquivo binário (usa URL de imagem estática).
+nexia	src/pages/NexIAPage.tsx	Todos	Funcional: Chat operacional integrado ao endpoint POST /api/gemini/nexia com contexto em tempo real de fretes e contratos.
+verify	src/pages/NexIAVerifyPage.tsx	Todos	Funcional (Local): Analisa documentos do usuário via POST /api/gemini/verify e concede o Selo Azul (verified: true) quando CNH/CRLV/ANTT/CNPJ estão aprovados.
+subscriptions	src/pages/SubscriptionsPage.tsx	Todos	Parcial: Carrossel de planos fiel às referências e cálculo de descontos (mensal/trimestral/semestral/anual), mas o checkout coleta cartão em estado React e recebe ID mock do backend.
+admin	src/pages/AdminControlPage.tsx	Todos (link NexControl exposto no Header)	Parcial / Inicial: Aprova/revoga Selo Azul e documentos no localStorage; possui slider de taxa e tabela de auditoria estática; faltam os 12 módulos Enterprise.
+partners	src/pages/PartnersPage.tsx	Todos	Somente Visual: Exibe link de indicação e 3 métricas fixas hardcoded (18, R$ 1.420,50, R$ 380,00).
+C. FUNCIONALIDADES COMPROVADAMENTE OPERACIONAIS
+Motor de Cálculos Logísticos e Financeiros (src/utils/logistics.ts & src/utils/logistics.test.ts):
+Cálculo geodésico Haversine com fator rodoviário 1.28 (calculateRoadDistanceKm).
+Rateio simétrico da taxa de manutenção da plataforma (calculatePlatformFee: padrão 3,5% dividido em 1,75% contratante e 1,75% transportador).
+Validação algorítmica de dígitos verificadores de CNPJ (isValidCNPJ).
+Motor de Custos Operacionais e Rentabilidade Líquida V2.0 (calculateOperationalMetrics): consumo de diesel por número de eixos, custo de combustível, estimativa de pedágio por eixo/km, lucro líquido estimado, margem percentual e classificação de viabilidade (ALTA, MEDIA, BAIXA).
+Comprovado por 7 de 7 testes unitários automatizados passando via node:test.
+Integração Google Maps Platform & Routes API (src/pages/RadarFretesPage.tsx, src/services/routeService.ts, src/services/mapsService.ts):
+Renderização de mapa vetorial com <Map mapId="DEMO_MAP_ID">, <AdvancedMarker>, <Pin> e <InfoWindow>.
+Traçado de polilinha rodoviária real com google.maps.routes.Route.computeRoutes() e fallback gracioso para linha geodésica em caso de indisponibilidade da API.
+Cache de rotas de 24 horas em localStorage (nexcarga_route_cache_v2) para economia de cota.
+Autocomplete de cidades/endereços brasileiros com google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions() na publicação de fretes (CompanyDashboardPage.tsx, linhas 78–112).
+Defesa em 2 camadas contra erro OverQuotaMapError (src/main.tsx linhas 11–37 e src/App.tsx linhas 22–53), garantindo carregamento sob demanda apenas na rota radar.
+Inteligência Artificial com Google Gemini (server.ts, linhas 51–148):
+POST /api/gemini/nexia: assistente logístico alimentado pelo modelo gemini-2.5-flash via @google/genai, com fallback determinístico caso GEMINI_API_KEY não esteja configurada.
+POST /api/gemini/verify: auditoria automatizada de documentos logísticos retornando JSON estruturado (approved, confidenceScore, technicalOpinion, missingRequirements).
+Fluxo Transacional Local de Fretes, Propostas e Contratos (src/services/supabaseClient.ts):
+Criação de frete (createFreight), envio de proposta (createProposal) e aceite com geração de código contratual NXC-YYYY-XXXXXX (acceptProposalAndCreateContract) funcionam de ponta a ponta na sessão do navegador.
+D. FUNCIONALIDADES PARCIALMENTE IMPLEMENTADAS
+Persistência Supabase PostgreSQL (src/services/supabaseClient.ts):
+Evidência: Linhas 23–30 criam o cliente supabase, mas todas as funções de DataService (linhas 476–733) utilizam exclusivamente getFromStorage e saveToStorage no localStorage.
+Autenticação de Usuários (src/contexts/AuthContext.tsx):
+Evidência: Na linha 43, const login = async (identifier: string, _pass: string) ignora completamente o parâmetro _pass, buscando apenas se o e-mail, CPF ou CNPJ existe na lista local de perfis.
+Configuração Dinâmica da Taxa da Plataforma (src/pages/AdminControlPage.tsx vs. src/services/supabaseClient.ts):
+Evidência: AdminControlPage.tsx (linhas 50–61) salva a nova taxa via DataService.updatePlatformFeeConfig(...). Contudo, quando uma proposta é aceita em DataService.acceptProposalAndCreateContract (src/services/supabaseClient.ts, linhas 582 e 595), o código chama calculatePlatformFee(proposal.proposedPrice) sem passar a taxa configurada e grava platformFeePercent: 3.5 hardcoded no contrato.
+Atualização de Status Operacional de Contratos (src/pages/ProposalsContractsPage.tsx):
+Evidência: Nas linhas 35–44, handleUpdateStatus atualiza apenas o array em memória do componente (setContracts(list)), sem chamar nenhum método de persistência em DataService. Ao navegar para outra página e voltar, o status retorna a GERADO.
+Integração de Pagamentos Mercado Pago (server.ts & src/pages/SubscriptionsPage.tsx):
+Evidência: POST /api/mercadopago/checkout (server.ts, linhas 151–167) apenas gera um ID simulado MP-${Date.now()} sem chamar a API oficial do Mercado Pago (https://api.mercadopago.com/checkout/preferences ou /preapproval). O webhook POST /api/mercadopago/webhook (linhas 169–174) apenas executa console.log sem validar assinatura x-signature nem atualizar assinaturas ou comissões.
+E. FUNCIONALIDADES SOMENTE VISUAIS (MOCK / HARDCODED)
+Painel de Parceiros e Afiliados (src/pages/PartnersPage.tsx):
+Evidência: Linhas 88–98 exibem valores fixos no JSX (18 indicados ativos, R$ 1.420,50 comissões pagas, R$ 380,00 saldo disponível PIX). O código de indicação gerado na linha 14 (?ref=NXC-...) não é lido em AuthPage.tsx nem em App.tsx.
+Cards Superiores de KPIs e Gráficos nos Dashboards (src/pages/CompanyDashboardPage.tsx & src/pages/CarrierDashboardPage.tsx):
+Evidência: Em CompanyDashboardPage.tsx (linhas 328–375), os 4 indicadores principais exibem valores estáticos (12 Fretes Ativos, 38 Propostas Recebidas, 6 Em Negociação, 24 Contratos Fechados) em vez de derivar de myFreights, proposals e contracts. Em CarrierDashboardPage.tsx (linhas 309–356), os 4 cards também são estáticos (217 Fretes Disponíveis, 28 Propostas Enviadas, 5 Fretes em Andamento, 156 Concluídos).
+Offsets Inflados nas Estatísticas Globais (src/services/supabaseClient.ts):
+Evidência: Nas linhas 724–730, getPlatformStats() soma constantes fixas aos dados reais (5000 + profiles.length, 12000 + freights.length, 1200 + companies, 462850 + totalMovedValue).
+Logs de Auditoria no Painel Admin (src/pages/AdminControlPage.tsx):
+Evidência: Linhas 141–157 renderizam 3 linhas <tr> estáticas fixas no HTML, sem tabela ou estado de auditoria real.
+Upload de Documentos (src/pages/DocsPage.tsx):
+Evidência: Linha 70 grava fixa a URL /assets/references/design_pack/07-selo-verificado-uso-funcional.png para qualquer documento enviado, sem leitura de arquivo real (<input type="file">) nem envio para Storage.
+F. FUNCIONALIDADES AUSENTES
+Central de Comando Enterprise (NexCarga Control) com 12 Módulos.
+Sistema de Acesso Assistido (NexCarga Impersonate) com isolamento de sessão, justificativa obrigatória, bloqueio de ações sensíveis e trilha de auditoria.
+Sistema Completo de Afiliados (NexCarga Partner Control) com os 5 níveis comerciais (PARTNER START, PRO, ELITE, MASTER, VIP), cargo PARTNER MANAGER, atribuição de links/cupons, máquina de estados de comissões (8 status), livro-razão imutável (affiliate_commission_ledger), regras antifraude e saques PIX (affiliate_payouts).
+Middleware Backend de Autenticação e Autorização RBAC validando JWT e permissões por módulo em server.ts.
+Políticas RLS (CREATE POLICY) completas no PostgreSQL para todas as tabelas operacionais e administrativas.
+Integração Google Cloud Storage com Signed URLs temporárias para documentos sensíveis (CNH, CRLV, RNTRC/ANTT, Contrato Social).
+Módulo de Governança e Monitoramento de Cotas Google Maps no painel administrativo.
+G. AUDITORIA DO NEXCARGA CONTROL (ATUAL VS. ARQUITETURA DOS 12 MÓDULOS)
+Estado Atual (src/pages/AdminControlPage.tsx — 314 linhas)
+Atualmente, o AdminControlPage.tsx é uma tela única simplificada contendo apenas:
+4 cards de resumo no topo;
+1 controle deslizante (slider) para ajuste da taxa da plataforma (que não reflete no fechamento real de contratos) e 3 linhas fixas de log;
+1 fila de documentos pendentes para aprovar/rejeitar;
+1 tabela de usuários para conceder/revogar o Selo Azul.
+Arquitetura Planejada dos 12 Módulos Oficiais do NexCarga Control
+Para transformar o NexCarga Control na Central de Comando Enterprise V3.0, ele será estruturado em layout com Sidebar Administrativa Dedicada + Topbar de Contexto Global + 12 Módulos Especializados:
+#	Módulo Oficial	Escopo Funcional Completo
+1	Dashboard Executivo	KPIs reais em tempo real (sem offsets fictícios): GMV transacionado, receita líquida da taxa de plataforma (3,5%), MRR de assinaturas, CAC via afiliados, funil de conversão de fretes, alertas de segurança e saúde das integrações.
+2	Clientes e Contas	Diretório completo de Empresas (COMPANY), Transportadoras (CARRIER) e Motoristas (DRIVER), visão 360º do cliente, histórico operacional, bloqueio/suspensão cautelar e botão de acionamento do Acesso Assistido (Impersonate).
+3	Verificação e Documentos	Fila de homologação documental (CNPJ, CNH com EAR, CRLV, RNTRC/ANTT), visualizador seguro via Signed URL, parecer técnico da NexIA Verify, concessão/revogação motivada do Selo Azul Verificado e controle de vencimentos.
+4	Fretes e Operações	Monitoramento em tempo real de todos os fretes publicados, em negociação, em trânsito, entregues ou cancelados; intervenção administrativa em disputas operacionais e auditoria de rotas/custos.
+5	Propostas e Contratos	Auditoria de todas as propostas, contra-propostas e contratos digitais (NXC-YYYY-XXXXXX), histórico imutável de status, valores acordados e taxas retidas de contratante e transportador.
+6	Planos e Assinaturas	Gestão de assinaturas ativas, em período de teste (Trial 15 dias), inadimplentes ou canceladas; configuração dinâmica de preços e ciclos (Mensal, Trimestral, Semestral, Anual) por perfil.
+7	Financeiro e Taxas	Conciliação de recebíveis (Assinaturas + Taxas de Manutenção de Contratos), parametrização real da taxa da plataforma com vigência imediata nos novos contratos, estornos, chargebacks e fluxo de caixa.
+8	Partner Control (Afiliados)	Gestão integral do programa de parceiros: aprovação de afiliados, progressão entre os 5 níveis (START a VIP), alocação de PARTNER MANAGER, auditoria de indicações/conversões, aprovação de comissões e liberação de saques PIX.
+9	Integrações e APIs	Painel de controle técnico de Google Maps Platform (controle de cotas e cache de rotas), Google Gemini AI (status, latência e modelo ativo), Supabase (conexão e banco) e Mercado Pago (webhooks e conciliação).
+10	Equipe e Permissões	Gestão de operadores internos (SUPER_ADMIN, ADMIN_OPERACIONAL, FINANCEIRO, SUPORTE, AUDITOR, PARTNER_MANAGER), matriz RBAC granular por módulo/ação e revogação imediata de sessões.
+11	Logs e Auditoria	Trilha de auditoria imutável (audit_logs) registrando actor_id, role, action, target_entity, before_state, after_state, ip_address, user_agent e sessões de Impersonate.
+12	Configurações Globais	Feature flags, regras de automação do Selo Azul, parâmetros padrão do motor de custos (preço médio do diesel, fator de pedágio por eixo), termos de uso e políticas de segurança.
+H. AUDITORIA DO SUPER ADMIN
+Estado Atual
+O papel SUPER_ADMIN está listado no enum UserRole (src/types/index.ts, linha 7) e atribuído ao perfil seed user-admin-1 (src/services/supabaseClient.ts, linha 82).
+Não existe separação de poderes nem validação de permissão no backend (server.ts).
+Matriz Oficial de Governança: Operações via Painel vs. Intervenção Técnica
+Operação	Executável Diretamente pelo SUPER ADMIN no Painel (NexCarga Control)	Exige Intervenção Técnica / Pipeline DevOps / Cloud Console
+Gerenciar clientes, aprovar/revogar Selo Azul e auditar documentos	SIM	Não
+Iniciar sessão de Acesso Assistido (NexCarga Impersonate)	SIM	Não
+Ajustar percentual da Taxa de Manutenção (ex.: 3,5%) e preços de planos	SIM	Não
+Gerenciar afiliados, alterar nível comercial (START a VIP), aprovar comissões e saques	SIM	Não
+Atribuir/revogar cargos administrativos (ADMIN_OPERACIONAL, FINANCEIRO, PARTNER_MANAGER, etc.)	SIM	Não
+Configurar limites internos de cota diária de APIs (Maps/Gemini) e limpar cache de rotas	SIM	Não
+Visualizar status de conexão das integrações (mascarado) e reprocessar Webhooks	SIM	Não
+Alterar código-fonte TypeScript/React ou lógica de rotas Express	Não	SIM (Desenvolvimento / Git)
+Executar migrations DDL (ALTER TABLE, CREATE INDEX) no PostgreSQL	Não	SIM (Pipeline de Banco de Dados)
+Modificar políticas estruturais de ROW LEVEL SECURITY (CREATE/ALTER POLICY)	Não	SIM (DBA / Migration Segura)
+Rotacionar chaves privadas mestras (SUPABASE_SERVICE_ROLE_KEY, MERCADO_PAGO_ACCESS_TOKEN)	Não	SIM (Google Cloud / AI Studio Secrets)
+I. AUDITORIA DO ACESSO ASSISTIDO (NEXCARGA IMPERSONATE)
+Estado Atual
+Inexistente como recurso de segurança. Atualmente existe apenas um seletor de demonstração (switchDemoUser em AuthContext.tsx, linha 115, exposto no Header.tsx, linhas 394–402), que substitui diretamente o usuário logado no localStorage sem autenticação, sem justificativa e sem registro de auditoria.
+Arquitetura Planejada para o NexCarga Impersonate (10 Passos Obrigatórios)
+Elegibilidade Estrita: Apenas SUPER_ADMIN (e SUPORTE com permissão explícita impersonate:start) podem iniciar o Acesso Assistido; é proibido impersonar outro SUPER_ADMIN.
+Modal de Justificativa Obrigatória: O administrador deve informar o motivo do acesso (ex.: ticket de suporte #1042 ou investigação operacional) antes de abrir a sessão.
+Token de Impersonação Isolado: Geração de registro na tabela impersonation_sessions contendo admin_user_id, target_user_id, reason, started_at, expires_at (TTL máximo de 30 minutos) e status = 'ACTIVE'.
+Preservação da Sessão Original: A sessão do SUPER_ADMIN permanece intacta em camada superior (impersonatorSession), permitindo retorno instantâneo em 1 clique sem novo login.
+Banner Global Fixo de Segurança (Topbar de Alerta): Exibição ininterrupta no topo da tela: "MODO DE ACESSO ASSISTIDO ATIVO — Visualizando como [Nome do Cliente / Perfil] | Operador: [Nome do Admin] | Tempo restante: [MM:SS] | [Encerrar Acesso Assistido]".
+Escopo de Ações Permitidas: Visualizar exatamente o painel do cliente, simular filtros no NexRadar, verificar propostas/contratos, diagnosticar erros de documentos e auxiliar no preenchimento operacional.
+Bloqueio Hardcoded de Ações Sensíveis: Durante o Impersonate, ficam bloqueados no frontend e no backend:
+Alterar senha, e-mail ou dados bancários/PIX do usuário;
+Contratar assinaturas pagas ou utilizar cartões salvos;
+Solicitar saques de comissões de afiliado;
+Excluir a conta ou assinar termos jurídicos em nome do cliente sem flag de assistência.
+Marcação Dupla em Todas as Ações (Dual Attribution): Qualquer registro criado/editado durante a sessão grava user_id = target_user_id e acted_by_admin_id = admin_user_id + impersonation_session_id.
+Auditoria em Tempo Real: Cada navegação e ação relevante dentro do modo assistido gera um evento vinculado ao impersonation_session_id em audit_logs.
+Encerramento Automático ou Manual: Ao clicar em "Encerrar Acesso Assistido" ou atingir o TTL de 30 minutos, a sessão grava ended_at, restaura o contexto do NexCarga Control e exibe o resumo das ações realizadas.
+J. AUDITORIA DO PARTNER CONTROL
+Estado Atual (src/pages/PartnersPage.tsx — 106 linhas)
+A página atual possui apenas 106 linhas com layout estático.
+Não possui tabela de afiliados, não possui aprovação cadastral de parceiros, não rastreia cliques, não vincula novos cadastros ao afiliado indicador e não integra com o AdminControlPage.tsx.
+Na tabela supabase/schema.sql (linhas 237–253), existe apenas uma tabela embrionária partners com referral_code, commission_percent, referred_count, total_earned, available_balance e pix_key, sem histórico de indicações, sem ledger e sem níveis comerciais.
+K. AUDITORIA DOS CARGOS E NÍVEIS COMERCIAIS DE AFILIADOS
+Estado Atual
+O enum UserRole (src/types/index.ts, linha 7) define apenas um papel genérico 'PARTNER', misturado aos papéis de acesso do sistema (COMPANY, CARRIER, DRIVER, ADMIN, SUPER_ADMIN).
+Os 5 níveis comerciais (PARTNER START, PARTNER PRO, PARTNER ELITE, PARTNER MASTER, PARTNER VIP) não existem no código nem no banco de dados.
+Arquitetura Planejada — Separação Obrigatória entre RBAC Administrativo e Níveis Comerciais
+Regra Arquitetural Crítica: Níveis comerciais de afiliados (affiliate_tier) definem regras de comissionamento, metas e benefícios comerciais e JAMAIS concedem permissões administrativas no NexCarga Control.
+Nível Comercial (affiliate_tier)	Critério de Elegibilidade (Indicações Ativas Pagantes)	Comissão sobre 1ª Mensalidade	Comissão Recorrente (Renovações)	Benefícios e Recursos Exclusivos
+PARTNER START	0 a 9 clientes ativos	20%	5% (por 6 meses)	Link único de indicação, painel básico de acompanhamento e saque PIX (mínimo R$ 100,00).
+PARTNER PRO	10 a 29 clientes ativos	25%	8% (por 12 meses)	Cupom personalizado com desconto de 5% para o indicado, kit de mídia oficial e suporte prioritário.
+PARTNER ELITE	30 a 74 clientes ativos	30%	10% (vitalício enquanto ativo)	Gerente de contas dedicado (PARTNER MANAGER), landing page co-branded e janela de saque reduzida.
+PARTNER MASTER	75 a 199 clientes ativos	35%	12% (vitalício enquanto ativo)	Bônus trimestral de performance, relatórios avançados de BI/conversão e API de integração de leads.
+PARTNER VIP	200+ clientes ativos ou parceiro estratégico homologado pelo SUPER_ADMIN	40% (ou taxa customizada)	15% (ou customizada)	Condições comerciais sob medida, participação em campanhas oficiais NexCarga e liquidação PIX expressa.
+L. AUDITORIA DO PARTNER MANAGER
+Estado Atual
+Ausente no código e no banco de dados.
+Especificação Funcional do Cargo PARTNER MANAGER
+O PARTNER MANAGER é um cargo administrativo interno (membro da equipe comercial/parcerias da NexCarga) com acesso restrito ao módulo Partner Control dentro do NexCarga Control:
+O que PODE fazer:
+Analisar e aprovar/recusar cadastros de novos afiliados;
+Acompanhar métricas de cliques, cadastros, períodos de teste (Trial) e conversões da sua carteira de afiliados;
+Criar campanhas promocionais e materiais de apoio;
+Solicitar revisão de comissões em análise (EM_ANALISE) e encaminhar lotes de saque para aprovação financeira;
+Atender afiliados da sua carteira.
+O que NÃO PODE fazer (Exclusivo do SUPER_ADMIN / FINANCEIRO):
+Não pode alterar taxas globais da plataforma (3,5%);
+Não pode executar liberação final de pagamento PIX (PAGA) sem aprovação financeira;
+Não pode conceder o nível PARTNER VIP ou taxas manuais acima do teto sem aprovação do SUPER_ADMIN;
+Não pode acessar módulos de Infraestrutura, Chaves de API ou Equipe Interna.
+M. AUDITORIA DAS COMISSÕES, LEDGER IMUTÁVEL E SAQUES
+Estado Atual
+Ausente. Não há cálculo de comissão sobre assinaturas nem registro de transações de afiliados.
+Arquitetura Planejada — Máquina de 8 Estados e Livro-Razão Imutável (affiliate_commission_ledger)
+1. Máquina de Estados Oficial da Comissão (commission_status)
+Text
+[GERADA] ──► [PENDENTE] ──► [EM_ANALISE] ──► [APROVADA] ──► [DISPONIVEL] ──► [SOLICITADA_SAQUE] ──► [PAGA]
+   │             │               │               │
+   └─────────────┴───────────────┴───────────────┴──► [CANCELADA] (Estorno / Chargeback / Fraude / Cancelamento no Trial)
+Status	Gatilho de Transição	Impacto no Saldo do Afiliado
+GERADA	Indicado cria conta e inicia checkout ou Trial de 15 dias.	Saldo Futuro / Expectativa (R$ 0 liberado).
+PENDENTE	Pagamento da assinatura confirmado via Webhook Mercado Pago; inicia período de carência (15 dias anti-chargeback).	Entra em pending_balance.
+EM_ANALISE	Retida automaticamente por alerta antifraude ou valor acima do limite de auditoria.	Permanece bloqueada em pending_balance.
+APROVADA	Validada pela regra antifraude após confirmação financeira.	Aguardando fim do prazo de maturação (D+15).
+DISPONIVEL	Prazo de maturação cumprido sem estorno/cancelamento; lançada a crédito (CREDIT) no Ledger.	Soma em available_balance para saque PIX.
+SOLICITADA_SAQUE	Afiliado solicita resgate PIX (affiliate_payouts); valor é reservado (HOLD no Ledger).	Deduz de available_balance e move para locked_withdrawal_balance.
+PAGA	Transferência PIX liquidada com comprovante registrado pelo Financeiro/Super Admin (DEBIT definitivo).	Soma em total_paid_balance.
+CANCELADA	Pagamento estornado, chargeback, autoindicação detectada ou assinatura cancelada antes da confirmação.	Estorno contábil (REVERSAL) registrado no Ledger.
+2. Livro-Razão Imutável (affiliate_commission_ledger)
+Nenhuma coluna numérica de saldo (available_balance) será editada por UPDATE solto sem lastro.
+Toda movimentação financeira de afiliado gera uma linha append-only (imutável, proibida de UPDATE ou DELETE via trigger PostgreSQL) contendo: id, affiliate_id, commission_id, payout_id, entry_type (CREDIT, DEBIT, HOLD, RELEASE, REVERSAL, ADJUSTMENT), amount, balance_before, balance_after, description, created_by e created_at.
+N. AUDITORIA DAS INDICAÇÕES, CONVERSÕES E REGRAS ANTIFRAUDE
+Estado Atual
+src/types/index.ts (linhas 187–199) declara a interface PartnerReferral, mas ela não é importada nem utilizada em nenhum arquivo do projeto.
+Arquitetura Planejada de Rastreamento (Attribution Engine) e Antifraude
+Captura Multi-Canal (?ref=CODIGO ou Cupom):
+Ao acessar qualquer URL com ?ref=NXC-XXXX, o sistema grava um cookie/storage de atribuição com validade de 30 dias (First-Touch ou Last-Touch configurável no NexCarga Control, padrão Last-Touch 30 dias) e registra o clique em affiliate_clicks (hash de IP, User-Agent, UTM source/medium/campaign, landing page).
+Funil de Conversão Auditado (5 Etapas):
+CLICK (Acesso ao link) ➔ SIGNUP (Conta criada vinculada ao referred_by_affiliate_id) ➔ TRIAL_STARTED (Ativou os 15 dias grátis) ➔ SUBSCRIPTION_PAID (1ª fatura liquidada no Mercado Pago) ➔ ACTIVE_RETENTION (Renovações mensais/anuais).
+Travamento de Atribuição (Attribution Lock):
+Uma vez que um user_id é vinculado a um affiliate_id no momento do cadastro, esse vínculo é imutável pelo usuário final (somente SUPER_ADMIN pode auditar/corrigir mediante log).
+Motor Antifraude de Afiliados (Bloqueio Automático):
+Proibição de Autoindicação (Self-Referral): Bloqueia comissão se o indicado possuir o mesmo CPF, mesmo CNPJ raiz (8 primeiros dígitos), mesmo e-mail, mesmo telefone, mesma chave PIX ou mesmo fingerprint/IP recorrente do afiliado.
+Proibição de Reciclagem de Contas: Se o CNPJ/CPF do indicado já teve conta na NexCarga nos últimos 180 dias, a indicação é marcada como EM_ANALISE (DUPLICATE_DOCUMENT_ALERT).
+O. AUDITORIA DO BANCO DE DADOS (supabase/schema.sql, seed.sql e 20261107_v2_evolution.sql)
+1. O que foi encontrado nos arquivos SQL
+supabase/schema.sql (304 linhas) define 6 ENUMs e 13 tabelas: profiles, companies, carriers, vehicles, freights, proposals, contracts, documents, subscriptions, partners, notifications, platform_settings e ai_verification_logs.
+supabase/migrations/20261107_v2_evolution.sql (63 linhas) adiciona colunas de inteligência de rota e custo em freights e cria a tabela route_cache (totalizando 14 tabelas definidas em SQL).
+2. Problemas Técnicos e Bugs Encontrados nos Scripts SQL Atuais
+BUG CRÍTICO DE SINTAXE/COLUNA EM supabase/migrations/20261107_v2_evolution.sql (Linhas 45–46):
+Evidência:
+SQL
+CREATE INDEX IF NOT EXISTS idx_freights_dest_coords ON freights (dest_lat, dest_lng);
+CREATE INDEX IF NOT EXISTS idx_freights_status_state ON freights (status, origin_state, dest_state);
+Problema: Na tabela freights (supabase/schema.sql, linhas 140–145), as colunas reais chamam-se destination_lat, destination_lng e destination_state (e não dest_lat, dest_lng, dest_state). A execução dessa migration no PostgreSQL falha com ERROR: column "dest_lat" does not exist.
+BLOQUEIO TOTAL POR FALTA DE POLÍTICAS RLS (supabase/schema.sql, Linhas 277–289):
+Evidência: O script executa ALTER TABLE ... ENABLE ROW LEVEL SECURITY em 11 tabelas (profiles, companies, carriers, vehicles, freights, proposals, contracts, documents, subscriptions, notifications, ai_verification_logs), mas cria políticas (CREATE POLICY) apenas para profiles e freights (linhas 292–303).
+Impacto: No PostgreSQL/Supabase, habilitar RLS em uma tabela sem criar nenhuma POLICY resulta em negação total (Deny All) para todas as operações via anon ou authenticated key. Assim, proposals, contracts, documents, vehicles, companies, carriers, subscriptions e notifications ficam inacessíveis pelo cliente Supabase até que as políticas sejam criadas.
+TABELA partners SEM RLS (supabase/schema.sql, Linha 237):
+A tabela partners sequer teve ENABLE ROW LEVEL SECURITY ativado.
+P. AUDITORIA DAS APIS E BACKEND (server.ts)
+1. Rotas Atualmente Implementadas em server.ts (216 linhas)
+Método e Rota	Linhas em server.ts	Status Real	Problemas Identificados
+GET /api/health	39–48	Funcional	Expõe booleans de configuração de serviços sem autenticação (aceitável para healthcheck básico, mas não deve expor metadados sensíveis).
+POST /api/gemini/nexia	51–95	Funcional	Sem autenticação JWT e sem rate-limiting por usuário/IP (qualquer cliente externo pode consumir a cota Gemini).
+POST /api/gemini/verify	98–148	Funcional	Sem autenticação JWT; recebe metadados do documento mas não valida o binário real no Storage.
+POST /api/mercadopago/checkout	151–167	Mock / Parcial	Retorna apenas preferenceId: "MP-..." sem comunicar com a API do Mercado Pago.
+POST /api/mercadopago/webhook	169–174	Incompleto	Apenas faz console.log('Mercado Pago Webhook received:', req.body) e retorna 200 OK, sem validar header x-signature nem atualizar o banco de dados.
+Q. AUDITORIA GOOGLE MAPS CONTROL
+Estado Atual
+A integração de mapas no frontend (src/pages/RadarFretesPage.tsx, src/services/mapsService.ts, src/services/routeService.ts) é de alta qualidade técnica, utilizando a arquitetura moderna do Google Maps (@vis.gl/react-google-maps, Route.computeRoutes, AutocompleteSuggestion.fetchAutocompleteSuggestions) e cache local de 24h (nexcarga_route_cache_v2).
+O que falta para o padrão Enterprise V3.0:
+Persistir o cache de rotas compartilhado na tabela route_cache do PostgreSQL (já criada na migration V2.0, mas ainda não consultada pelo routeService.ts), permitindo que uma rota calculada por um usuário economize chamadas de API para todos os demais usuários da plataforma.
+Criar o sub-módulo Google Maps Control dentro de Integrações e APIs no NexCarga Control, exibindo: contador diário de chamadas por SKU (Dynamic Maps, Routes API ComputeRoutes, Places Autocomplete, Geocoding), taxa de acerto do cache (Cache Hit Ratio %), botão de limpeza de cache expirado e chave de contingência (Kill Switch / Modo Econômico Geodésico) acionável pelo SUPER_ADMIN.
+R. AUDITORIA FINANCEIRA E MERCADO PAGO
+Estado Atual (src/pages/SubscriptionsPage.tsx & server.ts)
+Risco Crítico de PCI-DSS no Frontend (src/pages/SubscriptionsPage.tsx, linhas 39–43 e 421–487):
+O modal de checkout captura cardNumber (PAN), cardName, cardExpiry e cardCvv diretamente em variáveis useState do React, sem tokenização via SDK oficial do Mercado Pago (@mercadopago/sdk-react / CardPayment Brick ou Checkout Pro Redirect).
+Ausência de Conciliação de Receita de Contratos + Assinaturas + Comissões de Afiliados:
+Atualmente não há tabela de transações financeiras (financial_transactions) que consolide:
+Receita de Assinaturas (SUBSCRIPTION_REVENUE);
+Receita da Taxa de Manutenção de 3,5% dos Contratos (CONTRACT_FEE_REVENUE);
+Despesa de Comissões de Afiliados (AFFILIATE_COMMISSION_EXPENSE);
+Liquidação de Saques PIX (AFFILIATE_PAYOUT).
+S. AUDITORIA DE SEGURANÇA — MATRIZ ESTRUTURADA DE VULNERABILIDADES E PROBLEMAS
+#	Módulo	Arquivo(s)	Evidência (Linhas)	Problema Encontrado	Impacto	Prioridade	Recomendação Técnica	Dependências
+S1	Autenticação & Acesso Admin	src/components/common/Header.tsx, src/pages/AuthPage.tsx, src/contexts/AuthContext.tsx	Header.tsx: 51, 394–402; AuthPage.tsx: 489–519; AuthContext.tsx: 43, 115	Botão NexControl visível para todos, seletor de conta demo permitindo assumir SUPER_ADMIN em 1 clique e função login() ignorando a senha (_pass).	Crítico: Qualquer visitante acessa o painel administrativo e assume qualquer identidade.	P0 (Imediata)	Integrar supabase.auth.signInWithPassword, validar sessão JWT real, proteger rotas com <ProtectedRoute allowedRoles={[...]} /> e remover o switcher demo em produção (substituindo pelo NexCarga Impersonate autenticado).	Supabase Auth configurado
+S2	Pagamentos / PCI-DSS	src/pages/SubscriptionsPage.tsx	Linhas 39–43, 421–487	Coleta direta de número de cartão de crédito (cardNumber) e cardCvv em inputs HTML controlados pelo React sem tokenização client-side do gateway.	Crítico: Violação de conformidade PCI-DSS se transmitido ao backend.	P0 (Imediata)	Utilizar Mercado Pago Checkout Pro (redirect/modal oficial) ou Mercado Pago Payment Brick (tokenização client-side direta com chave pública) + PIX QR Code dinâmico.	MERCADO_PAGO_PUBLIC_KEY e ACCESS_TOKEN
+S3	Banco de Dados & RLS	supabase/schema.sql, supabase/migrations/20261107_v2_evolution.sql	schema.sql: 279–303; 20261107_v2_evolution.sql: 45–46	9 tabelas com RLS ativo sem nenhuma POLICY (bloqueando queries legítimas), tabela partners sem RLS e índice SQL referenciando coluna inexistente (dest_lat).	Alto: Falha na execução da migration V2.0 e bloqueio de leitura/escrita quando conectado ao Supabase real.	P0 (Imediata)	Corrigir nomes das colunas nos índices para destination_lat/lng/state e criar as políticas RLS granulares para todas as tabelas.	Banco PostgreSQL Supabase
+S4	Backend APIs	server.ts	Linhas 51–174	Rotas /api/gemini/* e /api/mercadopago/* não exigem token Bearer JWT, não possuem rate limiting e o webhook não valida assinatura HMAC x-signature.	Alto: Consumo indevido de cota de IA por terceiros e risco de falsificação de confirmação de pagamento via webhook forjado.	P0 (Imediata)	Criar middleware requireAuth e requireRole validando JWT do Supabase no server.ts, aplicar rate-limit e validar x-signature do Mercado Pago.	Supabase Service Role / JWT
+S5	Integridade Financeira de Taxas	src/services/supabaseClient.ts	Linhas 582 e 595	acceptProposalAndCreateContract ignora a taxa configurada pelo Admin e aplica 3.5% fixo.	Médio: Alterações de taxa feitas pelo SUPER_ADMIN no painel não surtem efeito financeiro nos contratos gerados.	P1 (Alta)	Ler getPlatformFeeConfig().totalPercent dinamicamente no momento de gerar o contrato e gravar o snapshot da taxa no contrato.	Nenhuma
+S6	Persistência de Contratos	src/pages/ProposalsContractsPage.tsx	Linhas 35–44	handleUpdateStatus altera o status do contrato (EM_TRANSITO, ENTREGUE) apenas na memória local do componente React.	Médio: Perda de rastreabilidade operacional ao atualizar ou trocar de página.	P1 (Alta)	Criar e invocar DataService.updateContractStatus(contractId, newStatus, actorId) persistindo no banco e no statusHistory.	Nenhuma
+S7	Privacidade Documental (LGPD)	src/pages/DocsPage.tsx	Linha 70	Documentos sensíveis (CNH, CRLV, ANTT) não possuem upload real e usam caminho público estático.	Médio: Impossibilidade de auditoria documental real e risco de exposição se armazenados em bucket público.	P1 (Alta)	Armazenar documentos em bucket privado (Supabase Storage / Google Cloud Storage) com acesso exclusivo via Signed URLs temporárias (TTL 15 min).	Bucket privado configurado
+T. ARQUITETURA RECOMENDADA V3.0 (ENTERPRISE COMMAND CENTER)
+Text
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                  FRONTEND (React 19 + TypeScript + Vite)                        │
+├───────────────────────────┬───────────────────────────────────┬─────────────────────────────────┤
+│   ECOSISTEMA OPERACIONAL  │     NEXCARGA PARTNER CONTROL      │   NEXCARGA CONTROL (ENTERPRISE) │
+│ • Home V2.0 + NexRadar    │ • Dashboard do Afiliado           │ • 12 Módulos Administrativos    │
+│ • Painel Empresa          │ • Progressão (START ➔ VIP)        │ • Gestão de Equipe e RBAC       │
+│ • Painel Transportador    │ • Gerador de Links (?ref) & Cupom │ • NexCarga Impersonate (Banner) │
+│ • Propostas & Contratos   │ • Extrato Ledger Imutável         │ • Google Maps Quota Control     │
+│ • NexCarga Docs & Verify  │ • Solicitação de Saque PIX        │ • Conciliação Financeira & Logs │
+└─────────────┬─────────────┴─────────────────┬─────────────────┴────────────────┬────────────────┘
+              │                               │                                  │
+              ▼                               ▼                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                        CAMADA DE SERVIÇOS & SEGURANÇA (server.ts + Middlewares)                 │
+│ • Middleware JWT Auth (Supabase)   • Middleware RBAC & Permissions   • Impersonation Guard      │
+│ • Attribution & Anti-Fraud Engine  • Commission Ledger Engine        • Webhook HMAC Validator   │
+└─────────────┬───────────────────────────────┬──────────────────────────────────┬────────────────┘
+              │                               │                                  │
+              ▼                               ▼                                  ▼
+┌───────────────────────────┐   ┌───────────────────────────┐   ┌─────────────────────────────────┐
+│   SUPABASE POSTGRESQL     │   │    GOOGLE CLOUD / APIs    │   │         MERCADO PAGO            │
+│ • Tabelas Operacionais    │   │ • Maps JS API v3 + Routes │   │ • Checkout / PIX / Assinaturas  │
+│ • Tabelas Admin & Audit   │   │ • Places API (New)        │   │ • Webhooks Assinados (HMAC)     │
+│ • Tabelas Affiliate/Ledger│   │ • Gemini 2.5 Flash API    │   │ • Conciliação de Recebíveis     │
+│ • RLS Ativo em 100%       │   │ • Private Storage (Docs)  │   │                                 │
+└───────────────────────────┘   └───────────────────────────┘   └─────────────────────────────────┘
+U. ESTRUTURA DE PERMISSÕES (RBAC ADMINISTRATIVO VS. NÍVEIS COMERCIAIS)
+1. Papéis Administrativos e Operacionais (UserRole / RBAC)
+Papel (role)	Natureza	Escopo de Acesso
+SUPER_ADMIN	Administrativo Master	Acesso irrestrito aos 12 módulos do NexCarga Control, Impersonate, aprovação final de taxas, nomeação de administradores e níveis VIP.
+ADMIN_OPERACIONAL	Administrativo Interno	Acesso aos módulos de Clientes, Verificação Documental (Selo Azul), Fretes, Propostas/Contratos e Acesso Assistido (Impersonate supervisionado).
+FINANCEIRO	Administrativo Interno	Acesso aos módulos de Planos/Assinaturas, Financeiro/Taxas, conciliação Mercado Pago e liquidação de saques PIX de afiliados (affiliate_payouts).
+AUDITOR	Administrativo Leitura	Acesso somente leitura aos 12 módulos, Logs de Auditoria, sessões de Impersonate e Ledger de comissões para compliance.
+SUPORTE	Atendimento Interno	Acesso a Clientes, Documentos, Fretes e Impersonate para suporte técnico ao usuário, sem permissão de alterar taxas ou aprovar saques.
+PARTNER_MANAGER	Comercial Interno	Acesso dedicado ao módulo Partner Control (gestão de afiliados, campanhas, análise de conversões e pré-aprovação de comissões).
+COMPANY	Cliente Externo	Painel da Empresa (publicação de cargas, gestão de propostas, contratos, documentos e assinatura).
+CARRIER	Cliente Externo	Painel da Transportadora (gestão de frota, busca no NexRadar, propostas, contratos, documentos e assinatura).
+DRIVER	Cliente Externo	Painel do Motorista Autônomo (veículo, busca no NexRadar, propostas, contratos, documentos e assinatura).
+PARTNER	Parceiro Comercial Externo	Painel do Afiliado (PartnersPage: links de indicação, funil de indicados, extrato do Ledger e solicitação de saque PIX). Zero acesso ao NexCarga Control.
+V. ESTRUTURA DE TABELAS NECESSÁRIAS (MAPEAMENTO SEM DUPLICAÇÃO)
+Para evitar qualquer duplicação com as 14 tabelas já existentes em supabase/schema.sql e supabase/migrations/20261107_v2_evolution.sql, adotaremos a seguinte estratégia de Preservação + Evolução (ALTER TABLE) + Novas Tabelas Enterprise:
+Tabela Solicitada na Arquitetura V3.0	Equivalente Atual no Projeto	Ação Planejada (Sem Duplicação)
+users / profiles	profiles (schema.sql L52)	Preservar e evoluir profiles (adicionar suporte aos novos papéis administrativos e coluna referred_by_affiliate_id).
+roles & permissions & admin_users	(Ausentes)	Criar tabelas admin_roles_permissions e user_role_assignments para RBAC granular por módulo/ação.
+companies, carriers, drivers, vehicles	companies, carriers, vehicles (schema.sql L77–128)	Preservar tabelas existentes (drivers e carriers compartilham a estrutura de transportador com distinção por role e cpf/cnpj) e adicionar políticas RLS faltantes.
+freights, proposals, contracts	freights, proposals, contracts (schema.sql L132–201)	Preservar tabelas existentes, corrigir os 2 índices da migration V2.0 (destination_lat/lng/state) e adicionar políticas RLS.
+documents & verifications	documents & ai_verification_logs (schema.sql L205, L269)	Preservar ambas, adicionando storage_bucket_path em documents e políticas RLS restritas ao proprietário e administradores.
+subscriptions & payments	subscriptions (schema.sql L220)	Preservar subscriptions e criar payment_transactions para registrar cada cobrança, webhook Mercado Pago e conciliação.
+platform_fees & system_settings	platform_settings (schema.sql L263)	Preservar platform_settings (JSONB flexível) e adicionar histórico de vigência de taxas.
+affiliates & affiliate_levels	partners (schema.sql L237)	Evoluir partners (ou mapear via view/migração limpa) adicionando affiliate_tier (PARTNER_START a PARTNER_VIP), manager_id (PARTNER_MANAGER), status, custom_commission_rate e criar tabela de configuração affiliate_levels.
+affiliate_links, affiliate_clicks, affiliate_referrals, affiliate_conversions	(Ausentes)	Criar tabelas para rastreamento completo de cliques, atribuição de cadastros (referrals) e conversões pagas (conversions).
+affiliate_commissions & affiliate_commission_ledger	(Ausentes)	Criar affiliate_commissions (com os 8 status oficiais) e affiliate_commission_ledger (livro-razão imutável append-only).
+affiliate_payouts & affiliate_campaigns & affiliate_managers	(Ausentes)	Criar affiliate_payouts (solicitações e comprovantes PIX), affiliate_campaigns e vínculo de carteira de gerentes.
+impersonation_sessions & audit_logs	(Ausentes)	Criar impersonation_sessions (controle de Acesso Assistido com TTL e motivo) e audit_logs (trilha imutável de auditoria).
+api_integrations_status & maps_usage_logs	route_cache (20261107_v2_evolution.sql L49)	Preservar route_cache e criar maps_usage_logs para telemetria diária de cotas e status das integrações.
+W. ENDPOINTS EXISTENTES E AUSENTES
+1. Endpoints Existentes (server.ts)
+GET /api/health — Operacional (requer enriquecimento para painel Admin).
+POST /api/gemini/nexia — Operacional (requer middleware de autenticação).
+POST /api/gemini/verify — Operacional (requer middleware de autenticação).
+POST /api/mercadopago/checkout — Parcial/Mock (requer integração real com API Mercado Pago).
+POST /api/mercadopago/webhook — Esqueleto (requer validação HMAC e processamento de assinatura + geração automática de comissão de afiliado).
+2. Endpoints Ausentes que Deverão Ser Criados
+Governança & Impersonate:
+POST /api/admin/impersonate/start (valida permissão, exige justificativa, cria sessão com TTL de 30 min e registra log).
+POST /api/admin/impersonate/stop (encerra sessão assistida e registra resumo).
+GET /api/admin/audit-logs (consulta paginada e filtrável da trilha de auditoria).
+Partner Control, Ledger & Saques:
+POST /api/affiliates/track-click (registra clique de ?ref= com deduplicação por IP/janela).
+POST /api/affiliates/register-referral (vincula novo usuário ao afiliado no signup e executa verificação antifraude).
+GET /api/affiliates/dashboard (retorna funil real, nível atual, progresso para o próximo nível e extrato do Ledger).
+POST /api/affiliates/payouts/request (valida saldo DISPONIVEL, cria HOLD no Ledger e abre solicitação de saque PIX).
+POST /api/admin/affiliates/:id/tier (altera nível comercial ou atribui PARTNER_MANAGER).
+POST /api/admin/affiliates/commissions/:id/status (transiciona status na máquina de 8 estados com lançamento automático no Ledger).
+POST /api/admin/affiliates/payouts/:id/approve (confirma pagamento PIX e lança DEBIT definitivo no Ledger).
+Documentos & Telemetria de Mapas:
+POST /api/documents/signed-url (gera URL temporária assinada para upload/leitura segura de CNH/CRLV/ANTT).
+GET /api/admin/maps/usage e POST /api/admin/maps/config (monitoramento de cota e controle de cache/contingência).
+X. RISCOS E DEPENDÊNCIAS
+Dependência de Credenciais Externas (.env / AI Studio Secrets):
+Enquanto VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não estiverem preenchidos no ambiente, a aplicação precisa manter um adaptador híbrido resiliente (Supabase + Fallback Local Persistente Sincronizado), garantindo que todas as novas tabelas (impersonation_sessions, audit_logs, affiliate_commissions, affiliate_commission_ledger, affiliate_payouts, etc.) funcionem 100% tanto com um cluster Supabase PostgreSQL conectado quanto no ambiente de preview do AI Studio.
+Migração Sem Quebra de Compatibilidade (Zero Regression):
+A Home V2.0, o NexRadar com Google Maps/Routes API e o motor de custos operacionais (src/utils/logistics.ts) já estão aprovados e validados; nenhuma alteração da V3.0 pode regredir essas conquistas.
+Proteção de Cota Google Maps:
+O GoogleMapsProvider deve continuar sendo instanciado exclusivamente sob demanda na rota radar (e no sub-módulo de diagnóstico de mapas do Admin apenas se solicitado pelo operador), preservando a blindagem contra OverQuotaMapError.
+Y. PLANO COMPLETO DE IMPLEMENTAÇÃO FUTURA (16 FASES OFICIAIS)
+A implementação seguirá rigorosamente as 16 fases sequenciais abaixo após a sua aprovação:
+FASE 1 — Auditoria Completa do Sistema
+Status: CONCLUÍDA NESTE RELATÓRIO (100% Read-Only).
+FASE 2 — Modelagem Completa do Banco de Dados e Correção de Migrations
+Pré-requisitos: Aprovação deste relatório.
+Arquivos Envolvidos: supabase/schema.sql, supabase/migrations/20261107_v2_evolution.sql, nova migration supabase/migrations/20261108_v3_enterprise_command_center.sql e src/types/index.ts.
+Alterações no Banco: Correção dos índices destination_lat/lng/state; criação das tabelas Enterprise (admin_roles_permissions, impersonation_sessions, audit_logs, affiliate_levels, affiliate_clicks, affiliate_referrals, affiliate_commissions, affiliate_commission_ledger, affiliate_payouts, affiliate_campaigns, payment_transactions, maps_usage_logs) e triggers de imutabilidade do Ledger.
+Critério de Conclusão e Testes: Scripts SQL 100% válidos sem erros de referência e interfaces TypeScript completas em src/types/index.ts.
+FASE 3 — Implementação de Roles, Permissões (RBAC) e Políticas RLS
+Pré-requisitos: Fase 2.
+Arquivos Envolvidos: supabase/migrations/20261108_v3_enterprise_command_center.sql, src/utils/rbac.ts, src/contexts/AuthContext.tsx, server.ts.
+Alterações: Criação de todas as políticas CREATE POLICY faltantes no PostgreSQL; implementação da matriz RBAC (SUPER_ADMIN, ADMIN_OPERACIONAL, FINANCEIRO, AUDITOR, SUPORTE, PARTNER_MANAGER, COMPANY, CARRIER, DRIVER, PARTNER) separada dos níveis comerciais (affiliate_tier); validação real de senha no login e proteção de rotas.
+Testes: Testes unitários da matriz RBAC (rbac.test.ts) comprovando isolamento entre cargos administrativos e níveis comerciais de afiliados.
+FASE 4 — Estruturação do Novo NexCarga Control (Arquitetura de 12 Módulos)
+Pré-requisitos: Fase 3.
+Arquivos Envolvidos: src/pages/AdminControlPage.tsx (refatorado em layout Enterprise com Sidebar colapsável, Topbar de status, busca global e navegação entre os 12 módulos), src/components/common/Header.tsx.
+Alterações: Ocultação do botão NexControl para usuários não-administradores; criação do shell do NexCarga Control e do Módulo 1 (Dashboard Executivo) com KPIs 100% reais (remoção dos offsets fictícios de +5000 / +12000 no painel administrativo).
+Testes: Verificação de controle de acesso e precisão matemática dos KPIs executivos.
+FASE 5 — Módulo de Clientes, Contas e Operações (Módulos 2, 4 e 5)
+Pré-requisitos: Fase 4.
+Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/pages/ProposalsContractsPage.tsx, src/pages/CompanyDashboardPage.tsx, src/pages/CarrierDashboardPage.tsx, src/services/supabaseClient.ts.
+Alterações: Implementação dos módulos Clientes e Contas, Fretes e Operações e Propostas e Contratos no NexCarga Control; correção da persistência de mudança de status de contratos em ProposalsContractsPage.tsx; substituição dos números hardcoded nos cards dos Dashboards de Empresa e Transportador pelos totais reais calculados.
+Testes: Persistência de status de contrato (GERADO ➔ EM_TRANSITO ➔ ENTREGUE) após reload da página.
+FASE 6 — Implementação do Acesso Assistido (NexCarga Impersonate)
+Pré-requisitos: Fase 5.
+Arquivos Envolvidos: src/contexts/AuthContext.tsx, src/components/common/Header.tsx, src/pages/AdminControlPage.tsx, server.ts.
+Alterações: Implementação completa dos 10 passos do NexCarga Impersonate: modal de justificativa obrigatória, preservação da sessão original do SUPER_ADMIN, Banner Fixo de Alerta no topo com cronômetro regressivo (30 min), bloqueio de ações sensíveis (saques, senhas, cartões), atribuição dupla (acted_by_admin_id) e botão de encerramento imediato.
+Testes: Iniciar sessão assistida em uma conta COMPANY ou CARRIER, verificar banner de segurança, testar bloqueio de ação sensível, encerrar sessão e validar registro no Log de Auditoria.
+FASE 7 — Módulo de Verificação Documental, Storage Seguro e Selo Azul (Módulo 3)
+Pré-requisitos: Fase 5.
+Arquivos Envolvidos: src/pages/DocsPage.tsx, src/pages/NexIAVerifyPage.tsx, src/pages/AdminControlPage.tsx, server.ts.
+Alterações: Upload real de arquivos (FileReader / Multipart / Signed URL Storage), visualização segura de documentos no Módulo 3 (Verificação e Documentos), parecer da NexIA Verify e histórico de concessão/revogação do Selo Azul Verificado.
+Testes: Upload de documento real, análise via NexIA Verify e aprovação pelo Admin com ativação imediata do VerifiedBadge.
+FASE 8 — Módulo Financeiro, Planos, Assinaturas e Taxas Dinâmicas (Módulos 6 e 7)
+Pré-requisitos: Fase 5.
+Arquivos Envolvidos: src/pages/SubscriptionsPage.tsx, src/pages/AdminControlPage.tsx, src/services/supabaseClient.ts, server.ts.
+Alterações: Correção do bug em acceptProposalAndCreateContract para aplicar dinamicamente a taxa configurada pelo SUPER_ADMIN em platform_settings; refatoração do checkout em SubscriptionsPage.tsx (removendo coleta insegura de PAN/CVV em estado puro e implementando fluxo seguro Mercado Pago / PIX dinâmico); validação HMAC no webhook /api/mercadopago/webhook; implementação dos Módulos 6 (Planos e Assinaturas) e 7 (Financeiro e Taxas).
+Testes: Alterar taxa da plataforma no Admin (ex.: de 3,5% para 4,0%), fechar um contrato e comprovar que a nova taxa foi aplicada e registrada no financeiro.
+FASE 9 — Criação do Partner Control e Estrutura de Afiliados (Módulo 8 — Parte 1)
+Pré-requisitos: Fase 8.
+Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/pages/PartnersPage.tsx, src/services/supabaseClient.ts.
+Alterações: Construção do Módulo 8 (Partner Control) dentro do NexCarga Control para o SUPER_ADMIN e PARTNER_MANAGER; cadastro e homologação de afiliados; geração de links parametrizados (?ref=) e cupons de desconto.
+Testes: Aprovar afiliado, alocar um PARTNER_MANAGER e gerar link/cupom ativo.
+FASE 10 — Implementação dos 5 Níveis de Afiliados (START a VIP) e PARTNER MANAGER
+Pré-requisitos: Fase 9.
+Arquivos Envolvidos: src/utils/affiliateEngine.ts, src/pages/PartnersPage.tsx, src/pages/AdminControlPage.tsx.
+Alterações: Implementação das regras automáticas e manuais dos níveis PARTNER START (20%/5%), PARTNER PRO (25%/8%), PARTNER ELITE (30%/10%), PARTNER MASTER (35%/12%) e PARTNER VIP (40%/15% ou customizado); visão dedicada do PARTNER_MANAGER restrita à sua carteira.
+Testes: Testes unitários (affiliateEngine.test.ts) validando cálculo de comissões por nível, progressão automática por metas e restrições de alçada do PARTNER_MANAGER.
+FASE 11 — Rastreamento de Cliques, Indicações, Conversões e Motor Antifraude
+Pré-requisitos: Fase 10.
+Arquivos Envolvidos: src/App.tsx, src/pages/AuthPage.tsx, src/utils/affiliateEngine.ts, server.ts.
+Alterações: Captura automática de ?ref= na entrada do app (App.tsx) com persistência de atribuição por 30 dias; vínculo automático no cadastro (AuthPage.tsx); travamento de atribuição (Attribution Lock); motor antifraude bloqueando autoindicação (mesmo CPF, raiz de CNPJ, e-mail, telefone ou chave PIX).
+Testes: Simular acesso via ?ref=, criar nova conta, verificar vínculo no funil do afiliado e testar bloqueio automático de autoindicação.
+FASE 12 — Máquina de Estados de Comissões (8 Status) e Livro-Razão Imutável (Ledger)
+Pré-requisitos: Fase 11.
+Arquivos Envolvidos: src/utils/affiliateEngine.ts, src/services/supabaseClient.ts, src/pages/PartnersPage.tsx, src/pages/AdminControlPage.tsx.
+Alterações: Implementação dos 8 status (GERADA, PENDENTE, EM_ANALISE, APROVADA, DISPONIVEL, SOLICITADA_SAQUE, PAGA, CANCELADA) e do livro-razão affiliate_commission_ledger (com lançamentos CREDIT, DEBIT, HOLD, RELEASE, REVERSAL, ADJUSTMENT e saldo anterior/posterior auditável).
+Testes: Testes unitários e de integração validando transições de estado, estorno em caso de cancelamento (CANCELADA) e integridade matemática do Ledger.
+FASE 13 — Fluxo de Saques PIX (affiliate_payouts) e Painel Definitivo do Afiliado
+Pré-requisitos: Fase 12.
+Arquivos Envolvidos: src/pages/PartnersPage.tsx, src/pages/AdminControlPage.tsx.
+Alterações: Reconstrução completa de PartnersPage.tsx com dados 100% reais: barra de progressão de nível (START ➔ VIP), funil de cliques/cadastros/conversões, tabela de indicados, extrato contábil do Ledger e solicitação de saque PIX com reserva imediata de saldo (HOLD) e liquidação pelo Financeiro/Super Admin (PAGA).
+Testes: Solicitar saque PIX como afiliado, aprovar no NexCarga Control e verificar atualização de saldos e comprovante.
+FASE 14 — Monitoramento de Integrações, Google Maps Control, Equipe e Configs (Módulos 9, 10 e 12)
+Pré-requisitos: Fase 8.
+Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/services/routeService.ts, server.ts.
+Alterações: Implementação do Módulo 9 (Integrações e APIs + Google Maps Control) com telemetria de uso de mapas, taxa de acerto do cache (route_cache) e chave de contingência; Módulo 10 (Equipe e Permissões); e Módulo 12 (Configurações Globais).
+Testes: Verificar painel de saúde das integrações, estatísticas do cache de rotas e edição de parâmetros globais.
+FASE 15 — Trilha Imutável de Auditoria e Hardening de Segurança (Módulo 11)
+Pré-requisitos: Fases 6, 13 e 14.
+Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/services/supabaseClient.ts, server.ts.
+Alterações: Implementação do Módulo 11 (Logs e Auditoria) exibindo todos os eventos reais de segurança, alterações de taxas, aprovações de documentos, movimentações do Ledger e sessões de Impersonate com filtros por operador, data e entidade; revisão final de middlewares de segurança no server.ts.
+Testes: Auditar todas as operações administrativas realizadas e confirmar gravação de before_state e after_state.
+FASE 16 — Testes Automatizados Completos e Validação para Produção
+Pré-requisitos: Fases 1 a 15 concluídas.
+Arquivos Envolvidos: src/utils/logistics.test.ts, src/utils/affiliateEngine.test.ts, src/utils/rbac.test.ts e verificação E2E via navegador real (playwright-cli).
+Critérios de Conclusão:
+100% dos testes unitários de logística, taxas, RBAC, antifraude e Ledger passando via node:test;
+compile_applet (TypeScript + Vite build) e lint_applet com zero erros;
+Inspeção visual e funcional em navegador real (playwright-cli) validando todos os 12 módulos do NexCarga Control, o fluxo de Impersonate, o Partner Control completo e a preservação integral da Home V2.0 e do NexRadar.
+AGUARDANDO AUTORIZAÇÃO DO PROPRIETÁRIO DO PROJETO
+A auditoria técnica Full Stack V3.0 e o plano arquitetural de 16 fases estão concluídos em modo 100% somente leitura.
+Deseja autorizar o início da implementação seguindo o plano estruturado acima (a partir da Fase 2 até a Fase 16), ou gostaria de ajustar alguma regra de negócio (como percentuais dos níveis PARTNER START a VIP, tempo de maturação de comissões ou escopo dos 12 módulos do NexCarga Control) antes de iniciarmos a codificação?
