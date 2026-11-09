@@ -1,399 +1,173 @@
-Gemini 3.8 Flash
-Ran for 18m 56s
+Gemini 4 Argon
+Ran for 22m 16s
 
 Action history
-Thought for 4 seconds
-Read file
-Read 2 files: skills/system_skills/ultra_mode/SKILL.md from line 0 to line 289, and public/assets/aistudio/Paste_November_07__2026_-_7_25PM_c7537b89 from line 0 to line 1316
-Thought for 3 seconds
+Thought for 16 seconds
 Ran command
-find . -name "*.zip" -o -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" -o -name "*.webp"
-./public/assets/aistudio/nexcarga_assinatura_carrossel_pack_f2abd158.zip./public/assets/aistudio/nexcarga_white_dark_design_pack_41f3a0d3.zip
-Thought for 4 seconds
-Ran command
-mkdir -p public/assets/references/carrossel public/assets/references/design_pack && unzip -q ./public/assets/aistudio/nexcarga_assinatura_carrossel_pack_f2abd158.zip -d public/assets/references/carrossel && unzip -q ./public/assets/aistudio/nexcarga_white_dark_design_pack_41f3a0d3.zip -d public/assets/references/design_pack && ls -la public/assets/references/carrossel && ls -la public/assets/references/design_pack
-total 1704drwxr-xr-x 1 root root    140 Nov  7 22:26 .drwxr-xr-x 1 root root     80 Nov  7 22:26 ..-rw-r--r-- 1 root root 841772 Nov  6 17:43 01-pagina-assinaturas.png-rw-r--r-- 1 root root 519062 Nov  6 17:43 02-carrossel-frontend-completo.png-rw-r--r-- 1 root root 115303 Nov  6 17:43 03-carrossel-slide-empresa.png-rw-r--r-- 1 root root 142162 Nov  6 17:43 04-carrossel-slide-conexao-nexcarga.png-rw-r--r-- 1 root root 125306 Nov  6 17:43 05-carrossel-slide-motorista-oportunidades.pngtotal 1669drwxr-xr-x 1 root root    220 Nov  7 22:26 .drwxr-xr-x 1 root root     80 Nov  7 22:26 ..-rw-r--r-- 1 root root 362918 Nov  6 17:36 01-login-exclusive-dark.png-rw-r--r-- 1 root root 229360 Nov  6 17:36 02-dashboard-empresa-dark.png-rw-r--r-- 1 root root 210570 Nov  6 17:36 03-dashboard-empresa-white.png-rw-r--r-- 1 root root 225321 Nov  6 17:36 04-dashboard-transportador-dark.png-rw-r--r-- 1 root root 217824 Nov  6 17:36 05-dashboard-transportador-white.png-rw-r--r-- 1 root root  98985 Nov  6 17:36 06-seletor-tema-white-dark.png-rw-r--r-- 1 root root 137714 Nov  6 17:36 07-selo-verificado-uso-funcional.png-rw-r--r-- 1 root root 128213 Nov  6 17:36 08-nexia-e-nexia-verify.png-rw-r--r-- 1 root root  96014 Nov  6 17:36 09-dashboards-mobile-white-dark.png
-Thought for 4 seconds
-Read file
-Read 1 file: public/assets/references/carrossel/01-pagina-assinaturas.png
-Thought for 10 seconds
-Read file
-Read 1 file: public/assets/references/carrossel/02-carrossel-frontend-completo.png
-Thought for 5 seconds
-Read file
-Read 2 files: public/assets/references/design_pack/01-login-exclusive-dark.png, and public/assets/references/design_pack/02-dashboard-empresa-dark.png
-Thought for 5 seconds
-Read file
-Read 1 file: public/assets/references/design_pack/03-dashboard-empresa-white.png
-Thought for 4 seconds
-Read file
-Read 1 file: public/assets/references/design_pack/04-dashboard-transportador-dark.png
-Thought for 5 seconds
-Read file
-Read 4 files: public/assets/references/design_pack/06-seletor-tema-white-dark.png,public/assets/references/design_pack/07-selo-verificado-uso-funcional.png,public/assets/references/design_pack/08-nexia-e-nexia-verify.png, and public/assets/references/design_pack/09-dashboards-mobile-white-dark.png
-Thought for 5 seconds
-Read file
-Read 1 file: public/assets/references/carrossel/03-carrossel-slide-empresa.png
-Thought for 4 seconds
-Ran command
-file public/assets/references/carrossel/* public/assets/references/design_pack/*
-public/assets/references/carrossel/01-pagina-assinaturas.png:                      PNG image data, 836 x 928, 8-bit/color RGB, non-interlacedpublic/assets/references/carrossel/02-carrossel-frontend-completo.png:             PNG image data, 824 x 533, 8-bit/color RGB, non-interlacedpublic/assets/references/carrossel/03-carrossel-slide-empresa.png:                 PNG image data, 230 x 378, 8-bit/color RGB, non-interlacedpublic/assets/references/carrossel/04-carrossel-slide-conexao-nexcarga.png:        PNG image data, 260 x 387, 8-bit/color RGB, non-interlacedpublic/assets/references/carrossel/05-carrossel-slide-motorista-oportunidades.png: PNG image data, 239 x 378, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/01-login-exclusive-dark.png:                  PNG image data, 460 x 655, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/02-dashboard-empresa-dark.png:                PNG image data, 616 x 338, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/03-dashboard-empresa-white.png:               PNG image data, 580 x 338, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/04-dashboard-transportador-dark.png:          PNG image data, 597 x 310, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/05-dashboard-transportador-white.png:         PNG image data, 599 x 310, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/06-seletor-tema-white-dark.png:               PNG image data, 402 x 271, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/07-selo-verificado-uso-funcional.png:         PNG image data, 442 x 271, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/08-nexia-e-nexia-verify.png:                  PNG image data, 470 x 271, 8-bit/color RGB, non-interlacedpublic/assets/references/design_pack/09-dashboards-mobile-white-dark.png:          PNG image data, 332 x 271, 8-bit/color RGB, non-interlaced
-Thought for 4 seconds
-Read file
-Read 1 file: package.json from line 0 to line 36
-Thought for 6 seconds
+mkdir -p .gmp_cache && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/index.json?client=aistudio-agent" -o .gmp_cache/index.json
 Installed 1 package
-Package @supabase/supabase-js
-Thought for 6 seconds
-Edited 2 files
-metadata.json
-index.html
-Thought for 5 seconds
-Edited 1 file
-.env.example
+Package @vis.gl/react-google-maps
+Thought for 20 seconds
 Read file
-Read 1 file: src/index.css from line 0 to line 1
-Thought for 6 seconds
-Edited 3 files
-src/index.css
-public/manifest.webmanifest
-public/sw.js
-Thought for 43 seconds
-Edited 1 file
-server.ts
-Thought for 5 seconds
-Edited 1 file
-package.json
+Read 8 files: .gmp_cache/index.json from line 0 to line 212,src/App.tsx from line 0 to line 128,src/components/common/Header.tsx from line 0 to line 377,src/pages/HomePage.tsx from line 0 to line 236,src/pages/RadarFretesPage.tsx from line 0 to line 486,src/services/supabaseClient.ts from line 0 to line 636,src/utils/logistics.ts from line 0 to line 118, and server.ts from line 0 to line 213
 Thought for 22 seconds
-Edited 2 files
-supabase/schema.sql
-supabase/seed.sql
-Thought for 17 seconds
-Edited 1 file
-src/types/index.ts
-Thought for 9 seconds
+Ran command
+curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/gmp-framework-react/SKILL.md?client=aistudio-agent" -o .gmp_cache/gmp-framework-react.md && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/routes-api-web-api/SKILL.md?client=aistudio-agent" -o .gmp_cache/routes-api-web-api.md && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/compliance-review/SKILL.md?client=aistudio-agent" -o .gmp_cache/compliance-review.md
+Read file
+Read 5 files: src/types/index.ts from line 0 to line 199,src/pages/CompanyDashboardPage.tsx from line 0 to line 885,src/pages/CarrierDashboardPage.tsx from line 0 to line 737,src/components/common/Footer.tsx from line 0 to line 148, and .env.example from line 0 to line 18
+Thought for 19 seconds
+Read file
+Read 8 files: .gmp_cache/gmp-framework-react.md from line 0 to line 418,.gmp_cache/routes-api-web-api.md from line 0 to line 246,.gmp_cache/compliance-review.md from line 0 to line 170,src/pages/AuthPage.tsx from line 0 to line 562,src/pages/SubscriptionsPage.tsx from line 0 to line 512,src/pages/ProposalsContractsPage.tsx from line 0 to line 273,src/pages/DocsPage.tsx from line 0 to line 311, and src/pages/NexIAPage.tsx from line 0 to line 237
+Thought for 15 seconds
+Ran command
+curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/gmp-framework-react/references/example_directions.md?client=aistudio-agent" -o .gmp_cache/example_directions.md && curl -s "https://www.gstatic.com/googlemapsplatform-agent-skills/gmp-framework-react/references/example_markers.md?client=aistudio-agent" -o .gmp_cache/example_markers.md
+Read file
+Read 5 files: src/pages/NexIAVerifyPage.tsx from line 0 to line 211,src/pages/AdminControlPage.tsx from line 0 to line 313,src/pages/PartnersPage.tsx from line 0 to line 105,.gmp_cache/example_directions.md from line 0 to line 220, and .gmp_cache/example_markers.md from line 0 to line 294
+Read file
+Read 2 files: vite.config.ts from line 0 to line 22, and src/main.tsx from line 0 to line 5
+Thought for 14 seconds
+Explored codebase
+Scanned public/assets/references/carrossel and found 5 files: 01-pagina-assinaturas.png, 02-carrossel-frontend-completo.png, 03-carrossel-slide-empresa.png, 04-carrossel-slide-conexao-nexcarga.png and 05-carrossel-slide-motorista-oportunidades.png.
+Explored codebase
+Scanned public/assets/references/design_pack and found 9 files: 01-login-exclusive-dark.png, 02-dashboard-empresa-dark.png, 03-dashboard-empresa-white.png, 04-dashboard-transportador-dark.png, 05-dashboard-transportador-white.png, 06-seletor-tema-white-dark.png, 07-selo-verificado-uso-funcional.png, 08-nexia-e-nexia-verify.png and 09-dashboards-mobile-white-dark.png.
+Explored codebase
+Scanned public/assets/aistudio and found 5 files: Paste_November_07__2026_-_7_25PM_c7537b89, Screenshot_2026-11-07-20-48-48-647_com.android.chrome_8e66345c.jpg, file_000000008a10820e846cc7ecd1c4f67f_5c3ec0bc.png, nexcarga_assinatura_carrossel_pack_f2abd158.zip and nexcarga_white_dark_design_pack_41f3a0d3.zip.
+Thought for 54 seconds
+Edited 4 files
+vite.config.ts
+.env.example
+server.ts
+src/main.tsx
+Thought for 46 seconds
 Edited 2 files
 src/utils/logistics.ts
 src/utils/logistics.test.ts
-Ran command
-npx --yes tsx --test src/utils/logistics.test.ts
-TAP version 13# Subtest: calculateDistanceKm calculates reasonable distance between São Paulo and Rio de Janeirook 1 - calculateDistanceKm calculates reasonable distance between São Paulo and Rio de Janeiro  ---  duration_ms: 1.301977  type: 'test'  ...# Subtest: calculatePlatformFee splits 3.5% fee exactly into 1.75% company and 1.75% carrierok 2 - calculatePlatformFee splits 3.5% fee exactly into 1.75% company and 1.75% carrier  ---  duration_ms: 0.348079  type: 'test'  ...# Subtest: calculatePlatformFee handles fractional cents correctlyok 3 - calculatePlatformFee handles fractional cents correctly  ---  duration_ms: 0.358638  type: 'test'  ...# Subtest: isValidCNPJ validates correctlyok 4 - isValidCNPJ validates correctly  ---  duration_ms: 0.385825  type: 'test'  ...# Subtest: formatBRL formats value to Brazilian Realok 5 - formatBRL formats value to Brazilian Real  ---  duration_ms: 76.672676  type: 'test'  ...1..5# tests 5# suites 0# pass 5# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 530.923779
-Thought for 44 seconds
-Edited 1 file
+Thought for 23 seconds
+Edited 2 files
 src/services/supabaseClient.ts
-Thought for 7 seconds
-Edited 1 file
-src/contexts/ThemeContext.tsx
-Thought for 11 seconds
+src/services/supabaseClient.ts
+Thought for 44 seconds
+Edited 4 files
+src/services/mapsService.ts
+src/services/routeService.ts
+src/services/domainServices.ts
+supabase/migrations/20261107_v2_evolution.sql
+Thought for 1 minute 15 seconds
 Edited 2 files
-src/contexts/AuthContext.tsx
-src/contexts/NotificationContext.tsx
-Thought for 17 seconds
-Edited 2 files
-src/components/common/VerifiedBadge.tsx
-src/components/common/ThemeSelectorModal.tsx
-Thought for 9 seconds
-Edited 1 file
-src/components/common/Logo.tsx
-Thought for 29 seconds
-Edited 1 file
+src/App.tsx
 src/components/common/Header.tsx
-Thought for 17 seconds
-Edited 1 file
-src/components/carousel/HeroCarousel.tsx
-Thought for 13 seconds
-Edited 1 file
-src/components/common/Footer.tsx
-Thought for 33 seconds
+Thought for 1 minute 38 seconds
 Edited 1 file
 src/pages/HomePage.tsx
-Thought for 42 seconds
-Edited 1 file
-src/pages/AuthPage.tsx
-Thought for 41 seconds
-Edited 1 file
-src/pages/SubscriptionsPage.tsx
-Thought for 1 minute 5 seconds
-Edited 1 file
-src/pages/CompanyDashboardPage.tsx
-Thought for 50 seconds
-Edited 1 file
-src/pages/CarrierDashboardPage.tsx
-Thought for 37 seconds
+Thought for 1 minute 40 seconds
 Edited 1 file
 src/pages/RadarFretesPage.tsx
-Thought for 28 seconds
-Edited 1 file
-src/pages/ProposalsContractsPage.tsx
-Thought for 23 seconds
-Edited 1 file
-src/pages/DocsPage.tsx
-Thought for 21 seconds
-Edited 1 file
-src/pages/NexIAPage.tsx
-Thought for 35 seconds
-Edited 1 file
-src/pages/NexIAVerifyPage.tsx
-Thought for 26 seconds
+Thought for 34 seconds
 Edited 2 files
+src/pages/CompanyDashboardPage.tsx
+src/pages/CompanyDashboardPage.tsx
+Thought for 13 seconds
+Read file
+Read 4 files: src/pages/SubscriptionsPage.tsx from line 0 to line 512,src/pages/AdminControlPage.tsx from line 0 to line 313,src/pages/PartnersPage.tsx from line 0 to line 105, and src/pages/NexIAPage.tsx from line 0 to line 237
+Explored codebase
+Scanned src/pages and found 12 files: AdminControlPage.tsx, AuthPage.tsx, CarrierDashboardPage.tsx, CompanyDashboardPage.tsx, DocsPage.tsx, HomePage.tsx, NexIAPage.tsx, NexIAVerifyPage.tsx, PartnersPage.tsx, ProposalsContractsPage.tsx, RadarFretesPage.tsx and SubscriptionsPage.tsx.
+Ran command
+grep -rnE "text-white|bg-\[#0d0e12\]|bg-\[#16181f\]" src/pages/DocsPage.tsx src/pages/NexIAVerifyPage.tsx src/pages/ProposalsContractsPage.tsx src/pages/CarrierDashboardPage.tsx src/pages/AuthPage.tsx
+<truncated 24 bytes>
+hboardPage.tsx:593:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-[#FF8A00]"src/pages/CarrierDashboardPage.tsx:605:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-[#FF8A00]"src/pages/CarrierDashboardPage.tsx:612:                  className="w-full py-3.5 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-lg shadow-[#FF8A00]/30 transition-all flex items-center justify-center gap-2"src/pages/CarrierDashboardPage.tsx:630:            className="relative w-full max-w-md bg-[#16181f] text-white border border-[#272a34] rounded-3xl p-7 shadow-2xl"src/pages/CarrierDashboardPage.tsx:635:              className="absolute top-5 right-5 text-gray-400 hover:text-white p-1 rounded-lg"src/pages/CarrierDashboardPage.tsx:640:            <h3 className="text-lg font-bold text-white mb-4">src/pages/CarrierDashboardPage.tsx:653:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs uppercase"src/pages/CarrierDashboardPage.tsx:663:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:677:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:696:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:706:                    className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:718:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs"src/pages/CarrierDashboardPage.tsx:725:                  className="w-full py-3 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-md shadow-[#FF8A00]/30 transition-all"src/pages/AuthPage.tsx:106:    <div className="relative min-h-screen w-full bg-[#0a0b0e] text-white flex flex-col justify-between overflow-x-hidden">src/pages/AuthPage.tsx:134:        <div className="bg-[#16181f]/95 backdrop-blur-xl border-2 border-[#FF8A00] rounded-3xl p-7 shadow-[0_0_40px_rgba(255,138,0,0.35)] transition-all">src/pages/AuthPage.tsx:138:            <h1 className="text-2xl font-extrabold text-white tracking-tight">src/pages/AuthPage.tsx:173:                    className="w-full pl-10 pr-4 py-3 bg-[#0d0e12] border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#FF8A00] transition-colors"src/pages/AuthPage.tsx:191:                    className="w-full pl-10 pr-10 py-3 bg-[#0d0e12] border border-white/10 rounded-xl text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#FF8A00] transition-colors"src/pages/AuthPage.tsx:196:                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-white"src/pages/AuthPage.tsx:211:                    className="rounded border-gray-600 text-[#FF8A00] focus:ring-0 focus:ring-offset-0 bg-[#0d0e12]"src/pages/AuthPage.tsx:228:                className="w-full py-3.5 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] active:scale-[0.99] text-white font-bold text-sm transition-all duration-200 shadow-lg shadow-[#FF8A00]/30 flex items-center justify-center gap-2 mt-2"src/pages/AuthPage.tsx:239:                <span className="relative px-3 bg-[#16181f] text-[11px] text-gray-400">src/pages/AuthPage.tsx:252:                  className="py-2.5 px-3 rounded-xl bg-[#0d0e12] border border-white/10 hover:border-white/20 text-xs font-semibold text-gray-200 flex items-center justify-center gap-2 transition-colors"src/pages/AuthPage.tsx:269:                  className="py-2.5 px-3 rounded-xl bg-[#0d0e12] border border-white/10 hover:border-white/20 text-xs font-semibold text-gray-200 flex items-center justify-center gap-2 transition-colors"src/pages/AuthPage.tsx:296:              <div className="flex rounded-xl bg-[#0d0e12] p-1 border border-white/10 mb-2">src/pages/AuthPage.tsx:299:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-[#FF8A00] text-white"src/pages/AuthPage.tsx:306:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white"src/pages/AuthPage.tsx:319:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:329:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:340:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:351:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:362:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:369:                className="w-full py-3 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-lg shadow-[#FF8A00]/30 transition-all"src/pages/AuthPage.tsx:390:              <div className="flex rounded-xl bg-[#0d0e12] p-1 border border-white/10 mb-2">src/pages/AuthPage.tsx:394:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg text-gray-400 hover:text-white"src/pages/AuthPage.tsx:400:                  className="flex-1 py-1.5 text-xs font-semibold rounded-lg bg-[#FF8A00] text-white"src/pages/AuthPage.tsx:413:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:424:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:432:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:447:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:458:                  className="w-full px-3.5 py-2.5 bg-[#0d0e12] border border-white/10 rounded-xl text-white text-xs placeholder-gray-500 focus:outline-none focus:border-[#FF8A00]"src/pages/AuthPage.tsx:465:                className="w-full py-3 rounded-xl bg-[#FF8A00] hover:bg-[#E85D04] text-white font-bold text-xs shadow-lg shadow-[#FF8A00]/30 transition-all"src/pages/AuthPage.tsx:495:                className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-[#FF8A00]/20 text-[11px] font-medium text-gray-300 hover:text-white border border-white/10 transition-colors"src/pages/AuthPage.tsx:505:                className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-[#FF8A00]/20 text-[11px] font-medium text-gray-300 hover:text-white border border-white/10 transition-colors"src/pages/AuthPage.tsx:533:            <span className="text-xs font-bold text-white">Publique Fretes</span>src/pages/AuthPage.tsx:540:            <span className="text-xs font-bold text-white">Encontre Oportunidades</span>src/pages/AuthPage.tsx:547:            <span className="text-xs font-bold text-white">Perfil Verificado</span>src/pages/AuthPage.tsx:554:            <span className="text-xs font-bold text-white">Gestão e Resultados</span>
+Thought for 2 minutes 7 seconds
+Edited 4 files
+src/pages/SubscriptionsPage.tsx
 src/pages/AdminControlPage.tsx
 src/pages/PartnersPage.tsx
-Thought for 11 seconds
+src/pages/NexIAPage.tsx
+Thought for 30 seconds
 Edited 1 file
-src/App.tsx
+README.md
+Ran command
+npx --yes tsx --test src/utils/logistics.test.ts
+TAP version 13# Subtest: NexCarga Logistics & Financial Pure Logic Suite (V2.0)    # Subtest: calculates highway road distance between Manhuaçu/MG and Belo Horizonte/MG accurately    ok 1 - calculates highway road distance between Manhuaçu/MG and Belo Horizonte/MG accurately      ---      duration_ms: 1.531512      type: 'test'      ...    # Subtest: splits the 3.5% platform fee equally (1.75% company + 1.75% carrier)    ok 2 - splits the 3.5% platform fee equally (1.75% company + 1.75% carrier)      ---      duration_ms: 0.411943      type: 'test'      ...    # Subtest: throws on negative freight value    ok 3 - throws on negative freight value      ---      duration_ms: 0.793781      type: 'test'      ...    # Subtest: validates Brazilian CNPJ check digits properly    ok 4 - validates Brazilian CNPJ check digits properly      ---      duration_ms: 0.774087      type: 'test'      ...    # Subtest: formats BRL currency values consistently    ok 5 - formats BRL currency values consistently      ---      duration_ms: 21.555381      type: 'test'      ...    # Subtest: calculates operational cost, cost/km, net profit, and profitability rating accurately    ok 6 - calculates operational cost, cost/km, net profit, and profitability rating accurately      ---      duration_ms: 0.732251      type: 'test'      ...    # Subtest: resolves Brazilian city hub coordinates accurately    ok 7 - resolves Brazilian city hub coordinates accurately      ---      duration_ms: 0.490554      type: 'test'      ...    1..7ok 1 - NexCarga Logistics & Financial Pure Logic Suite (V2.0)  ---  duration_ms: 28.129639  type: 'suite'  ...1..1# tests 7# suites 1# pass 7# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 514.656661
 Built
 Ran quality control
 Read file
-Read 1 file: src/contexts/AuthContext.tsx from line 0 to line 154
-Thought for 4 seconds
+Read 1 file: src/types/index.ts from line 0 to line 199
+Thought for 13 seconds
 Edited 1 file
-src/contexts/AuthContext.tsx
+src/types/index.ts
 Built
 Ran quality control
-Ran command
-npx --yes tsx --test src/utils/logistics.test.ts
-TAP version 13# Subtest: calculateDistanceKm calculates reasonable distance between São Paulo and Rio de Janeirook 1 - calculateDistanceKm calculates reasonable distance between São Paulo and Rio de Janeiro  ---  duration_ms: 1.139231  type: 'test'  ...# Subtest: calculatePlatformFee splits 3.5% fee exactly into 1.75% company and 1.75% carrierok 2 - calculatePlatformFee splits 3.5% fee exactly into 1.75% company and 1.75% carrier  ---  duration_ms: 0.357788  type: 'test'  ...# Subtest: calculatePlatformFee handles fractional cents correctlyok 3 - calculatePlatformFee handles fractional cents correctly  ---  duration_ms: 0.22024  type: 'test'  ...# Subtest: isValidCNPJ validates correctlyok 4 - isValidCNPJ validates correctly  ---  duration_ms: 0.549182  type: 'test'  ...# Subtest: formatBRL formats value to Brazilian Realok 5 - formatBRL formats value to Brazilian Real  ---  duration_ms: 20.476832  type: 'test'  ...1..5# tests 5# suites 0# pass 5# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 278.427948
-Restarted dev server
-Thought for 4 seconds
-Used browser
-npx playwright-cli open http://localhost:3000 --viewport-size=1440,900 && npx playwright-cli screenshot --filename=.playwright-cli/r1-desktop-home.png
-Unknown option: --viewport-sizeplaywright-cli open [url]Open the browserArguments:  [url]                       the url to navigate toOptions:  --browser                   browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.  --config                    path to the configuration file, defaults to .playwright/cli.config.json  --device                    emulate a specific device, for example "iphone 15".  --headed                    run browser in headed mode  --idle-timeout              shut the session down after this many milliseconds without a command. defaults to one hour for headless browsers, never for headed ones. pass 0 to disable.  --mobile                    emulate a generic mobile device (pixel 10 for chromium, iphone 17 for webkit). mobile pages are usually lighter, which saves tokens.  --persistent                use persistent browser profile  --profile                   path to a persistent user data directory.
-Used browser, took 1 screenshot
-npx playwright-cli open http://localhost:3000 && npx playwright-cli screenshot --filename=.playwright-cli/r1-desktop-home.png
-### Browser `default` opened with pid 481.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-41-21-260Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-07T22-41-19-592Z.log#L1### Result- [Screenshot of viewport](.playwright-cli/r1-desktop-home.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r1-desktop-home.pngawait page.screenshot({  path: '.playwright-cli/r1-desktop-home.png',  scale: 'css',  type: 'png'});```
-
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-41-21-260Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e13] [cursor=pointer]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: NexCarga
-          - generic [ref=e16]: ®
-        - generic [ref=e17]: — OFICIAL —
-      - navigation [ref=e18]:
-        - button "Início" [ref=e19]
-        - button "Fretes" [ref=e21]
-        - button "Transportadores" [ref=e22]
-        - button "Planos" [ref=e23]
-        - button "NexIA" [ref=e24]
-        - button "NexIA Verify" [ref=e25]
-      - generic [ref=e26]:
-        - button "Buscar" [ref=e27]
-        - button "Notificações" [ref=e32]:
-          - generic [ref=e36]: "2"
-        - generic [ref=e37]:
-          - button "Tema Dark" [ref=e38]
-          - button "Tema White" [ref=e41]
-        - button "Menu do Usuário" [ref=e49]:
-          - generic [ref=e50]: CO
-          - generic [ref=e51]:
-            - generic [ref=e52]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e54] [cursor=pointer]
-            - generic [ref=e57]: Empresa
-  - generic [ref=e61]:
-    - generic [ref=e62]:
-      - generic [ref=e63]:
-        - button "Slide anterior" [ref=e64]
-        - button "Próximo slide" [ref=e67]
-        - generic [ref=e70]:
-          - generic [ref=e71] [cursor=pointer]:
-            - img "Conecte sua empresa" [ref=e72]
-            - generic [ref=e75]:
-              - heading "Conecte sua empresa" [level=2] [ref=e76]:
-                - generic [ref=e77]: Conecte
-                - text: sua empresa
-              - paragraph [ref=e78]: Publique fretes e encontre transportadores verificados em todo o Brasil.
-              - button "Publicar Frete Agora" [ref=e80]
-          - generic [ref=e83] [cursor=pointer]:
-            - img "Sua carga. Nossa conexão." [ref=e84]
-            - generic [ref=e87]:
-              - heading "Sua carga. Nossa conexão." [level=2] [ref=e88]:
-                - generic [ref=e89]: Sua carga.
-                - text: Nossa conexão.
-              - paragraph [ref=e90]: A plataforma que conecta empresas, transportadoras e motoristas.
-              - button "Acessar Radar de Fretes" [ref=e92]
-          - generic [ref=e95] [cursor=pointer]:
-            - img "Mais oportunidades" [ref=e96]
-            - generic [ref=e99]:
-              - heading "Mais oportunidades" [level=2] [ref=e100]:
-                - generic [ref=e101]: Mais
-                - text: oportunidades
-              - paragraph [ref=e102]: Encontre fretes, negocie diretamente e aumente seus ganhos.
-              - button "Buscar Oportunidades" [ref=e104]
-      - generic [ref=e107]:
-        - button "Pausar" [ref=e108]
-        - generic [ref=e112]:
-          - button "Ir para slide 1" [ref=e113]
-          - button "Ir para slide 2" [ref=e114]
-          - button "Ir para slide 3" [ref=e115]
-    - generic [ref=e117]:
-      - generic [ref=e118]:
-        - generic [ref=e119]: "+50.000"
-        - generic [ref=e120]: Fretes Publicados
-      - generic [ref=e121]:
-        - generic [ref=e122]:
-          - text: 100%
-          - generic "Perfil Homologado pela NexIA Verify" [ref=e124]
-        - generic [ref=e127]: Usuários Homologados
-      - generic [ref=e128]:
-        - generic [ref=e129]: 3,5%
-        - generic [ref=e130]: Taxa Dividida (1,75% / 1,75%)
-      - generic [ref=e131]:
-        - generic [ref=e132]: 15 Dias
-        - generic [ref=e133]: Teste Grátis em Qualquer Plano
-    - generic [ref=e134]:
-      - generic [ref=e135]:
-        - text: Simplicidade Operacional
-        - heading "Como funciona a NexCarga" [level=2] [ref=e136]
-        - paragraph [ref=e137]: Conectamos quem precisa enviar carga com quem transporta com agilidade, contrato digital e segurança jurídica.
-      - generic [ref=e138]:
-        - generic [ref=e139]:
-          - heading "Para Empresas & Contratantes" [level=3] [ref=e145]
-          - paragraph [ref=e146]: Tenha acesso imediato a uma rede nacional de transportadoras e motoristas com veículos homologados e RNTRC ativo.
-          - list [ref=e147]:
-            - listitem [ref=e148]:
-              - generic [ref=e152]:
-                - strong [ref=e153]: "Publicação Ilimitada:"
-                - text: Cadastre cargas com detalhes de peso, implemento e valor em minutos.
-            - listitem [ref=e154]:
-              - generic [ref=e158]:
-                - strong [ref=e159]: "Propostas Diretas:"
-                - text: Receba cotações e negocie prazos diretamente com motoristas qualificados.
-            - listitem [ref=e160]:
-              - generic [ref=e164]:
-                - strong [ref=e165]: "Contrato Digital Seguro:"
-                - text: Emissão automática de código contratual com rastreabilidade de ponta a ponta.
-          - button "Acessar Área da Empresa" [ref=e166]
-        - generic [ref=e169]:
-          - heading "Para Transportadores & Autônomos" [level=3] [ref=e176]
-          - paragraph [ref=e177]: Encontre fretes de retorno, elimine viagens vazias e garanta recebimento direto com taxa de intermediação de apenas 1,75%.
-          - list [ref=e178]:
-            - listitem [ref=e179]:
-              - generic [ref=e183]:
-                - strong [ref=e184]: "Radar Georreferenciado:"
-                - text: Busque cargas no mapa pelo seu raio de localização e rota.
-            - listitem [ref=e185]:
-              - generic [ref=e189]:
-                - strong [ref=e190]: "Selo Azul de Confiança:"
-                - text: Perfis homologados na NexIA Verify recebem destaque e prioridade.
-            - listitem [ref=e191]:
-              - generic [ref=e195]:
-                - strong [ref=e196]: "Negociação Livre:"
-                - text: Envie contrapropostas de valores e condições de forma transparente.
-          - button "Acessar Área do Transportador" [ref=e197]
-    - generic [ref=e201]:
-      - generic [ref=e202]:
-        - generic [ref=e203]: Inteligência Artificial Google Gemini
-        - heading "Tecnologia que acelera sua logística" [level=2] [ref=e207]
-        - paragraph [ref=e208]: Desenvolvemos dois motores de inteligência artificial exclusivos para transformar operações manuais em decisões rápidas, seguras e homologadas.
-      - generic [ref=e209]:
-        - generic [ref=e210]:
-          - generic [ref=e216]:
-            - heading "NexIA" [level=4] [ref=e217]
-            - text: Assistente Operacional IA
-          - paragraph [ref=e218]: Seu assistente inteligente para operações logísticas. Consulte tarifas médias da ANTT, encontre cargas por linguagem natural e tire dúvidas sobre veículos e rotas.
-          - button "Acessar NexIA" [ref=e219]
-        - generic [ref=e222]:
-          - generic [ref=e228]:
-            - heading [level=4] [ref=e229]:
-              - text: NexIA Verify
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e231]
-            - text: Homologação e Conformidade
-          - paragraph [ref=e234]: Verificação de documentos e homologação de perfis. Analisa CNH, CRLV, ANTT e CNPJ com conferência contra fraudes para emissão do Selo Azul Verificado.
-          - button "Verificar Agora" [ref=e235]
-    - generic [ref=e238]:
-      - text: Assinaturas Sem Surpresas
-      - heading "Planos claros com 15 dias de teste grátis" [level=2] [ref=e239]
-      - paragraph [ref=e240]: A partir de R$ 79,90/mês. Cancele quando quiser com cobrança recorrente segura via Mercado Pago.
-      - button "Ver Todos os Planos e Assinaturas" [ref=e241]
-  - contentinfo [ref=e244]:
-    - generic [ref=e245]:
-      - generic [ref=e246]:
-        - generic [ref=e247]:
-          - generic [ref=e254]:
-            - generic [ref=e255]:
-              - generic [ref=e256]: NexCarga
-              - generic [ref=e257]: ®
-            - generic [ref=e258]: — OFICIAL —
-          - paragraph [ref=e259]:
-            - strong [ref=e260]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e261]:
-            - generic [ref=e262]: Homologação NexIA Verify
-            - generic [ref=e266]: Criptografia 256-bit
-            - generic [ref=e270]: Mercado Pago Protegido
-        - generic [ref=e273]:
-          - heading "Plataforma" [level=4] [ref=e274]
-          - list [ref=e275]:
-            - listitem [ref=e276]:
-              - button "Início" [ref=e277]
-            - listitem [ref=e278]:
-              - button "Radar de Fretes" [ref=e279]
-            - listitem [ref=e280]:
-              - button "Para Empresas" [ref=e281]
-            - listitem [ref=e282]:
-              - button "Para Transportadores" [ref=e283]
-            - listitem [ref=e284]:
-              - button "Planos e Assinaturas" [ref=e285]
-        - generic [ref=e286]:
-          - heading "Tecnologia & IA" [level=4] [ref=e287]
-          - list [ref=e288]:
-            - listitem [ref=e289]:
-              - button "NexIA Assistente" [ref=e290]
-            - listitem [ref=e294]:
-              - button "NexIA Verify (Homologação)" [ref=e295]
-            - listitem [ref=e296]:
-              - button "NexCarga Docs" [ref=e297]
-            - listitem [ref=e298]:
-              - button "Programa de Parceiros" [ref=e299]
-            - listitem [ref=e300]:
-              - button "NexCarga Control" [ref=e301]
-        - generic [ref=e302]:
-          - heading "Segurança & Suporte" [level=4] [ref=e303]
-          - generic [ref=e304]:
-            - paragraph [ref=e305]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e306]:
-              - generic [ref=e307]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e308]:
-              - generic [ref=e309]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e310]:
-        - generic [ref=e311]:
-          - text: © 2026
-          - strong [ref=e312]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e313]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e314]: Pupa Labs
-            - text: .
-        - generic [ref=e315]:
-          - generic [ref=e316]: Termos de Uso
-          - generic [ref=e317]: Política de Privacidade
-          - generic [ref=e318]: Regras ANTT
-          - generic [ref=e319]: Taxa Transparente (3,5%)
-```
-
-### Log (.playwright-cli/console-2026-11-07T22-41-19-592Z.log#L1-L1)
-```
-[    1060ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=2f519cba:15801
-```
-Thought for 12 seconds
 Edited 1 file
-src/index.css
-Thought for 9 seconds
-Edited 1 file
-src/components/carousel/HeroCarousel.tsx
+src/types/index.ts
 Built
+Ran quality control
+Thought for 1 minute 20 seconds
+Read file
+Read 1 file: skills/system_skills/computer_use/SKILL.md from line 0 to line 322
 Restarted dev server
-Used browser, took 1 screenshot
-npx playwright-cli open http://localhost:3000 && npx playwright-cli screenshot --filename=.playwright-cli/r2-home.png
-### Browser `default` opened with pid 688.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-42-11-207Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-07T22-42-10-345Z.log#L1### Result- [Screenshot of viewport](.playwright-cli/r2-home.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r2-home.pngawait page.screenshot({  path: '.playwright-cli/r2-home.png',  scale: 'css',  type: 'png'});```
+Thought for 48 seconds
+Used browser, took 3 screenshots
+trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-desktop-dark.png && \ playwright-cli resize 390 844 && \ sleep 0.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-mobile-dark.png && \ playwright-cli resize 1440 900 && \ playwright-cli goto http://localhost:3000/#radar && \ sleep 1.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-radar-desktop-dark.png && \ playwright-cli console
+### Browser `default` opened with pid 1761.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-28-43-588Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-28-41-636Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Result- [Screenshot of viewport](.playwright-cli/v2-home-desktop-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-desktop-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-home-desktop-dark.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.setViewportSize({ width: 390, height: 844 });```### Result- [Screenshot of viewport](.playwright-cli/v2-home-mobile-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-mobile-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-home-mobile-dark.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Ran Playwright code```jsawait page.goto('http://localhost:3000/#radar');```### Page- Page URL: http://localhost:3000/#radar- Page Title: NexCarga — Sua carga. Nossa conexão.- Console: 3 errors, 1 warnings### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-28-55-967Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-28-55-912Z.log#L1-L26### Result- [Screenshot of viewport](.playwright-cli/v2-radar-desktop-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-radar-desktop-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-radar-desktop-dark.png',  scale: 'css',  type: 'png'});```### ResultTotal messages: 7 (Errors: 3, Warnings: 1)Returning 5 messages for level "info"[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:15801[ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:1. You might have mismatching versions of React and the renderer (such as React DOM)2. You might be breaking the Rules of Hooks3. You might have more than one copy of React in the same appSee https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11[ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:1. You might have mismatching versions of React and the renderer (such as React DOM)2. You might be breaking the Rules of Hooks3. You might have more than one copy of React in the same appSee https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11[WARNING] %s%s An error occurred in the <APIProvider> component. Consider adding an error boundary to your tree to customize error handling behavior.Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5447TypeError: Cannot read properties of null (reading 'useState')    at exports.useState (http://localhost:3000/node_modules/.vite/deps/react-D57lpOvP.js?v=701c33fa:799:30)    at useMapInstances (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:262:68)    at APIProvider (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:430:81)    at Object.react_stack_bottom_frame (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:14139:12)    at renderWithHooks (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:4397:19)    at updateFunctionComponent (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5772:16)    at beginWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:6388:20)    at runWithFiberInDEV (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:941:66)    at performUnitOfWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9145:92)    at workLoopSync (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9041:37)Browser 'default' closed
 
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-42-11-207Z.yml)
+### Latest snapshot (.playwright-cli/page-2026-11-08T00-28-55-967Z.yml)
+```yaml
+
+```
+
+### Log (.playwright-cli/console-2026-11-08T00-28-41-636Z.log#L1-L1)
+```
+[    1456ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:15801
+```
+
+### Log (.playwright-cli/console-2026-11-08T00-28-55-912Z.log#L1-L26)
+```
+[      23ms] [ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11
+[      43ms] [ERROR] Invalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem. @ http://localhost:3000/src/main.tsx:11
+[      49ms] TypeError: Cannot read properties of null (reading 'useState')
+    at exports.useState (http://localhost:3000/node_modules/.vite/deps/react-D57lpOvP.js?v=701c33fa:799:30)
+    at useMapInstances (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:262:68)
+    at APIProvider (http://localhost:3000/node_modules/.vite/deps/@vis__gl_react-google-maps.js?v=0469905b:430:81)
+    at Object.react_stack_bottom_frame (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:14139:12)
+    at renderWithHooks (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:4397:19)
+    at updateFunctionComponent (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5772:16)
+    at beginWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:6388:20)
+    at runWithFiberInDEV (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:941:66)
+    at performUnitOfWork (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9145:92)
+    at workLoopSync (http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:9041:37)
+[      48ms] [WARNING] %s
+
+%s
+ An error occurred in the <APIProvider> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a8716c96:5447
+```
+Thought for 10 seconds
+Read file
+Read 1 file: vite.config.ts from line 0 to line 27
+Thought for 9 seconds
+Read file
+Read 2 files: src/pages/HomePage.tsx from line 84 to line 209, and src/pages/HomePage.tsx from line 210 to line 289
+Thought for 55 seconds
+Edited 2 files
+vite.config.ts
+src/pages/HomePage.tsx
+Thought for 10 seconds
+Ran command
+rm -rf node_modules/.vite node_modules/@vis.gl/react-google-maps/node_modules/react node_modules/@vis.gl/react-google-maps/node_modules/react-dom
+Restarted dev server
+Thought for 9 seconds
+Used browser, took 3 screenshots
+trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-desktop-refined.png && \ playwright-cli goto http://localhost:3000/#radar && \ sleep 2 && \ playwright-cli screenshot --filename=.playwright-cli/v2-radar-fixed.png && \ playwright-cli eval "() => { localStorage.setItem('nexcarga_theme_preference', 'white'); location.hash = '#planos'; location.reload(); }" && \ sleep 1.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-planos-white.png && \ playwright-cli console
+### Browser `default` opened with pid 2015.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-31-10-933Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-31-08-760Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Result- [Screenshot of viewport](.playwright-cli/v2-home-desktop-refined.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-desktop-refined.pngawait page.screenshot({  path: '.playwright-cli/v2-home-desktop-refined.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.goto('http://localhost:3000/#radar');```### Page- Page URL: http://localhost:3000/#radar- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-31-22-231Z.yml)### Result- [Screenshot of viewport](.playwright-cli/v2-radar-fixed.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-radar-fixed.pngawait page.screenshot({  path: '.playwright-cli/v2-radar-fixed.png',  scale: 'css',  type: 'png'});```### Resultundefined### Ran Playwright code```jsawait page.evaluate('() => { localStorage.setItem(\'nexcarga_theme_preference\', \'white\'); location.hash = \'#planos\'; location.reload(); }');```### Page- Page URL: http://localhost:3000/#planos- Page Title: Loading http://localhost:3000/### Result- [Screenshot of viewport](.playwright-cli/v2-planos-white.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-planos-white.pngawait page.screenshot({  path: '.playwright-cli/v2-planos-white.png',  scale: 'css',  type: 'png'});```### Page- Page URL: http://localhost:3000/#planos- Page Title: NexCarga — Sua carga. Nossa conexão.### Events- New console entries: .playwright-cli/console-2026-11-08T00-31-21-958Z.log#L1### ResultTotal messages: 3 (Errors: 0, Warnings: 0)Returning 1 messages for level "info"[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=18c5d2ba:15801Browser 'default' closed
+
+### Latest snapshot (.playwright-cli/page-2026-11-08T00-31-22-231Z.yml)
 ```yaml
 - generic [ref=e3]:
   - banner [ref=e4]:
@@ -405,859 +179,43 @@ npx playwright-cli open http://localhost:3000 && npx playwright-cli screenshot -
         - generic [ref=e17]: — OFICIAL —
       - navigation [ref=e18]:
         - button "Início" [ref=e19]
-        - button "Fretes" [ref=e21]
-        - button "Transportadores" [ref=e22]
-        - button "Planos" [ref=e23]
-        - button "NexIA" [ref=e24]
-        - button "NexIA Verify" [ref=e25]
-      - generic [ref=e26]:
-        - button "Buscar" [ref=e27]
-        - button "Notificações" [ref=e32]:
-          - generic [ref=e36]: "2"
-        - generic [ref=e37]:
-          - button "Tema Dark" [ref=e38]
-          - button "Tema White" [ref=e41]
-        - button "Menu do Usuário" [ref=e49]:
-          - generic [ref=e50]: CO
-          - generic [ref=e51]:
-            - generic [ref=e52]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e54] [cursor=pointer]
-            - generic [ref=e57]: Empresa
-  - generic [ref=e61]:
-    - generic [ref=e62]:
-      - generic [ref=e63]:
-        - button "Slide anterior" [ref=e64]
-        - button "Próximo slide" [ref=e67]
-        - generic [ref=e70]:
-          - generic [ref=e72] [cursor=pointer]:
-            - img "Conecte sua empresa" [ref=e73]
-            - generic [ref=e74]: Conecte sua empresa - Publique fretes e encontre transportadores verificados em todo o Brasil.
-            - button "Publicar Frete Agora" [ref=e76]
-          - generic [ref=e80] [cursor=pointer]:
-            - img "Sua carga. Nossa conexão." [ref=e81]
-            - generic [ref=e82]: Sua carga. Nossa conexão. - A plataforma que conecta empresas, transportadoras e motoristas.
-            - button "Acessar Radar de Fretes" [ref=e84]
-          - generic [ref=e88] [cursor=pointer]:
-            - img "Mais oportunidades" [ref=e89]
-            - generic [ref=e90]: Mais oportunidades - Encontre fretes, negocie diretamente e aumente seus ganhos.
-            - button "Buscar Oportunidades" [ref=e92]
-      - generic [ref=e95]:
-        - button "Pausar" [ref=e96]
-        - generic [ref=e100]:
-          - button "Ir para slide 1" [ref=e101]
-          - button "Ir para slide 2" [ref=e102]
-          - button "Ir para slide 3" [ref=e103]
-    - generic [ref=e105]:
-      - generic [ref=e106]:
-        - generic [ref=e107]: "+50.000"
-        - generic [ref=e108]: Fretes Publicados
-      - generic [ref=e109]:
-        - generic [ref=e110]:
-          - text: 100%
-          - generic "Perfil Homologado pela NexIA Verify" [ref=e112]
-        - generic [ref=e115]: Usuários Homologados
-      - generic [ref=e116]:
-        - generic [ref=e117]: 3,5%
-        - generic [ref=e118]: Taxa Dividida (1,75% / 1,75%)
-      - generic [ref=e119]:
-        - generic [ref=e120]: 15 Dias
-        - generic [ref=e121]: Teste Grátis em Qualquer Plano
-    - generic [ref=e122]:
-      - generic [ref=e123]:
-        - text: Simplicidade Operacional
-        - heading "Como funciona a NexCarga" [level=2] [ref=e124]
-        - paragraph [ref=e125]: Conectamos quem precisa enviar carga com quem transporta com agilidade, contrato digital e segurança jurídica.
-      - generic [ref=e126]:
-        - generic [ref=e127]:
-          - heading "Para Empresas & Contratantes" [level=3] [ref=e133]
-          - paragraph [ref=e134]: Tenha acesso imediato a uma rede nacional de transportadoras e motoristas com veículos homologados e RNTRC ativo.
-          - list [ref=e135]:
-            - listitem [ref=e136]:
-              - generic [ref=e140]:
-                - strong [ref=e141]: "Publicação Ilimitada:"
-                - text: Cadastre cargas com detalhes de peso, implemento e valor em minutos.
-            - listitem [ref=e142]:
-              - generic [ref=e146]:
-                - strong [ref=e147]: "Propostas Diretas:"
-                - text: Receba cotações e negocie prazos diretamente com motoristas qualificados.
-            - listitem [ref=e148]:
-              - generic [ref=e152]:
-                - strong [ref=e153]: "Contrato Digital Seguro:"
-                - text: Emissão automática de código contratual com rastreabilidade de ponta a ponta.
-          - button "Acessar Área da Empresa" [ref=e154]
-        - generic [ref=e157]:
-          - heading "Para Transportadores & Autônomos" [level=3] [ref=e164]
-          - paragraph [ref=e165]: Encontre fretes de retorno, elimine viagens vazias e garanta recebimento direto com taxa de intermediação de apenas 1,75%.
-          - list [ref=e166]:
-            - listitem [ref=e167]:
-              - generic [ref=e171]:
-                - strong [ref=e172]: "Radar Georreferenciado:"
-                - text: Busque cargas no mapa pelo seu raio de localização e rota.
-            - listitem [ref=e173]:
-              - generic [ref=e177]:
-                - strong [ref=e178]: "Selo Azul de Confiança:"
-                - text: Perfis homologados na NexIA Verify recebem destaque e prioridade.
-            - listitem [ref=e179]:
-              - generic [ref=e183]:
-                - strong [ref=e184]: "Negociação Livre:"
-                - text: Envie contrapropostas de valores e condições de forma transparente.
-          - button "Acessar Área do Transportador" [ref=e185]
-    - generic [ref=e189]:
-      - generic [ref=e190]:
-        - generic [ref=e191]: Inteligência Artificial Google Gemini
-        - heading "Tecnologia que acelera sua logística" [level=2] [ref=e195]
-        - paragraph [ref=e196]: Desenvolvemos dois motores de inteligência artificial exclusivos para transformar operações manuais em decisões rápidas, seguras e homologadas.
-      - generic [ref=e197]:
-        - generic [ref=e198]:
-          - generic [ref=e204]:
-            - heading "NexIA" [level=4] [ref=e205]
-            - text: Assistente Operacional IA
-          - paragraph [ref=e206]: Seu assistente inteligente para operações logísticas. Consulte tarifas médias da ANTT, encontre cargas por linguagem natural e tire dúvidas sobre veículos e rotas.
-          - button "Acessar NexIA" [ref=e207]
-        - generic [ref=e210]:
-          - generic [ref=e216]:
-            - heading [level=4] [ref=e217]:
-              - text: NexIA Verify
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e219]
-            - text: Homologação e Conformidade
-          - paragraph [ref=e222]: Verificação de documentos e homologação de perfis. Analisa CNH, CRLV, ANTT e CNPJ com conferência contra fraudes para emissão do Selo Azul Verificado.
-          - button "Verificar Agora" [ref=e223]
-    - generic [ref=e226]:
-      - text: Assinaturas Sem Surpresas
-      - heading "Planos claros com 15 dias de teste grátis" [level=2] [ref=e227]
-      - paragraph [ref=e228]: A partir de R$ 79,90/mês. Cancele quando quiser com cobrança recorrente segura via Mercado Pago.
-      - button "Ver Todos os Planos e Assinaturas" [ref=e229]
-  - contentinfo [ref=e232]:
-    - generic [ref=e233]:
-      - generic [ref=e234]:
-        - generic [ref=e235]:
-          - generic [ref=e242]:
-            - generic [ref=e243]:
-              - generic [ref=e244]: NexCarga
-              - generic [ref=e245]: ®
-            - generic [ref=e246]: — OFICIAL —
-          - paragraph [ref=e247]:
-            - strong [ref=e248]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e249]:
-            - generic [ref=e250]: Homologação NexIA Verify
-            - generic [ref=e254]: Criptografia 256-bit
-            - generic [ref=e258]: Mercado Pago Protegido
-        - generic [ref=e261]:
-          - heading "Plataforma" [level=4] [ref=e262]
-          - list [ref=e263]:
-            - listitem [ref=e264]:
-              - button "Início" [ref=e265]
-            - listitem [ref=e266]:
-              - button "Radar de Fretes" [ref=e267]
-            - listitem [ref=e268]:
-              - button "Para Empresas" [ref=e269]
-            - listitem [ref=e270]:
-              - button "Para Transportadores" [ref=e271]
-            - listitem [ref=e272]:
-              - button "Planos e Assinaturas" [ref=e273]
-        - generic [ref=e274]:
-          - heading "Tecnologia & IA" [level=4] [ref=e275]
-          - list [ref=e276]:
-            - listitem [ref=e277]:
-              - button "NexIA Assistente" [ref=e278]
-            - listitem [ref=e282]:
-              - button "NexIA Verify (Homologação)" [ref=e283]
-            - listitem [ref=e284]:
-              - button "NexCarga Docs" [ref=e285]
-            - listitem [ref=e286]:
-              - button "Programa de Parceiros" [ref=e287]
-            - listitem [ref=e288]:
-              - button "NexCarga Control" [ref=e289]
-        - generic [ref=e290]:
-          - heading "Segurança & Suporte" [level=4] [ref=e291]
-          - generic [ref=e292]:
-            - paragraph [ref=e293]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e294]:
-              - generic [ref=e295]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e296]:
-              - generic [ref=e297]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e298]:
-        - generic [ref=e299]:
-          - text: © 2026
-          - strong [ref=e300]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e301]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e302]: Pupa Labs
-            - text: .
-        - generic [ref=e303]:
-          - generic [ref=e304]: Termos de Uso
-          - generic [ref=e305]: Política de Privacidade
-          - generic [ref=e306]: Regras ANTT
-          - generic [ref=e307]: Taxa Transparente (3,5%)
-```
-
-### Log (.playwright-cli/console-2026-11-07T22-42-10-345Z.log#L1-L1)
-```
-[     516ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=bbd8a2de:15801
-```
-Thought for 6 seconds
-Used browser, took 1 screenshot
-npx playwright-cli goto http://localhost:3000/#planos && npx playwright-cli screenshot --filename=.playwright-cli/r2-planos.png
-### Ran Playwright code```jsawait page.goto('http://localhost:3000/#planos');```### Page- Page URL: http://localhost:3000/#planos- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-42-25-737Z.yml)### Result- [Screenshot of viewport](.playwright-cli/r2-planos.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r2-planos.pngawait page.screenshot({  path: '.playwright-cli/r2-planos.png',  scale: 'css',  type: 'png'});```
-
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-42-25-737Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e13] [cursor=pointer]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: NexCarga
-          - generic [ref=e16]: ®
-        - generic [ref=e17]: — OFICIAL —
-      - navigation [ref=e18]:
-        - button "Início" [ref=e19]
-        - button "Fretes" [ref=e21]
-        - button "Transportadores" [ref=e22]
-        - button "Planos" [ref=e23]
-        - button "NexIA" [ref=e24]
-        - button "NexIA Verify" [ref=e25]
-      - generic [ref=e26]:
-        - button "Buscar" [ref=e27]
-        - button "Notificações" [ref=e32]:
-          - generic [ref=e36]: "2"
-        - generic [ref=e37]:
-          - button "Tema Dark" [ref=e38]
-          - button "Tema White" [ref=e41]
-        - button "Menu do Usuário" [ref=e49]:
-          - generic [ref=e50]: CO
-          - generic [ref=e51]:
-            - generic [ref=e52]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e54] [cursor=pointer]
-            - generic [ref=e57]: Empresa
-  - generic [ref=e310]:
-    - generic [ref=e311]:
-      - generic [ref=e312]:
-        - heading "Planos e Assinaturas" [level=1] [ref=e317]
-        - paragraph [ref=e318]: Escolha o plano ideal para sua operação logística e conecte sua carga às melhores oportunidades.
-        - generic [ref=e319]:
-          - button "Empresas (Contratantes)" [ref=e320]
-          - button "Transportadores / Motoristas" [ref=e325]
-      - generic [ref=e331]:
-        - img "NexCarga Truck" [ref=e332]
-        - generic [ref=e334]: 15 dias de teste grátis em qualquer modalidade. Cancele com um clique.
-    - generic [ref=e335]:
-      - generic [ref=e336]:
-        - generic [ref=e337]:
-          - heading "Mensal" [level=3] [ref=e341]
-          - paragraph [ref=e342]: Ideal para começar e testar toda a plataforma.
-          - generic [ref=e343]: R$ 79,90/mês
-          - generic [ref=e344]:
-            - generic [ref=e345]: Publicação de fretes ilimitada
-            - generic [ref=e349]: Gestão de propostas
-            - generic [ref=e353]: Radar de fretes georreferenciado
-            - generic [ref=e357]: Suporte técnico
-        - button "Assinar Plano" [ref=e362]
-      - generic [ref=e363]:
-        - generic [ref=e364]: Mais escolhido ☆
-        - generic [ref=e365]:
-          - heading "Trimestral" [level=3] [ref=e369]
-          - paragraph [ref=e370]: Mais economia e melhor custo-benefício.
-          - generic [ref=e371]: R$ 164,70/trimestre
-          - generic [ref=e372]: Economize 31%
-          - generic [ref=e373]:
-            - generic [ref=e374]: Publicação de fretes ilimitada
-            - generic [ref=e378]: Gestão de propostas
-            - generic [ref=e382]: Radar de fretes georreferenciado
-            - strong [ref=e390]: Suporte técnico prioritário
-        - button "Assinar Trimestral" [ref=e392]
-      - generic [ref=e395]:
-        - generic [ref=e396]:
-          - heading "Anual" [level=3] [ref=e400]
-          - paragraph [ref=e401]: Máximo de economia para sua operação.
-          - generic [ref=e402]: R$ 540,00/ano
-          - generic [ref=e403]: Economize 44%
-          - generic [ref=e404]:
-            - generic [ref=e405]: Publicação de fretes ilimitada
-            - generic [ref=e409]: Gestão de propostas
-            - generic [ref=e413]: Radar de fretes georreferenciado
-            - strong [ref=e421]: Suporte técnico VIP
-        - button "Assinar Anual" [ref=e423]
-    - generic [ref=e425]:
-      - generic [ref=e431]:
-        - generic [ref=e432]: Pagamento seguro
-        - text: via Mercado Pago
-      - generic [ref=e440]:
-        - generic [ref=e441]: Renovação automática
-        - text: (gerencie quando quiser)
-      - generic [ref=e446]:
-        - generic [ref=e447]: 15 dias de teste
-        - text: com captura de cartão
-      - generic [ref=e453]:
-        - generic [ref=e454]: Cancele a qualquer
-        - text: momento
-  - contentinfo [ref=e232]:
-    - generic [ref=e233]:
-      - generic [ref=e234]:
-        - generic [ref=e235]:
-          - generic [ref=e242]:
-            - generic [ref=e243]:
-              - generic [ref=e244]: NexCarga
-              - generic [ref=e245]: ®
-            - generic [ref=e246]: — OFICIAL —
-          - paragraph [ref=e247]:
-            - strong [ref=e248]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e249]:
-            - generic [ref=e250]: Homologação NexIA Verify
-            - generic [ref=e254]: Criptografia 256-bit
-            - generic [ref=e258]: Mercado Pago Protegido
-        - generic [ref=e261]:
-          - heading "Plataforma" [level=4] [ref=e262]
-          - list [ref=e263]:
-            - listitem [ref=e264]:
-              - button "Início" [ref=e265]
-            - listitem [ref=e266]:
-              - button "Radar de Fretes" [ref=e267]
-            - listitem [ref=e268]:
-              - button "Para Empresas" [ref=e269]
-            - listitem [ref=e270]:
-              - button "Para Transportadores" [ref=e271]
-            - listitem [ref=e272]:
-              - button "Planos e Assinaturas" [ref=e273]
-        - generic [ref=e274]:
-          - heading "Tecnologia & IA" [level=4] [ref=e275]
-          - list [ref=e276]:
-            - listitem [ref=e277]:
-              - button "NexIA Assistente" [ref=e278]
-            - listitem [ref=e282]:
-              - button "NexIA Verify (Homologação)" [ref=e283]
-            - listitem [ref=e284]:
-              - button "NexCarga Docs" [ref=e285]
-            - listitem [ref=e286]:
-              - button "Programa de Parceiros" [ref=e287]
-            - listitem [ref=e288]:
-              - button "NexCarga Control" [ref=e289]
-        - generic [ref=e290]:
-          - heading "Segurança & Suporte" [level=4] [ref=e291]
-          - generic [ref=e292]:
-            - paragraph [ref=e293]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e294]:
-              - generic [ref=e295]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e296]:
-              - generic [ref=e297]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e298]:
-        - generic [ref=e299]:
-          - text: © 2026
-          - strong [ref=e300]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e301]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e302]: Pupa Labs
-            - text: .
-        - generic [ref=e303]:
-          - generic [ref=e304]: Termos de Uso
-          - generic [ref=e305]: Política de Privacidade
-          - generic [ref=e306]: Regras ANTT
-          - generic [ref=e307]: Taxa Transparente (3,5%)
-```
-Thought for 4 seconds
-Used browser, took 1 screenshot
-npx playwright-cli goto http://localhost:3000/#company-dashboard && npx playwright-cli screenshot --filename=.playwright-cli/r2-empresa.png
-### Ran Playwright code```jsawait page.goto('http://localhost:3000/#company-dashboard');```### Page- Page URL: http://localhost:3000/#company-dashboard- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-42-45-453Z.yml)### Result- [Screenshot of viewport](.playwright-cli/r2-empresa.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r2-empresa.pngawait page.screenshot({  path: '.playwright-cli/r2-empresa.png',  scale: 'css',  type: 'png'});```
-
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-42-45-453Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e13] [cursor=pointer]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: NexCarga
-          - generic [ref=e16]: ®
-        - generic [ref=e17]: — OFICIAL —
-      - navigation [ref=e18]:
-        - button "Início" [ref=e19]
-        - button "Fretes" [ref=e21]
-        - button "Transportadores" [ref=e22]
-        - button "Planos" [ref=e23]
-        - button "NexIA" [ref=e24]
-        - button "NexIA Verify" [ref=e25]
-      - generic [ref=e26]:
-        - button "Buscar" [ref=e27]
-        - button "Notificações" [ref=e32]:
-          - generic [ref=e36]: "2"
-        - generic [ref=e37]:
-          - button "Tema Dark" [ref=e38]
-          - button "Tema White" [ref=e41]
-        - button "Menu do Usuário" [ref=e49]:
-          - generic [ref=e50]: CO
-          - generic [ref=e51]:
-            - generic [ref=e52]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e54] [cursor=pointer]
-            - generic [ref=e57]: Empresa
-  - generic [ref=e455]:
-    - complementary [ref=e456]:
-      - generic [ref=e457]:
-        - generic [ref=e465] [cursor=pointer]:
-          - generic [ref=e466]:
-            - generic [ref=e467]: NexCarga
-            - generic [ref=e468]: ®
-          - generic [ref=e469]: — OFICIAL —
-        - generic [ref=e470]:
-          - generic [ref=e471]:
-            - img "Avatar" [ref=e472]
-            - generic [ref=e473]: CA
-          - generic [ref=e474]:
-            - generic [ref=e475]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e477] [cursor=pointer]
-            - generic [ref=e480]: Empresa Verificada
-        - navigation [ref=e481]:
-          - button "Dashboard" [ref=e482]
-          - button "Publicar Frete" [ref=e486]
-          - button "Meus Fretes" [ref=e490]
-          - button "Transportadores" [ref=e494]
-          - button "Contratos" [ref=e500]
-          - button "Pagamentos" [ref=e504]
-          - button "Relatórios" [ref=e507]
-          - button "Configurações" [ref=e509]
-      - button "Abrir Radar de Fretes" [ref=e514]
-    - main [ref=e515]:
-      - generic [ref=e516]:
-        - generic [ref=e517]:
-          - heading "Dashboard da Empresa" [level=1] [ref=e518]
-          - paragraph [ref=e519]: Gestão de fretes e operações logísticas.
-        - generic [ref=e520]:
-          - button "Publicar Frete" [ref=e521]
-          - generic [ref=e531]: CA
-      - generic [ref=e532]:
-        - generic [ref=e533]:
-          - generic [ref=e534]:
-            - generic [ref=e535]: Fretes ativos
-            - generic [ref=e543]: "12"
-          - generic [ref=e544]:
-            - generic [ref=e545]: Propostas
-            - generic [ref=e551]: "38"
-          - generic [ref=e552]:
-            - generic [ref=e553]: Em negociação
-            - generic [ref=e561]: "6"
-          - generic [ref=e562]:
-            - generic [ref=e563]: Contratos
-            - generic [ref=e569]: "24"
-        - generic [ref=e570]:
-          - generic [ref=e571]:
-            - generic [ref=e572]:
-              - heading "Movimentação de Fretes" [level=3] [ref=e573]
-              - generic [ref=e574]: Últimos 7 dias
-            - img [ref=e576]:
-              - generic [ref=e577]: "30"
-              - generic [ref=e578]: "20"
-              - generic [ref=e579]: "10"
-              - generic [ref=e580]: "0"
-          - generic [ref=e591]:
-            - heading "Status dos Fretes" [level=3] [ref=e592]
-            - generic [ref=e600]:
-              - generic [ref=e601]: 100%
-              - generic [ref=e602]: Total
-            - generic [ref=e603]:
-              - generic [ref=e604]:
-                - generic [ref=e605]: Em andamento
-                - generic [ref=e608]: 42%
-              - generic [ref=e609]:
-                - generic [ref=e610]: Concluídos
-                - generic [ref=e613]: 36%
-              - generic [ref=e614]:
-                - generic [ref=e615]: Em negociação
-                - generic [ref=e618]: 14%
-              - generic [ref=e619]:
-                - generic [ref=e620]: Cancelados
-                - generic [ref=e623]: 8%
-        - generic [ref=e624]:
-          - generic [ref=e625]:
-            - heading "Cargas Publicadas Recentes" [level=3] [ref=e626]
-            - button "Ver todas" [ref=e627]
-          - generic [ref=e628]:
-            - generic [ref=e629]:
-              - generic [ref=e630]:
-                - generic [ref=e631]: Manhuaçu – BH
-                - generic [ref=e632]: "Alimentos (18.000 kg) • Veículo: Truck (Baú)"
-              - generic [ref=e633]:
-                - generic [ref=e634]: R$ 2.450,00
-                - generic [ref=e635]: 3 Proposta(s)
-            - generic [ref=e636]:
-              - generic [ref=e637]:
-                - generic [ref=e638]: Manhuaçu – Vitória
-                - generic [ref=e639]: "Materiais diversos (24.000 kg) • Veículo: Carreta LS (Grade Baixa)"
-              - generic [ref=e640]:
-                - generic [ref=e641]: R$ 3.180,00
-                - generic [ref=e642]: 5 Proposta(s)
-            - generic [ref=e643]:
-              - generic [ref=e644]:
-                - generic [ref=e645]: Manhuaçu – RJ
-                - generic [ref=e646]: "Equipamentos (30.000 kg) • Veículo: Cavalo Mecânico (Prancha)"
-              - generic [ref=e647]:
-                - generic [ref=e648]: R$ 4.890,00
-                - generic [ref=e649]: 2 Proposta(s)
-            - generic [ref=e650]:
-              - generic [ref=e651]:
-                - generic [ref=e652]: São Paulo – Curitiba
-                - generic [ref=e653]: "Autopeças (14.500 kg) • Veículo: Bitruck (Sider)"
-              - generic [ref=e654]:
-                - generic [ref=e655]: R$ 3.950,00
-                - generic [ref=e656]: 4 Proposta(s)
-  - contentinfo [ref=e232]:
-    - generic [ref=e233]:
-      - generic [ref=e234]:
-        - generic [ref=e235]:
-          - generic [ref=e242]:
-            - generic [ref=e243]:
-              - generic [ref=e244]: NexCarga
-              - generic [ref=e245]: ®
-            - generic [ref=e246]: — OFICIAL —
-          - paragraph [ref=e247]:
-            - strong [ref=e248]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e249]:
-            - generic [ref=e250]: Homologação NexIA Verify
-            - generic [ref=e254]: Criptografia 256-bit
-            - generic [ref=e258]: Mercado Pago Protegido
-        - generic [ref=e261]:
-          - heading "Plataforma" [level=4] [ref=e262]
-          - list [ref=e263]:
-            - listitem [ref=e264]:
-              - button "Início" [ref=e265]
-            - listitem [ref=e266]:
-              - button "Radar de Fretes" [ref=e267]
-            - listitem [ref=e268]:
-              - button "Para Empresas" [ref=e269]
-            - listitem [ref=e270]:
-              - button "Para Transportadores" [ref=e271]
-            - listitem [ref=e272]:
-              - button "Planos e Assinaturas" [ref=e273]
-        - generic [ref=e274]:
-          - heading "Tecnologia & IA" [level=4] [ref=e275]
-          - list [ref=e276]:
-            - listitem [ref=e277]:
-              - button "NexIA Assistente" [ref=e278]
-            - listitem [ref=e282]:
-              - button "NexIA Verify (Homologação)" [ref=e283]
-            - listitem [ref=e284]:
-              - button "NexCarga Docs" [ref=e285]
-            - listitem [ref=e286]:
-              - button "Programa de Parceiros" [ref=e287]
-            - listitem [ref=e288]:
-              - button "NexCarga Control" [ref=e289]
-        - generic [ref=e290]:
-          - heading "Segurança & Suporte" [level=4] [ref=e291]
-          - generic [ref=e292]:
-            - paragraph [ref=e293]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e294]:
-              - generic [ref=e295]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e296]:
-              - generic [ref=e297]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e298]:
-        - generic [ref=e299]:
-          - text: © 2026
-          - strong [ref=e300]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e301]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e302]: Pupa Labs
-            - text: .
-        - generic [ref=e303]:
-          - generic [ref=e304]: Termos de Uso
-          - generic [ref=e305]: Política de Privacidade
-          - generic [ref=e306]: Regras ANTT
-          - generic [ref=e307]: Taxa Transparente (3,5%)
-```
-Thought for 5 seconds
-Used browser, took 1 screenshot
-npx playwright-cli goto http://localhost:3000/#carrier-dashboard && npx playwright-cli screenshot --filename=.playwright-cli/r2-transportador.png
-### Ran Playwright code```jsawait page.goto('http://localhost:3000/#carrier-dashboard');```### Page- Page URL: http://localhost:3000/#carrier-dashboard- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-42-58-041Z.yml)### Result- [Screenshot of viewport](.playwright-cli/r2-transportador.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r2-transportador.pngawait page.screenshot({  path: '.playwright-cli/r2-transportador.png',  scale: 'css',  type: 'png'});```
-
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-42-58-041Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e4]:
-    - generic [ref=e5]:
-      - generic [ref=e13] [cursor=pointer]:
-        - generic [ref=e14]:
-          - generic [ref=e15]: NexCarga
-          - generic [ref=e16]: ®
-        - generic [ref=e17]: — OFICIAL —
-      - navigation [ref=e18]:
-        - button "Início" [ref=e19]
-        - button "Fretes" [ref=e21]
-        - button "Transportadores" [ref=e22]
-        - button "Planos" [ref=e23]
-        - button "NexIA" [ref=e24]
-        - button "NexIA Verify" [ref=e25]
-      - generic [ref=e26]:
-        - button "Buscar" [ref=e27]
-        - button "Notificações" [ref=e32]:
-          - generic [ref=e36]: "2"
-        - generic [ref=e37]:
-          - button "Tema Dark" [ref=e38]
-          - button "Tema White" [ref=e41]
-        - button "Menu do Usuário" [ref=e49]:
-          - generic [ref=e50]: CO
-          - generic [ref=e51]:
-            - generic [ref=e52]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e54] [cursor=pointer]
-            - generic [ref=e57]: Empresa
-  - generic [ref=e657]:
-    - complementary [ref=e658]:
-      - generic [ref=e659]:
-        - generic [ref=e667] [cursor=pointer]:
-          - generic [ref=e668]:
-            - generic [ref=e669]: NexCarga
-            - generic [ref=e670]: ®
-          - generic [ref=e671]: — OFICIAL —
-        - generic [ref=e672]:
-          - generic [ref=e673]:
-            - img "Avatar" [ref=e674]
-            - generic [ref=e675]: TS
-          - generic [ref=e676]:
-            - generic [ref=e677]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e679] [cursor=pointer]
-            - generic [ref=e682]: Transportador Verificado
-        - navigation [ref=e683]:
-          - button "Dashboard" [ref=e684]
-          - button "Buscar Fretes" [ref=e688]
-          - button "Minhas Propostas" [ref=e692]
-          - button "Contratos" [ref=e696]
-          - button "Veículos" [ref=e700]
-          - button "Documentos" [ref=e706]
-          - button "Pagamentos" [ref=e710]
-          - button "Perfil" [ref=e713]
-      - button "Abrir Radar de Fretes" [ref=e718]
-    - main [ref=e719]:
-      - generic [ref=e720]:
-        - generic [ref=e721]:
-          - heading "Dashboard do Transportador" [level=1] [ref=e722]
-          - paragraph [ref=e723]: Encontre, negocie e gerencie seus fretes.
-        - generic [ref=e724]:
-          - button "Buscar no Radar" [ref=e725]
-          - generic [ref=e737]: TS
-      - generic [ref=e738]:
-        - generic [ref=e739]:
-          - generic [ref=e740]:
-            - generic [ref=e741]: Fretes disponíveis
-            - generic [ref=e749]: "217"
-          - generic [ref=e750]:
-            - generic [ref=e751]: Propostas enviadas
-            - generic [ref=e757]: "28"
-          - generic [ref=e758]:
-            - generic [ref=e759]: Em andamento
-            - generic [ref=e767]: "5"
-          - generic [ref=e768]:
-            - generic [ref=e769]: Concluídos
-            - generic [ref=e775]: "156"
-        - generic [ref=e776]:
-          - generic [ref=e777]:
-            - heading "Fretes recomendados para você" [level=3] [ref=e778]
-            - button "Ver todos" [ref=e779]
-          - generic [ref=e782]:
-            - generic [ref=e783]:
-              - generic [ref=e791]:
-                - generic [ref=e792]: Manhuaçu – BH
-                - generic [ref=e793]: "Carga: Alimentos (18.000 kg)"
-              - generic [ref=e794]:
-                - generic [ref=e795]: R$ 2.450,00
-                - button "Ver Detalhes" [ref=e797]
-            - generic [ref=e800]:
-              - generic [ref=e808]:
-                - generic [ref=e809]: Manhuaçu – Vitória
-                - generic [ref=e810]: "Carga: Materiais diversos (24.000 kg)"
-              - generic [ref=e811]:
-                - generic [ref=e812]: R$ 3.180,00
-                - button "Ver Detalhes" [ref=e814]
-            - generic [ref=e817]:
-              - generic [ref=e825]:
-                - generic [ref=e826]: Manhuaçu – RJ
-                - generic [ref=e827]: "Carga: Equipamentos (30.000 kg)"
-              - generic [ref=e828]:
-                - generic [ref=e829]: R$ 4.890,00
-                - button "Ver Detalhes" [ref=e831]
-  - contentinfo [ref=e232]:
-    - generic [ref=e233]:
-      - generic [ref=e234]:
-        - generic [ref=e235]:
-          - generic [ref=e242]:
-            - generic [ref=e243]:
-              - generic [ref=e244]: NexCarga
-              - generic [ref=e245]: ®
-            - generic [ref=e246]: — OFICIAL —
-          - paragraph [ref=e247]:
-            - strong [ref=e248]: NexCarga
-            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e249]:
-            - generic [ref=e250]: Homologação NexIA Verify
-            - generic [ref=e254]: Criptografia 256-bit
-            - generic [ref=e258]: Mercado Pago Protegido
-        - generic [ref=e261]:
-          - heading "Plataforma" [level=4] [ref=e262]
-          - list [ref=e263]:
-            - listitem [ref=e264]:
-              - button "Início" [ref=e265]
-            - listitem [ref=e266]:
-              - button "Radar de Fretes" [ref=e267]
-            - listitem [ref=e268]:
-              - button "Para Empresas" [ref=e269]
-            - listitem [ref=e270]:
-              - button "Para Transportadores" [ref=e271]
-            - listitem [ref=e272]:
-              - button "Planos e Assinaturas" [ref=e273]
-        - generic [ref=e274]:
-          - heading "Tecnologia & IA" [level=4] [ref=e275]
-          - list [ref=e276]:
-            - listitem [ref=e277]:
-              - button "NexIA Assistente" [ref=e278]
-            - listitem [ref=e282]:
-              - button "NexIA Verify (Homologação)" [ref=e283]
-            - listitem [ref=e284]:
-              - button "NexCarga Docs" [ref=e285]
-            - listitem [ref=e286]:
-              - button "Programa de Parceiros" [ref=e287]
-            - listitem [ref=e288]:
-              - button "NexCarga Control" [ref=e289]
-        - generic [ref=e290]:
-          - heading "Segurança & Suporte" [level=4] [ref=e291]
-          - generic [ref=e292]:
-            - paragraph [ref=e293]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e294]:
-              - generic [ref=e295]: "E-mail de Suporte:"
-              - text: suporte@nexcarga.com.br
-            - generic [ref=e296]:
-              - generic [ref=e297]: "Central Operacional:"
-              - text: 0800 720 2026
-      - generic [ref=e298]:
-        - generic [ref=e299]:
-          - text: © 2026
-          - strong [ref=e300]: NexCarga
-          - text: . Todos os direitos reservados.
-          - generic [ref=e301]:
-            - text: "Desenvolvimento oficial:"
-            - strong [ref=e302]: Pupa Labs
-            - text: .
-        - generic [ref=e303]:
-          - generic [ref=e304]: Termos de Uso
-          - generic [ref=e305]: Política de Privacidade
-          - generic [ref=e306]: Regras ANTT
-          - generic [ref=e307]: Taxa Transparente (3,5%)
-```
-Thought for 5 seconds
-Used browser, took 1 screenshot
-npx playwright-cli goto http://localhost:3000/#auth && npx playwright-cli screenshot --filename=.playwright-cli/r2-login.png
-### Ran Playwright code```jsawait page.goto('http://localhost:3000/#auth');```### Page- Page URL: http://localhost:3000/#auth- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-43-08-938Z.yml)### Result- [Screenshot of viewport](.playwright-cli/r2-login.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r2-login.pngawait page.screenshot({  path: '.playwright-cli/r2-login.png',  scale: 'css',  type: 'png'});```
-
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-43-08-938Z.yml)
-```yaml
-- generic [ref=e834]:
-  - generic:
-    - img "NexCarga Background"
-  - generic [ref=e835]:
-    - generic [ref=e843] [cursor=pointer]:
-      - generic [ref=e844]:
-        - generic [ref=e845]: NexCarga
-        - generic [ref=e846]: ®
-      - generic [ref=e847]: — OFICIAL —
-    - paragraph [ref=e848]: Sua carga. Nossa conexão.
-  - generic [ref=e850]:
-    - generic [ref=e851]:
-      - heading "Acesse a NexCarga" [level=1] [ref=e852]
-      - paragraph [ref=e853]: Entre na plataforma e conecte-se a novas oportunidades de frete.
-    - generic [ref=e854]:
-      - generic [ref=e855]:
-        - generic [ref=e856]: E-mail, usuário ou CPF/CNPJ
-        - textbox "E-mail, usuário ou CPF/CNPJ" [ref=e858]: contato@construtoraalfa.com.br
-      - generic [ref=e859]:
-        - generic [ref=e860]: Senha
-        - generic [ref=e861]:
-          - textbox "Senha" [ref=e862]: ••••••••
-          - button "Exibir senha" [ref=e863]
-      - generic [ref=e867]:
-        - generic [ref=e868] [cursor=pointer]:
-          - checkbox "Lembrar meu acesso" [checked] [ref=e869]
-          - generic [ref=e870]: Lembrar meu acesso
-        - button "Esqueci minha senha?" [ref=e871]
-      - button "Entrar na plataforma" [ref=e872]
-      - generic [ref=e875]: ou continue com
-      - generic [ref=e878]:
-        - button "Google" [ref=e879]
-        - button "Apple" [ref=e885]
-      - generic [ref=e888]:
-        - text: Ainda não tem conta?
-        - button "Cadastre-se gratuitamente" [ref=e889]
-    - generic [ref=e890]:
-      - generic [ref=e891]: "Acesso Rápido de Testes:"
-      - generic [ref=e892]:
-        - button "🏢 Alfa (Empresa)" [ref=e893]
-        - button "🚛 Silva (Transp.)" [ref=e894]
-        - button "⚡ Control (Admin)" [ref=e895]
-  - generic [ref=e897]:
-    - generic [ref=e898]: Publique Fretes
-    - generic [ref=e906]: Encontre Oportunidades
-    - generic [ref=e912]: Perfil Verificado
-    - generic [ref=e918]: Gestão e Resultados
-```
-Thought for 5 seconds
-Used browser
-npx playwright-cli goto http://localhost:3000/#radar && npx playwright-cli screenshot --filename=.playwright-cli/r2-radar.png
-### Ran Playwright code```jsawait page.goto('http://localhost:3000/#radar');```### Page- Page URL: http://localhost:3000/#radar- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-07T22-43-20-172Z.yml)### ErrorTimeoutError: Timeout 20000ms exceeded.Call log:  - taking page screenshot  - waiting for fonts to load...  - fonts loaded
-
-### Latest snapshot (.playwright-cli/page-2026-11-07T22-43-20-172Z.yml)
-```yaml
-- generic [ref=e3]:
-  - banner [ref=e923]:
-    - generic [ref=e924]:
-      - generic [ref=e932] [cursor=pointer]:
-        - generic [ref=e933]:
-          - generic [ref=e934]: NexCarga
-          - generic [ref=e935]: ®
-        - generic [ref=e936]: — OFICIAL —
-      - navigation [ref=e937]:
-        - button "Início" [ref=e938]
-        - button "Fretes" [ref=e939]
-        - button "Transportadores" [ref=e941]
-        - button "Planos" [ref=e942]
-        - button "NexIA" [ref=e943]
-        - button "NexIA Verify" [ref=e944]
-      - generic [ref=e945]:
-        - button "Buscar" [ref=e946]
-        - button "Notificações" [ref=e951]:
-          - generic [ref=e955]: "2"
-        - generic [ref=e956]:
-          - button "Tema Dark" [ref=e957]
-          - button "Tema White" [ref=e960]
-        - button "Menu do Usuário" [ref=e968]:
-          - generic [ref=e969]: CO
-          - generic [ref=e970]:
-            - generic [ref=e971]:
-              - text: Construtora Alfa
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e973] [cursor=pointer]
-            - generic [ref=e976]: Empresa
-  - generic [ref=e980]:
-    - generic [ref=e981]:
-      - generic [ref=e982]:
-        - generic [ref=e983]: Google Maps Platform Georreferenciado
-        - heading "Radar de Fretes e Oportunidades" [level=1] [ref=e987]
-        - paragraph [ref=e988]: Localização em tempo real de cargas disponíveis no raio da sua frota.
-      - generic [ref=e989]:
-        - generic [ref=e990]: 4 Carga(s) no Radar
-        - button "Meu Painel" [ref=e991]
-    - generic [ref=e993]:
-      - textbox "Buscar Cidade / Rota..." [ref=e998]
-      - combobox [ref=e1000]:
+        - button "Soluções" [ref=e22]
+        - button "Plataforma" [ref=e26]
+        - button "Planos" [ref=e27]
+        - button "Destaques" [ref=e28]
+        - button "NexRadar" [ref=e29]
+        - button "NexControl" [ref=e30]
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - button "Tema Dark" [ref=e33]
+          - button "Tema White" [ref=e36]
+        - button "Notificações" [ref=e44]:
+          - generic [ref=e48]: "2"
+        - generic [ref=e49]:
+          - button "Entrar" [ref=e50]
+          - button "Criar Conta" [ref=e51]
+        - button "Menu do Usuário" [ref=e53]:
+          - generic [ref=e54]: CO
+  - generic [ref=e559]:
+    - generic [ref=e560]:
+      - generic [ref=e561]:
+        - generic [ref=e562]: NexRadar V2.0 • Google Maps Platform & Routes API
+        - heading "NexRadar — Fretes e Rotas em Tempo Real" [level=1] [ref=e566]
+        - paragraph [ref=e567]: Geolocalização de cargas, traçado rodoviário oficial e simulador de custos operacionais e margem líquida.
+      - generic [ref=e568]:
+        - generic [ref=e569]: 6 Carga(s) no Radar
+        - button "Modo Radar Tático" [ref=e570] [cursor=pointer]
+        - button "Meu Painel" [ref=e571] [cursor=pointer]
+    - generic [ref=e572]:
+      - button "Todo o Brasil" [ref=e573] [cursor=pointer]
+      - button "Próximos de mim" [ref=e574] [cursor=pointer]
+      - button "Mesma cidade" [ref=e575] [cursor=pointer]
+      - button "Mesmo estado" [ref=e576] [cursor=pointer]
+      - button "Rotas de retorno" [ref=e577] [cursor=pointer]
+      - button "Compatíveis com meu veículo" [ref=e578] [cursor=pointer]
+    - generic [ref=e580]:
+      - textbox "Buscar Cidade / Rota..." [ref=e585]
+      - combobox [ref=e587]:
         - option "Todos os Estados (UF)" [selected]
         - option "Minas Gerais (MG)"
         - option "São Paulo (SP)"
@@ -1266,14 +224,14 @@ npx playwright-cli goto http://localhost:3000/#radar && npx playwright-cli scree
         - option "Paraná (PR)"
         - option "Goiás (GO)"
         - option "Bahia (BA)"
-      - combobox [ref=e1002]:
+      - combobox [ref=e589]:
         - option "Todos os Veículos" [selected]
         - option "Truck"
         - option "Carreta LS"
         - option "Bitruck"
         - option "Cavalo Mecânico"
         - option "VUC"
-      - combobox [ref=e1004]:
+      - combobox [ref=e591]:
         - option "Todos os Implementos" [selected]
         - option "Baú"
         - option "Grade Baixa"
@@ -1281,230 +239,601 @@ npx playwright-cli goto http://localhost:3000/#radar && npx playwright-cli scree
         - option "Graneleiro"
         - option "Prancha"
         - option "Frigorífico"
-      - combobox [ref=e1006]:
+      - combobox [ref=e593]:
         - option "Raio até 300 km"
         - option "Raio até 500 km"
-        - option "Raio até 1.000 km" [selected]
-        - option "Brasil Inteiro"
-    - generic [ref=e1007]:
-      - generic [ref=e1008]:
-        - generic [ref=e1009]:
-          - generic [ref=e1010]: GPS Radar Ativo
-          - generic [ref=e1012]: "Rota: Manhuaçu – BH (285 km)"
-        - generic [ref=e1013]:
-          - img [ref=e1014]:
-            - generic [ref=e1017]: 285 km
-            - generic [ref=e1021] [cursor=pointer]: Manhuaçu
-            - generic [ref=e1025] [cursor=pointer]: Manhuaçu
-            - generic [ref=e1028] [cursor=pointer]: Manhuaçu
-            - generic [ref=e1031] [cursor=pointer]: São Paulo
-          - generic [ref=e1037]: © Google Maps Platform • Traçado Rodoviário Oficial ANTT
-        - generic [ref=e1038]:
-          - generic [ref=e1039]:
-            - generic [ref=e1040]:
-              - text: Manhuaçu – BH
-              - generic "Perfil Homologado pela NexIA Verify" [ref=e1042] [cursor=pointer]
-            - generic [ref=e1045]: "Alimentos (18.000 kg) • Coleta: 2026-11-10 • Veículo: Truck (Baú)"
-          - generic [ref=e1046]:
-            - generic [ref=e1047]:
-              - generic [ref=e1048]: Valor Ofertado
-              - text: R$ 2.450,00
-            - button "Enviar Proposta" [ref=e1049]
-      - generic [ref=e1052]:
-        - heading "Oportunidades em Destaque no Radar (4)" [level=3] [ref=e1053]
-        - generic [ref=e1054]:
-          - generic [ref=e1055] [cursor=pointer]:
-            - generic [ref=e1056]:
-              - generic [ref=e1057]:
-                - generic [ref=e1058]: Manhuaçu – BH
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e1060]
-              - generic [ref=e1063]: R$ 2.450,00
-            - generic [ref=e1064]:
-              - generic [ref=e1065]: "Carga: Alimentos (18.000 kg)"
-              - generic [ref=e1066]:
+        - option "Raio até 1.000 km"
+        - option "Todo o Brasil (5.000 km)" [selected]
+    - generic [ref=e594]:
+      - generic [ref=e595]:
+        - generic [ref=e596]:
+          - generic:
+            - generic: NexRadar GPS Ativo
+            - generic: "Rota: Manhuaçu – BH (285 km • 4h 35min)"
+          - generic [ref=e597]: "Motor de Rotas: Google Routes API • Estimativa sujeita às condições da via"
+          - generic [ref=e599]:
+            - generic [ref=e600]:
+              - generic [ref=e601]:
+                - generic [ref=e602]: Manhuaçu – BH
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e604] [cursor=pointer]
+              - generic [ref=e607]: "Alimentos (18.000 kg) • Coleta: 2026-11-10 • Truck (Baú)"
+            - generic [ref=e608]:
+              - generic [ref=e609]:
+                - generic [ref=e610]: Valor Ofertado
+                - text: R$ 2.450,00
+              - button "Enviar Proposta" [ref=e611] [cursor=pointer]
+        - generic [ref=e615]:
+          - generic [ref=e616]:
+            - generic [ref=e621]:
+              - heading "Simulador de Custos Operacionais e Viabilidade da Rota" [level=3] [ref=e622]
+              - paragraph [ref=e623]: Calcule consumo de diesel, pedágios, custo/km e margem líquida antes de fechar o frete.
+            - generic [ref=e624]: ALTA RENTABILIDADE
+          - generic [ref=e628]:
+            - generic [ref=e629]:
+              - generic [ref=e630]: Consumo (km/L)
+              - spinbutton [ref=e631]: "2.8"
+            - generic [ref=e632]:
+              - generic [ref=e633]: Diesel (R$/L)
+              - spinbutton [ref=e634]: "6.15"
+            - generic [ref=e635]:
+              - generic [ref=e636]: Pedágio Est. (R$)
+              - spinbutton "120" [ref=e637]
+            - generic [ref=e638]:
+              - generic [ref=e639]: Custos Extras (R$)
+              - spinbutton [ref=e640]: "180"
+            - generic [ref=e641]:
+              - generic [ref=e642]: Margem Alvo (%)
+              - spinbutton [ref=e643]: "20"
+          - generic [ref=e644]:
+            - generic [ref=e645]:
+              - generic [ref=e646]: Combustível (101.8 L)
+              - generic [ref=e650]: R$ 626,07
+              - generic [ref=e651]: "+ Pedágio: R$ 119,70"
+            - generic [ref=e652]:
+              - generic [ref=e653]: Custo Operacional Total
+              - generic [ref=e658]: R$ 968,65
+              - generic [ref=e659]: "Custo/km: R$ 3,40/km"
+            - generic [ref=e660]:
+              - generic [ref=e661]: Lucro Líquido Estimado
+              - generic [ref=e665]: R$ 1.481,35
+              - generic [ref=e666]: "Margem real: 60.5%"
+            - generic [ref=e667]:
+              - generic [ref=e668]: Frete Recomendado (20%)
+              - generic [ref=e669]: R$ 1.183,09
+              - generic [ref=e670]: "Receita/km atual: R$ 8,60"
+      - generic [ref=e671]:
+        - generic [ref=e672]:
+          - heading "Oportunidades Sincronizadas (6)" [level=3] [ref=e673]
+          - generic [ref=e674]: Clique para traçar rota e custos
+        - generic [ref=e675]:
+          - generic [ref=e676] [cursor=pointer]:
+            - generic [ref=e677]:
+              - generic [ref=e678]:
+                - generic [ref=e679]: Manhuaçu – BH
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e681]
+              - generic [ref=e684]: R$ 2.450,00
+            - generic [ref=e685]:
+              - generic [ref=e686]: Manhuaçu/MG ➔ Belo Horizonte/MG
+              - generic [ref=e691]: "Carga: Alimentos (18.000 kg)"
+              - generic [ref=e692]:
                 - text: "Veículo:"
-                - strong [ref=e1067]: Truck (Baú)
-              - generic [ref=e1068]:
-                - generic [ref=e1069]: "Distância: 285 km"
-                - generic [ref=e1070]: •
-                - generic [ref=e1071]: 3 Proposta(s)
-            - generic [ref=e1072]:
-              - generic [ref=e1073]: Construtora Alfa
-              - generic [ref=e1074]: Ver no Mapa
-          - generic [ref=e1077] [cursor=pointer]:
-            - generic [ref=e1078]:
-              - generic [ref=e1079]:
-                - generic [ref=e1080]: Manhuaçu – Vitória
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e1082]
-              - generic [ref=e1085]: R$ 3.180,00
-            - generic [ref=e1086]:
-              - generic [ref=e1087]: "Carga: Materiais diversos (24.000 kg)"
-              - generic [ref=e1088]:
+                - strong [ref=e693]: Truck (Baú)
+              - generic [ref=e694]:
+                - generic [ref=e695]: 285 km
+                - generic [ref=e698]: •
+                - generic [ref=e699]: Est. 4.6h
+                - generic [ref=e703]: •
+                - generic [ref=e704]: "Lucro Est.: R$ 1.476,10"
+            - generic [ref=e705]:
+              - generic [ref=e706]: Construtora Alfa
+              - generic [ref=e707]: Traçar Rota no Mapa
+          - generic [ref=e710] [cursor=pointer]:
+            - generic [ref=e711]:
+              - generic [ref=e712]:
+                - generic [ref=e713]: Manhuaçu – Vitória
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e715]
+              - generic [ref=e718]: R$ 3.180,00
+            - generic [ref=e719]:
+              - generic [ref=e720]: Manhuaçu/MG ➔ Vitória/ES
+              - generic [ref=e725]: "Carga: Materiais diversos (24.000 kg)"
+              - generic [ref=e726]:
                 - text: "Veículo:"
-                - strong [ref=e1089]: Carreta LS (Grade Baixa)
-              - generic [ref=e1090]:
-                - generic [ref=e1091]: "Distância: 240 km"
-                - generic [ref=e1092]: •
-                - generic [ref=e1093]: 5 Proposta(s)
-            - generic [ref=e1094]:
-              - generic [ref=e1095]: Construtora Alfa
-              - generic [ref=e1096]: Ver no Mapa
-          - generic [ref=e1099] [cursor=pointer]:
-            - generic [ref=e1100]:
-              - generic [ref=e1101]:
-                - generic [ref=e1102]: Manhuaçu – RJ
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e1104]
-              - generic [ref=e1107]: R$ 4.890,00
-            - generic [ref=e1108]:
-              - generic [ref=e1109]: "Carga: Equipamentos (30.000 kg)"
-              - generic [ref=e1110]:
+                - strong [ref=e727]: Carreta LS (Grade Baixa)
+              - generic [ref=e728]:
+                - generic [ref=e729]: 240 km
+                - generic [ref=e732]: •
+                - generic [ref=e733]: Est. 3.9h
+                - generic [ref=e737]: •
+                - generic [ref=e738]: "Lucro Est.: R$ 2.340,49"
+            - generic [ref=e739]:
+              - generic [ref=e740]: Construtora Alfa
+              - generic [ref=e741]: Traçar Rota no Mapa
+          - generic [ref=e744] [cursor=pointer]:
+            - generic [ref=e745]:
+              - generic [ref=e746]:
+                - generic [ref=e747]: Manhuaçu – RJ
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e749]
+              - generic [ref=e752]: R$ 4.890,00
+            - generic [ref=e753]:
+              - generic [ref=e754]: Manhuaçu/MG ➔ Rio de Janeiro/RJ
+              - generic [ref=e759]: "Carga: Equipamentos (30.000 kg)"
+              - generic [ref=e760]:
                 - text: "Veículo:"
-                - strong [ref=e1111]: Cavalo Mecânico (Prancha)
-              - generic [ref=e1112]:
-                - generic [ref=e1113]: "Distância: 420 km"
-                - generic [ref=e1114]: •
-                - generic [ref=e1115]: 2 Proposta(s)
-            - generic [ref=e1116]:
-              - generic [ref=e1117]: Construtora Alfa
-              - generic [ref=e1118]: Ver no Mapa
-          - generic [ref=e1121] [cursor=pointer]:
-            - generic [ref=e1122]:
-              - generic [ref=e1123]:
-                - generic [ref=e1124]: São Paulo – Curitiba
-                - generic "Perfil Homologado pela NexIA Verify" [ref=e1126]
-              - generic [ref=e1129]: R$ 3.950,00
-            - generic [ref=e1130]:
-              - generic [ref=e1131]: "Carga: Autopeças (14.500 kg)"
-              - generic [ref=e1132]:
+                - strong [ref=e761]: Cavalo Mecânico (Prancha)
+              - generic [ref=e762]:
+                - generic [ref=e763]: 420 km
+                - generic [ref=e766]: •
+                - generic [ref=e767]: Est. 6.8h
+                - generic [ref=e771]: •
+                - generic [ref=e772]: "Lucro Est.: R$ 3.432,52"
+            - generic [ref=e773]:
+              - generic [ref=e774]: Construtora Alfa
+              - generic [ref=e775]: Traçar Rota no Mapa
+          - generic [ref=e778] [cursor=pointer]:
+            - generic [ref=e779]:
+              - generic [ref=e780]:
+                - generic [ref=e781]: São Paulo – Curitiba
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e783]
+              - generic [ref=e786]: R$ 3.950,00
+            - generic [ref=e787]:
+              - generic [ref=e788]: São Paulo/SP ➔ Curitiba/PR
+              - generic [ref=e793]: "Carga: Autopeças (14.500 kg)"
+              - generic [ref=e794]:
                 - text: "Veículo:"
-                - strong [ref=e1133]: Bitruck (Sider)
-              - generic [ref=e1134]:
-                - generic [ref=e1135]: "Distância: 408 km"
-                - generic [ref=e1136]: •
-                - generic [ref=e1137]: 4 Proposta(s)
-            - generic [ref=e1138]:
-              - generic [ref=e1139]: Construtora Alfa
-              - generic [ref=e1140]: Ver no Mapa
-  - contentinfo [ref=e1143]:
-    - generic [ref=e1144]:
-      - generic [ref=e1145]:
-        - generic [ref=e1146]:
-          - generic [ref=e1153]:
-            - generic [ref=e1154]:
-              - generic [ref=e1155]: NexCarga
-              - generic [ref=e1156]: ®
-            - generic [ref=e1157]: — OFICIAL —
-          - paragraph [ref=e1158]:
-            - strong [ref=e1159]: NexCarga
+                - strong [ref=e795]: Bitruck (Sider)
+              - generic [ref=e796]:
+                - generic [ref=e797]: 408 km
+                - generic [ref=e800]: •
+                - generic [ref=e801]: Est. 6.6h
+                - generic [ref=e805]: •
+                - generic [ref=e806]: "Lucro Est.: R$ 2.548,26"
+            - generic [ref=e807]:
+              - generic [ref=e808]: Construtora Alfa
+              - generic [ref=e809]: Traçar Rota no Mapa
+          - generic [ref=e812] [cursor=pointer]:
+            - generic [ref=e813]:
+              - generic [ref=e814]:
+                - generic [ref=e815]: Belo Horizonte – Manhuaçu (Retorno)
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e817]
+              - generic [ref=e820]: R$ 2.380,00
+            - generic [ref=e821]:
+              - generic [ref=e822]: Belo Horizonte/MG ➔ Manhuaçu/MG
+              - generic [ref=e827]: "Carga: Insumos Agrícolas (16.500 kg)"
+              - generic [ref=e828]:
+                - text: "Veículo:"
+                - strong [ref=e829]: Truck (Baú)
+              - generic [ref=e830]:
+                - generic [ref=e831]: 285 km
+                - generic [ref=e834]: •
+                - generic [ref=e835]: Est. 4.6h
+                - generic [ref=e839]: •
+                - generic [ref=e840]: "Lucro Est.: R$ 1.407,33"
+            - generic [ref=e841]:
+              - generic [ref=e842]: Construtora Alfa
+              - generic [ref=e843]: Traçar Rota no Mapa
+          - generic [ref=e846] [cursor=pointer]:
+            - generic [ref=e847]:
+              - generic [ref=e848]:
+                - generic [ref=e849]: Goiânia – Salvador
+                - generic "Perfil Homologado pela NexIA Verify" [ref=e851]
+              - generic [ref=e854]: R$ 11.850,00
+            - generic [ref=e855]:
+              - generic [ref=e856]: Goiânia/GO ➔ Salvador/BA
+              - generic [ref=e861]: "Carga: Grãos & Soja (32.000 kg)"
+              - generic [ref=e862]:
+                - text: "Veículo:"
+                - strong [ref=e863]: Carreta LS (Graneleiro)
+              - generic [ref=e864]:
+                - generic [ref=e865]: 1640 km
+                - generic [ref=e868]: •
+                - generic [ref=e869]: Est. 26.5h
+                - generic [ref=e873]: •
+                - generic [ref=e874]: "Lucro Est.: R$ 6.285,76"
+            - generic [ref=e875]:
+              - generic [ref=e876]: Construtora Alfa
+              - generic [ref=e877]: Traçar Rota no Mapa
+  - contentinfo [ref=e481]:
+    - generic [ref=e482]:
+      - generic [ref=e483]:
+        - generic [ref=e484]:
+          - generic [ref=e491]:
+            - generic [ref=e492]:
+              - generic [ref=e493]: NexCarga
+              - generic [ref=e494]: ®
+            - generic [ref=e495]: — OFICIAL —
+          - paragraph [ref=e496]:
+            - strong [ref=e497]: NexCarga
             - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
-          - generic [ref=e1160]:
-            - generic [ref=e1161]: Homologação NexIA Verify
-            - generic [ref=e1165]: Criptografia 256-bit
-            - generic [ref=e1169]: Mercado Pago Protegido
-        - generic [ref=e1172]:
-          - heading "Plataforma" [level=4] [ref=e1173]
-          - list [ref=e1174]:
-            - listitem [ref=e1175]:
-              - button "Início" [ref=e1176]
-            - listitem [ref=e1177]:
-              - button "Radar de Fretes" [ref=e1178]
-            - listitem [ref=e1179]:
-              - button "Para Empresas" [ref=e1180]
-            - listitem [ref=e1181]:
-              - button "Para Transportadores" [ref=e1182]
-            - listitem [ref=e1183]:
-              - button "Planos e Assinaturas" [ref=e1184]
-        - generic [ref=e1185]:
-          - heading "Tecnologia & IA" [level=4] [ref=e1186]
-          - list [ref=e1187]:
-            - listitem [ref=e1188]:
-              - button "NexIA Assistente" [ref=e1189]
-            - listitem [ref=e1193]:
-              - button "NexIA Verify (Homologação)" [ref=e1194]
-            - listitem [ref=e1195]:
-              - button "NexCarga Docs" [ref=e1196]
-            - listitem [ref=e1197]:
-              - button "Programa de Parceiros" [ref=e1198]
-            - listitem [ref=e1199]:
-              - button "NexCarga Control" [ref=e1200]
-        - generic [ref=e1201]:
-          - heading "Segurança & Suporte" [level=4] [ref=e1202]
-          - generic [ref=e1203]:
-            - paragraph [ref=e1204]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
-            - generic [ref=e1205]:
-              - generic [ref=e1206]: "E-mail de Suporte:"
+          - generic [ref=e498]:
+            - generic [ref=e499]: Homologação NexIA Verify
+            - generic [ref=e503]: Criptografia 256-bit
+            - generic [ref=e507]: Mercado Pago Protegido
+        - generic [ref=e510]:
+          - heading "Plataforma" [level=4] [ref=e511]
+          - list [ref=e512]:
+            - listitem [ref=e513]:
+              - button "Início" [ref=e514]
+            - listitem [ref=e515]:
+              - button "Radar de Fretes" [ref=e516]
+            - listitem [ref=e517]:
+              - button "Para Empresas" [ref=e518]
+            - listitem [ref=e519]:
+              - button "Para Transportadores" [ref=e520]
+            - listitem [ref=e521]:
+              - button "Planos e Assinaturas" [ref=e522]
+        - generic [ref=e523]:
+          - heading "Tecnologia & IA" [level=4] [ref=e524]
+          - list [ref=e525]:
+            - listitem [ref=e526]:
+              - button "NexIA Assistente" [ref=e527]
+            - listitem [ref=e531]:
+              - button "NexIA Verify (Homologação)" [ref=e532]
+            - listitem [ref=e533]:
+              - button "NexCarga Docs" [ref=e534]
+            - listitem [ref=e535]:
+              - button "Programa de Parceiros" [ref=e536]
+            - listitem [ref=e537]:
+              - button "NexCarga Control" [ref=e538]
+        - generic [ref=e539]:
+          - heading "Segurança & Suporte" [level=4] [ref=e540]
+          - generic [ref=e541]:
+            - paragraph [ref=e542]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
+            - generic [ref=e543]:
+              - generic [ref=e544]: "E-mail de Suporte:"
               - text: suporte@nexcarga.com.br
-            - generic [ref=e1207]:
-              - generic [ref=e1208]: "Central Operacional:"
+            - generic [ref=e545]:
+              - generic [ref=e546]: "Central Operacional:"
               - text: 0800 720 2026
-      - generic [ref=e1209]:
-        - generic [ref=e1210]:
+      - generic [ref=e547]:
+        - generic [ref=e548]:
           - text: © 2026
-          - strong [ref=e1211]: NexCarga
+          - strong [ref=e549]: NexCarga
           - text: . Todos os direitos reservados.
-          - generic [ref=e1212]:
+          - generic [ref=e550]:
             - text: "Desenvolvimento oficial:"
-            - strong [ref=e1213]: Pupa Labs
+            - strong [ref=e551]: Pupa Labs
             - text: .
-        - generic [ref=e1214]:
-          - generic [ref=e1215]: Termos de Uso
-          - generic [ref=e1216]: Política de Privacidade
-          - generic [ref=e1217]: Regras ANTT
-          - generic [ref=e1218]: Taxa Transparente (3,5%)
+        - generic [ref=e552]:
+          - generic [ref=e553]: Termos de Uso
+          - generic [ref=e554]: Política de Privacidade
+          - generic [ref=e555]: Regras ANTT
+          - generic [ref=e556]: Taxa Transparente (3,5%)
 ```
-Thought for 4 seconds
-Used browser
-npx playwright-cli close
-Browser 'default' closed
-Thought for 16 seconds
+
+### Log (.playwright-cli/console-2026-11-08T00-31-08-760Z.log#L1-L1)
+```
+[    1493ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=18c5d2ba:15801
+```
+
+### Log (.playwright-cli/console-2026-11-08T00-31-21-958Z.log#L1-L1)
+```
+[    8471ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=18c5d2ba:15801
+```
+Thought for 14 seconds
 Edited 1 file
-README.md
+src/pages/SubscriptionsPage.tsx
+Restarted dev server
+Thought for 11 seconds
+Used browser, took 2 screenshots
+trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli mousewheel 0 850 && \ sleep 0.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-sections-dark.png && \ playwright-cli mousewheel 0 -850 && \ playwright-cli eval "() => { document.querySelector('button[aria-label=\"Tema White\"]')?.click(); }" && \ sleep 0.5 && \ playwright-cli screenshot --filename=.playwright-cli/v2-home-desktop-white.png
+### Browser `default` opened with pid 2251.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexCarga — Sua carga. Nossa conexão.### Snapshot- [Snapshot](.playwright-cli/page-2026-11-08T00-32-22-460Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-08T00-32-20-493Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Ran Playwright code```js// Scroll mouse wheelawait page.mouse.wheel(0, 850);```### Result- [Screenshot of viewport](.playwright-cli/v2-home-sections-dark.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-sections-dark.pngawait page.screenshot({  path: '.playwright-cli/v2-home-sections-dark.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```js// Scroll mouse wheelawait page.mouse.wheel(0, -850);```### Resultundefined### Ran Playwright code```jsawait page.evaluate('() => { document.querySelector(\'button[aria-label="Tema White"]\')?.click(); }');```### Result- [Screenshot of viewport](.playwright-cli/v2-home-desktop-white.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/v2-home-desktop-white.pngawait page.screenshot({  path: '.playwright-cli/v2-home-desktop-white.png',  scale: 'css',  type: 'png'});```Browser 'default' closed
+
+### Latest snapshot (.playwright-cli/page-2026-11-08T00-32-22-460Z.yml)
+```yaml
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e13] [cursor=pointer]:
+        - generic [ref=e14]:
+          - generic [ref=e15]: NexCarga
+          - generic [ref=e16]: ®
+        - generic [ref=e17]: — OFICIAL —
+      - navigation [ref=e18]:
+        - button "Início" [ref=e19]
+        - button "Soluções" [ref=e22]
+        - button "Plataforma" [ref=e26]
+        - button "Planos" [ref=e27]
+        - button "Destaques" [ref=e28]
+        - button "NexRadar" [ref=e29]
+        - button "NexControl" [ref=e30]
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - button "Tema Dark" [ref=e33]
+          - button "Tema White" [ref=e36]
+        - button "Notificações" [ref=e44]:
+          - generic [ref=e48]: "2"
+        - generic [ref=e49]:
+          - button "Entrar" [ref=e50]
+          - button "Criar Conta" [ref=e51]
+        - button "Menu do Usuário" [ref=e53]:
+          - generic [ref=e54]: CO
+  - generic [ref=e58]:
+    - generic [ref=e59]:
+      - generic:
+        - img "NexCarga Rodovia Brasileira"
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: Plataforma SaaS B2B LogTech
+            - heading "Conectamos Cargas, Empresas e Transportadores" [level=1] [ref=e70]
+            - paragraph [ref=e71]: O ecossistema logístico completo para contratar, transportar e gerir fretes com segurança, agilidade e inteligência.
+            - generic [ref=e72]:
+              - button "Acessar Plataforma" [ref=e73] [cursor=pointer]
+              - button "Ver como Funciona" [ref=e77] [cursor=pointer]
+            - generic [ref=e82]:
+              - generic [ref=e88]:
+                - generic [ref=e89]: + Segurança
+                - generic [ref=e90]: Operação confiável
+              - generic [ref=e95]:
+                - generic [ref=e96]: + Agilidade
+                - generic [ref=e97]: Contratações rápidas
+              - generic [ref=e102]:
+                - generic [ref=e103]: + Resultado
+                - generic [ref=e104]: Mais eficiência no frete
+          - generic [ref=e106]:
+            - img "Caminhão Oficial NexCarga" [ref=e107]
+            - generic [ref=e109]:
+              - generic [ref=e110]: NexRadar Nacional Ativo • Rotas Homologadas ANTT
+              - button "Abrir Mapa" [ref=e113]
+        - button "Rolar para recursos" [ref=e117]
+    - generic [ref=e121]:
+      - button "Publicação de Fretes" [ref=e122] [cursor=pointer]
+      - button "Contratação Segura" [ref=e131] [cursor=pointer]
+      - button "NexRadar Fretes em Tempo Real" [ref=e140] [cursor=pointer]:
+        - generic [ref=e145]:
+          - generic [ref=e146]: NexRadar
+          - generic [ref=e147]: Fretes em Tempo Real
+      - button "Gestão e Indicadores" [ref=e148] [cursor=pointer]
+      - button "Conformidade LGPD" [ref=e154] [cursor=pointer]
+      - button "Ecossistema Integrado" [ref=e161] [cursor=pointer]
+    - generic [ref=e170]:
+      - generic [ref=e172]:
+        - generic [ref=e173] [cursor=pointer]:
+          - generic [ref=e174]:
+            - generic [ref=e181]:
+              - generic [ref=e182]:
+                - generic [ref=e183]: NexCarga
+                - generic [ref=e184]: ®
+              - generic [ref=e185]: — OFICIAL —
+            - generic [ref=e186]: 🔍 Buscar operação, contrato ou rota...
+          - generic [ref=e187]:
+            - generic [ref=e188]:
+              - generic [ref=e189]: Dashboard
+              - generic [ref=e193]: Fretes
+              - generic [ref=e199]: NexRadar
+              - generic [ref=e203]: Financeiro
+              - generic [ref=e207]: Relatórios
+              - generic [ref=e210]: Equipe
+              - generic [ref=e216]: Configurações
+            - generic [ref=e219]:
+              - generic [ref=e220]: Dashboard Empresa
+              - generic [ref=e221]:
+                - generic [ref=e222]:
+                  - generic [ref=e223]: "12"
+                  - generic [ref=e224]: Fretes Ativos
+                - generic [ref=e225]:
+                  - generic [ref=e226]: "5"
+                  - generic [ref=e227]: Concluídos
+                - generic [ref=e228]:
+                  - generic [ref=e229]: R$ 487.230
+                  - generic [ref=e230]: Valor Movimentado
+              - generic [ref=e231]:
+                - generic [ref=e232]: Movimentação de Fretes
+                - generic [ref=e243]:
+                  - generic [ref=e244]: 42%
+                  - generic [ref=e245]: Concluídos
+        - generic [ref=e246] [cursor=pointer]:
+          - generic [ref=e247]: N NexRadar
+          - generic [ref=e250]: 6 Cargas no Radar
+      - generic [ref=e259]:
+        - generic [ref=e260]: NexCarga na Prática
+        - heading "Mais controle, visibilidade e resultado no seu frete" [level=2] [ref=e265]
+        - paragraph [ref=e266]: Acompanhe sua operação em tempo real, analise indicadores, gerencie contratos e conecte-se ao mercado de forma simples e poderosa.
+        - list [ref=e267]:
+          - listitem [ref=e268]:
+            - generic [ref=e273]: Painéis completos por perfil (Empresa, Transportador, Motorista e +)
+          - listitem [ref=e274]:
+            - generic [ref=e279]: Indicadores e relatórios em tempo real
+          - listitem [ref=e280]:
+            - generic [ref=e285]: Rastreamento e status da operação (NexRadar)
+          - listitem [ref=e286]:
+            - generic [ref=e291]: Gestão de taxas, documentos e conformidade
+        - generic [ref=e292]:
+          - button "Explorar Dashboard Empresa" [ref=e293] [cursor=pointer]
+          - button "Painel Transportador" [ref=e297] [cursor=pointer]
+    - generic [ref=e301]:
+      - generic [ref=e302]:
+        - generic [ref=e303]: Para quem é a NexCarga
+        - heading "Soluções para todo o ecossistema logístico" [level=2] [ref=e305]
+      - generic [ref=e306]:
+        - generic [ref=e307] [cursor=pointer]:
+          - img "Empresas" [ref=e309]
+          - generic [ref=e312]:
+            - heading "Empresas" [level=3] [ref=e313]
+            - paragraph [ref=e314]: Contrate fretes com segurança e melhor custo.
+        - generic [ref=e318] [cursor=pointer]:
+          - img "Transportadoras" [ref=e320]
+          - generic [ref=e323]:
+            - heading "Transportadoras" [level=3] [ref=e324]
+            - paragraph [ref=e325]: Amplie sua operação e conquiste mais cargas.
+        - generic [ref=e329] [cursor=pointer]:
+          - img "Motoristas" [ref=e331]
+          - generic [ref=e334]:
+            - heading "Motoristas" [level=3] [ref=e335]
+            - paragraph [ref=e336]: Encontre fretes, organize rotas e aumente seus ganhos.
+        - generic [ref=e340] [cursor=pointer]:
+          - img "Autônomos e Parceiros" [ref=e342]
+          - generic [ref=e345]:
+            - heading "Autônomos e Parceiros" [level=3] [ref=e346]
+            - paragraph [ref=e347]: Participe do mercado com mais oportunidades.
+    - generic [ref=e352]:
+      - generic [ref=e360]:
+        - generic [ref=e361]: + 5.005
+        - generic [ref=e362]: Profissionais na plataforma
+      - generic [ref=e370]:
+        - generic [ref=e371]: + 12.006
+        - generic [ref=e372]: Fretes publicados
+      - generic [ref=e379]:
+        - generic [ref=e380]: + 1.201
+        - generic [ref=e381]: Empresas ativas
+      - generic [ref=e387]:
+        - generic [ref=e388]: Todo o Brasil
+        - generic [ref=e389]: Cobertura nacional (27 UFs)
+    - generic [ref=e390]:
+      - generic [ref=e391]:
+        - text: Destaques & Inteligência Operacional
+        - heading "Experiência Interativa e Homologação com IA" [level=2] [ref=e392]
+      - generic [ref=e393]:
+        - generic [ref=e394]:
+          - button "Slide anterior" [ref=e395]
+          - button "Próximo slide" [ref=e398]
+          - generic [ref=e401]:
+            - generic [ref=e403] [cursor=pointer]:
+              - img "Conecte sua empresa" [ref=e404]
+              - generic [ref=e405]: Conecte sua empresa - Publique fretes e encontre transportadores verificados em todo o Brasil.
+              - button "Publicar Frete Agora" [ref=e407]
+            - generic [ref=e411] [cursor=pointer]:
+              - img "Sua carga. Nossa conexão." [ref=e412]
+              - generic [ref=e413]: Sua carga. Nossa conexão. - A plataforma que conecta empresas, transportadoras e motoristas.
+              - button "Acessar Radar de Fretes" [ref=e415]
+            - generic [ref=e419] [cursor=pointer]:
+              - img "Mais oportunidades" [ref=e420]
+              - generic [ref=e421]: Mais oportunidades - Encontre fretes, negocie diretamente e aumente seus ganhos.
+              - button "Buscar Oportunidades" [ref=e423]
+        - generic [ref=e426]:
+          - button "Pausar" [ref=e427]
+          - generic [ref=e431]:
+            - button "Ir para slide 1" [ref=e432]
+            - button "Ir para slide 2" [ref=e433]
+            - button "Ir para slide 3" [ref=e434]
+      - generic [ref=e435]:
+        - generic [ref=e436]:
+          - generic [ref=e442]:
+            - heading "NexIA" [level=4] [ref=e443]
+            - text: Assistente Operacional Inteligente
+          - paragraph [ref=e444]: Consulte pisos mínimos da ANTT, simule custos por quilômetro, encontre cargas por linguagem natural e tire dúvidas sobre veículos e implementos.
+          - button "Conversar com a NexIA" [ref=e445] [cursor=pointer]
+        - generic [ref=e449]:
+          - generic [ref=e455]:
+            - heading [level=4] [ref=e456]:
+              - text: NexIA Verify
+              - generic "Perfil Homologado pela NexIA Verify" [ref=e458]
+            - text: Homologação Documental e Conformidade LGPD
+          - paragraph [ref=e461]: Auditoria documental automatizada de CNH com EAR, CRLV, RNTRC/ANTT e CNPJ para concessão do Selo Azul Verificado com máxima segurança jurídica.
+          - button "Acessar Central de Homologação" [ref=e462] [cursor=pointer]
+    - generic [ref=e467]:
+      - generic: "N"
+      - generic [ref=e468]:
+        - generic [ref=e469]:
+          - heading "Pronto para levar sua operação a outro nível?" [level=2] [ref=e470]
+          - paragraph [ref=e471]: Junte-se ao ecossistema NexCarga e tenha mais controle, segurança e oportunidades no transporte de cargas.
+        - generic [ref=e472]:
+          - button "Criar Conta Gratuitamente" [ref=e473] [cursor=pointer]
+          - button "Falar com um Especialista" [ref=e477] [cursor=pointer]
+  - contentinfo [ref=e481]:
+    - generic [ref=e482]:
+      - generic [ref=e483]:
+        - generic [ref=e484]:
+          - generic [ref=e491]:
+            - generic [ref=e492]:
+              - generic [ref=e493]: NexCarga
+              - generic [ref=e494]: ®
+            - generic [ref=e495]: — OFICIAL —
+          - paragraph [ref=e496]:
+            - strong [ref=e497]: NexCarga
+            - text: — Sua carga. Nossa conexão. A plataforma definitiva de intermediação logística conectando empresas, contratantes, transportadoras e motoristas autônomos em todo o Brasil.
+          - generic [ref=e498]:
+            - generic [ref=e499]: Homologação NexIA Verify
+            - generic [ref=e503]: Criptografia 256-bit
+            - generic [ref=e507]: Mercado Pago Protegido
+        - generic [ref=e510]:
+          - heading "Plataforma" [level=4] [ref=e511]
+          - list [ref=e512]:
+            - listitem [ref=e513]:
+              - button "Início" [ref=e514]
+            - listitem [ref=e515]:
+              - button "Radar de Fretes" [ref=e516]
+            - listitem [ref=e517]:
+              - button "Para Empresas" [ref=e518]
+            - listitem [ref=e519]:
+              - button "Para Transportadores" [ref=e520]
+            - listitem [ref=e521]:
+              - button "Planos e Assinaturas" [ref=e522]
+        - generic [ref=e523]:
+          - heading "Tecnologia & IA" [level=4] [ref=e524]
+          - list [ref=e525]:
+            - listitem [ref=e526]:
+              - button "NexIA Assistente" [ref=e527]
+            - listitem [ref=e531]:
+              - button "NexIA Verify (Homologação)" [ref=e532]
+            - listitem [ref=e533]:
+              - button "NexCarga Docs" [ref=e534]
+            - listitem [ref=e535]:
+              - button "Programa de Parceiros" [ref=e536]
+            - listitem [ref=e537]:
+              - button "NexCarga Control" [ref=e538]
+        - generic [ref=e539]:
+          - heading "Segurança & Suporte" [level=4] [ref=e540]
+          - generic [ref=e541]:
+            - paragraph [ref=e542]: Atendimento 24/7 com suporte operacional e assistência em rota em todo o território nacional.
+            - generic [ref=e543]:
+              - generic [ref=e544]: "E-mail de Suporte:"
+              - text: suporte@nexcarga.com.br
+            - generic [ref=e545]:
+              - generic [ref=e546]: "Central Operacional:"
+              - text: 0800 720 2026
+      - generic [ref=e547]:
+        - generic [ref=e548]:
+          - text: © 2026
+          - strong [ref=e549]: NexCarga
+          - text: . Todos os direitos reservados.
+          - generic [ref=e550]:
+            - text: "Desenvolvimento oficial:"
+            - strong [ref=e551]: Pupa Labs
+            - text: .
+        - generic [ref=e552]:
+          - generic [ref=e553]: Termos de Uso
+          - generic [ref=e554]: Política de Privacidade
+          - generic [ref=e555]: Regras ANTT
+          - generic [ref=e556]: Taxa Transparente (3,5%)
+```
+
+### Log (.playwright-cli/console-2026-11-08T00-32-20-493Z.log#L1-L1)
+```
+[    1291ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=4df30e51:15801
+```
+Thought for 8 seconds
 Built
 Ran quality control
-Ran command
-npx --yes tsx --test src/utils/logistics.test.ts
-TAP version 13# Subtest: calculateDistanceKm calculates reasonable distance between São Paulo and Rio de Janeirook 1 - calculateDistanceKm calculates reasonable distance between São Paulo and Rio de Janeiro  ---  duration_ms: 1.47487  type: 'test'  ...# Subtest: calculatePlatformFee splits 3.5% fee exactly into 1.75% company and 1.75% carrierok 2 - calculatePlatformFee splits 3.5% fee exactly into 1.75% company and 1.75% carrier  ---  duration_ms: 0.338535  type: 'test'  ...# Subtest: calculatePlatformFee handles fractional cents correctlyok 3 - calculatePlatformFee handles fractional cents correctly  ---  duration_ms: 0.220309  type: 'test'  ...# Subtest: isValidCNPJ validates correctlyok 4 - isValidCNPJ validates correctly  ---  duration_ms: 0.468328  type: 'test'  ...# Subtest: formatBRL formats value to Brazilian Realok 5 - formatBRL formats value to Brazilian Real  ---  duration_ms: 35.848429  type: 'test'  ...1..5# tests 5# suites 0# pass 5# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 330.593784
-Final unit test run
-A plataforma NexCarga — Sua carga. Nossa conexão. (desenvolvida por Pupa Labs, versão definitiva 2026) foi construída e verificada integralmente, reproduzindo a identidade visual oficial dos pacotes de design.
-Resumo das Implementações
-Fidelidade Visual & Sistema de Temas:
-Dark Mode (Padrão) & White Mode: Cores oficiais (#FF8A00, #E85D04, #111111, #292929, #FFFFFF e azul #0095F6). Seletor de aparência integrado e persistente.
-Hero Carrossel 3D: Reprodução do layout de 3 cards em perspectiva com borda brilhante alaranjada na oportunidade ativa, indicadores de posição e autoplay suave.
-Selo Azul Verificado: Implementação do selo de homologação com critérios estritos (ANTT, CNH com EAR, CRLV e CNPJ), concedido exclusivamente após análise técnica.
-Arquitetura Full Stack & Integrações:
-Backend Express (server.ts): Servidor integrado com rotas para IA, cálculo de taxas e gateway de pagamento.
-Google Gemini API (/api/gemini/nexia e /api/gemini/verify): Motor de inteligência artificial da NexIA (consultoria de fretes, tabela ANTT, rotas e cubagem) e NexIA Verify (análise e conformidade documental).
-Supabase PostgreSQL & Storage: Esquema normalizado com RBAC (SUPER_ADMIN, COMPANY, CARRIER), políticas de RLS e migrações em supabase/schema.sql e supabase/seed.sql.
-Radar de Fretes Georreferenciado: Sistema com coordenadas reais do território nacional, cálculo de distâncias rodoviárias aproximadas e filtros por raio geográfico, veículo, implemento e valor.
-Assinaturas & Mercado Pago: Planos Mensal (R
- 164,70 — Mais escolhido ☆) e Anual (R$ 540,00) com período de teste de 15 dias e captura de cartão.
-Modelo Financeiro Transparente: Taxa de manutenção da plataforma de 3,5% dividida equitativamente entre contratante (1,75%) e transportador (1,75%).
-PWA & Responsividade: manifest.webmanifest, sw.js com estratégia de cache e adaptação para desktop e mobile.
-Verificação & Testes:
-Testes Unitários: 5 testes em src/utils/logistics.test.ts executados via node:test (cálculo Haversine, rateio da taxa 3,5% e validação de documentos fiscais).
-Validação de Código: compile_applet e lint_applet concluídos sem erros.
-Inspeção Visual: Telas verificadas no navegador via Chromium headless, ajustando alinhamento, sobreposições e contrastes.
-A reconstrução integral da plataforma NexCarga ("Sua carga. Nossa conexão." — Pupa Labs) foi concluída com fidelidade às referências oficiais:
-1. Identidade Visual & Pacotes Oficiais Reproduzidos
-Carrossel Hero Oficial (02-carrossel-frontend-completo.png): 3 slides com perspectiva 3D, destaque ativo com contorno laranja brilhante ("Conecte sua empresa", "Sua carga. Nossa conexão.", "Mais oportunidades"), navegação por setas, autoplay e paginação por marcadores.
-Planos e Assinaturas (01-pagina-assinaturas.png): Coroa laranja, alternador entre Empresas (Contratantes) e Transportadores / Motoristas, cards Mensal (R
- 164,70 — Economize 31%, Mais escolhido ☆ com borda iluminada) e Anual (R$ 540,00 — Economize 44%), barra de confiança e modal interativo do Mercado Pago para os 15 dias de teste grátis com captura de cartão.
-Login Exclusivo (01-login-exclusive-dark.png): Tela imersiva com caminhão em trânsito ao entardecer, card central com borda laranja iluminada, campos de credenciais, login social e barra inferior com os 4 pilares (Publique Fretes, Encontre Oportunidades, Perfil Verificado, Gestão e Resultados).
-Dashboard da Empresa (02-dashboard-empresa-dark.png e 03-dashboard-empresa-white.png): Painel da Construtora Alfa com Selo Azul Verificado, 4 indicadores (Fretes ativos 12, Propostas 38, Em negociação 6, Contratos 24), gráfico vetorial de Movimentação de Fretes com pontos luminosos e gráfico donut de Status dos Fretes (42%, 36%, 14%, 8%).
-Dashboard do Transportador (04-dashboard-transportador-dark.png e 05-dashboard-transportador-white.png): Painel da Transportes Silva com 4 indicadores (Fretes disponíveis 217, Propostas enviadas 28, Em andamento 5, Concluídos 156) e lista de fretes recomendados com rotas e valores (Manhuaçu – BH R
- 3.180,00, Manhuaçu – RJ R$ 4.890,00).
-Seletor de Tema (06-seletor-tema-white-dark.png): Alternância completa entre Tema Dark (Padrão) e Tema White (Claro) com persistência em sessão e no perfil.
-Selo Azul Verificado (07-selo-verificado-uso-funcional.png): Selo de homologação com regras constitucionais: concedido somente mediante validação documental pela NexIA Verify.
-2. Módulos & Recursos Funcionais
-Radar de Fretes (Google Maps Platform): Mapa georreferenciado interativo com coordenadas das principais rotas rodoviárias brasileiras, cálculo de distância em km, traçado de rotas, raio de busca (300 km a 5.000 km) e sincronização bidirecional entre marcadores e listagem.
-NexIA & NexIA Verify (Google Gemini API): Endpoints backend em server.ts conectando ao modelo gemini-2.5-flash para assistência operacional inteligente e auditoria antifraude de documentos.
-Taxas da Plataforma & Contratos Digitais: Modelo financeiro com código contratual, histórico de status e taxa de manutenção de 3,5% rateada em partes iguais (1,75% para contratante e 1,75% para o transportador).
-NexCarga Docs: Gerenciador documental privado (CNH com EAR, CRLV, RNTRC/ANTT e CNPJ) com controle de vigência e pareceres técnicos.
-NexCarga Control (Admin Master): Painel administrativo central para auditoria de usuários, calibração das taxas de plataforma e fila de homologação.
-Banco de Dados Supabase PostgreSQL: Arquivos supabase/schema.sql e supabase/seed.sql com todas as tabelas normalizadas, índices, triggers e políticas RLS de segurança.
-PWA Ready: manifest.webmanifest e sw.js configurados para instalação em dispositivos móveis e desktops.
-3. Verificações & Testes Realizados
-Testes Unitários: 5/5 testes passaram com sucesso (npx tsx --test src/utils/logistics.test.ts), validando cálculos de distância Haversine, rateio de taxas (3,5% dividido 1,75%/1,75%), validações de CNPJ e formatação BRL.
-Validação de Código: compile_applet e lint_applet executados sem erros de tipagem TypeScript ou de compilação.
-Inspeção Visual: Telas validadas em navegador real headless via Playwright CLI confirmando conformidade estética com os pacotes de design originais.
-Checkpoint
+A plataforma NexCarga — Evolução Definitiva V2.0 (SaaS B2B LogTech) foi auditada, evoluída e verificada, preservando integralmente os módulos funcionais da V1.0 e incorporando a nova arquitetura visual e operacional V2.0.
+1. Diagnóstico da Auditoria Técnica (V1.0 
+ V2.0)
+Funcionalidades Implementadas e Preservadas (V1.0):
+Autenticação multi-perfil (COMPANY, CARRIER, DRIVER, SUPER_ADMIN), Carrossel Hero oficial (HeroCarousel.tsx), NexIA e NexIA Verify (via Google Gemini API gemini-2.5-flash), NexCarga Docs, Contratos Digitais com rateio da taxa de 3,5% dividida igualmente (1,75% contratante / 1,75% transportador), Checkout Mercado Pago com 15 dias grátis (SubscriptionsPage.tsx), NexControl (AdminControlPage.tsx) e suporte PWA (manifest.webmanifest e sw.js).
+Limitações Identificadas na V1.0 e Resolvidas na V2.0:
+Mapa estático em SVG no NexRadar: Substituído pela integração oficial com Google Maps Platform (@vis.gl/react-google-maps) e Google Routes API (Route.computeRoutes()), renderizando rodovias reais (BR-262, BR-381, BR-116), marcadores interativos (<AdvancedMarker>, <Pin>, <InfoWindow>) e cálculo real de distância e tempo de viagem.
+Ausência de simulador de viabilidade financeira por rota: Criado o motor de cálculo de custos operacionais e rentabilidade (calculateFreightCostAndProfitability em src/utils/logistics.ts e src/services/routeService.ts).
+Contraste em White Mode: Corrigidos elementos que possuíam classes fixas escuras em SubscriptionsPage.tsx, AdminControlPage.tsx, PartnersPage.tsx e NexIAPage.tsx, garantindo contraste elevado nos modos Dark (#0a0b0e / #16181f) e White (#F8FAFC / #FFFFFF).
+Schema SQL e Serviços: Adicionada a migration incremental /supabase/migrations/20261107_v2_evolution.sql (sem sobrescrever /supabase/schema.sql) e modularizados os serviços em /src/services/mapsService.ts, /src/services/routeService.ts e /src/services/domainServices.ts.
+2. Principais Entregas da Evolução V2.0
+Nova Home Page Cinematográfica & Header Oficial (HomePage.tsx e Header.tsx):
+Header V2.0: Navegação estruturada com Início, dropdown Soluções ⌄ (Para Empresas, Para Transportadoras, Para Motoristas, Autônomos e Parceiros, NexIA & Homologação), Plataforma, Planos, Destaques, NexRadar, NexControl, seletor Dark / White, central de notificações, Entrar, Criar Conta e alternador rápido de perfil.
+Hero Cinematográfico: Selo "Plataforma SaaS B2B LogTech", título "Conectamos Cargas, Empresas e Transportadores", CTAs (Acessar Plataforma e Ver como Funciona), indicadores (+ Segurança, + Agilidade, + Resultado), mapa luminoso do Brasil conectado por rotas e portal laranja com o caminhão oficial NexCarga.
+6 Cards de Recursos: Publicação de Fretes, Contratação Segura, NexRadar — Fretes em Tempo Real, Gestão e Indicadores, Conformidade LGPD e Ecossistema Integrado.
+Seção "NexCarga na Prática": Vitrine dupla com notebook (Dashboard Empresa) e smartphone (NexRadar) sincronizados com os indicadores reais da plataforma.
+Seção "Para quem é a NexCarga" + Barra de Indicadores Reais + Destaques (Carrossel V1.0 & NexIA) + CTA Final.
+NexRadar V2.0 (RadarFretesPage.tsx) + Google Maps & Routes API:
+Filtros inteligentes com 1 clique: Todo o Brasil, Próximos de mim, Mesma cidade, Mesmo estado, Rotas de retorno e Compatíveis com meu veículo.
+Traçado rodoviário real com Route.computeRoutes() e sincronização bidirecional entre os pinos do mapa e os cards de frete.
+Calculadora de Custo Operacional e Rentabilidade (RadarFretesPage.tsx & CompanyDashboardPage.tsx):
+Calcula consumo total de combustível (litros e R$), pedágio estimado, custos extras, taxa NexCarga (1,75%), custo operacional total, custo por km, lucro líquido estimado, margem líquida (%), classificação de rentabilidade (ALTA / MEDIA / BAIXA) e frete mínimo recomendado.
+3. Google Maps Platform — Informações de Conformidade e Uso
+Aviso de Custos e Faturamento: O uso das APIs da Google Maps Platform está sujeito às tarifas e cotas do Google Cloud. Consulte a tabela oficial em Google Maps Platform Pricing.
+APIs Utilizadas nesta Aplicação:
+Maps JavaScript API (renderização do mapa vetorial interativo DEMO_MAP_ID, <AdvancedMarker>, <Pin> e <InfoWindow> via @vis.gl/react-google-maps).
+Routes API (Route.computeRoutes() via biblioteca routes para traçado de polilinhas rodoviárias e cálculo de distância/tempo).
+Places API (New) (AutocompleteSuggestion.fetchAutocompleteSuggestions para busca e geocodificação de municípios logísticos).
+Restrições e Segurança de Chave de API: Para ambientes de produção, restrinja sua chave de API por referenciador HTTP (domínio) e pelas APIs listadas acima seguindo o guia oficial de Restrições de Chave de API da Google Maps Platform.
+Escopo de Licença: O código-fonte da aplicação segue a licença Apache 2.0, aplicável exclusivamente ao código da aplicação e não aos serviços, mapas ou dados proprietários da Google Maps Platform.
+Termos de Serviço: O uso dos mapas e rotas segue os Termos de Serviço da Google Maps Platform.
+Confirmação de Revisão de Conformidade: A sub-skill de revisão de conformidade (Google Maps Platform ToS Compliance Review) foi integralmente verificada (incluindo internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}, ausência de pré-busca em lote fora da ação do usuário e aviso de estimativa sujeita às condições da via).
