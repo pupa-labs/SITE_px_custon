@@ -1,484 +1,927 @@
 Gemini 4 Argon
-Ran for 5m 51s
+Canceled
 
 Action history
-Thought for 1 minute 19 seconds
+Thought for 49 seconds
+Called tool
+Thought for 2 minutes 39 seconds
+Explored codebase
+Scanned root directory and found 10 files: .env.example, .gitignore, bun.lock, index.html, metadata.json, package.json, public, src, tsconfig.json and vite.config.ts.
+Thought for 14 seconds
+Thought for 12 seconds
 Read file
-Read 4 files: supabase/seed.sql from line 0 to line 15,src/pages/CompanyDashboardPage.tsx from line 0 to line 947,src/pages/CarrierDashboardPage.tsx from line 0 to line 737, and src/pages/AuthPage.tsx
+Read 6 files: skills/system_skills/cloudsql-update-schema/SKILL.md from line 0 to line 26,skills/system_skills/cloudsql-execute-sql/SKILL.md from line 0 to line 28,skills/system_skills/computer_use/SKILL.md from line 0 to line 290,skills/system_skills/frontend_design/references/3_saas_dashboard.md from line 0 to line 121,firebase-applet-config.json from line 0 to line 10, and package.json from line 0 to line 36
+Thought for 1 minute 4 seconds
+Installed 7 packages
+Package firebase
+Package firebase-admin
+Package drizzle-orm
+Package drizzle-kit
+Package pg
+Package @types/pg
+Package vite-plugin-pwa
+Edited 3 files
+metadata.json
+.env.example
+index.html
 Read file
-Read 2 files: src/pages/AuthPage.tsx from line 0 to line 562, and src/components/common/Header.tsx from line 0 to line 522
-Thought for 3 minutes 41 seconds
-NEXCARGA — PLATAFORMA DEFINITIVA
-RELATÓRIO TÉCNICO DE AUDITORIA FULL STACK, ARQUITETURA ENTERPRISE, SUPER ADMIN & PARTNER CONTROL (VERSÃO 3.0)
-Status da Execução: SOMENTE LEITURA (READ-ONLY AUDIT) — Nenhum arquivo, pacote, banco de dados, variável de ambiente, Secret ou configuração foi alterado.
-SÍNTESE EXECUTIVA — SEPARAÇÃO OFICIAL DOS 6 ESTADOS DO SISTEMA
-Classificação	Resumo Técnico Baseado em Evidências do Repositório
-1. O que foi encontrado	Aplicação Full Stack TypeScript (React 19 + Vite 8 + Tailwind CSS v4 + Express 4) com 12 páginas em src/pages/, 6 camadas de serviços/utilitários (supabaseClient.ts, domainServices.ts, mapsService.ts, routeService.ts, logistics.ts, logistics.test.ts), servidor Express (server.ts) com rotas para Gemini AI e Mercado Pago, e scripts SQL (supabase/schema.sql, supabase/seed.sql, supabase/migrations/20261107_v2_evolution.sql).
-2. O que foi comprovado como funcional	Motor matemático e financeiro (src/utils/logistics.ts validado por 7/7 testes unitários em logistics.test.ts), mapa vetorial interativo real (@vis.gl/react-google-maps) com cálculo de rotas reais via google.maps.routes.Route.computeRoutes(), geocodificação e Places Autocomplete (New) em mapsService.ts, endpoints de IA (POST /api/gemini/nexia e POST /api/gemini/verify com gemini-2.5-flash), fluxo local de publicação de frete → envio de proposta → aceite e geração de contrato digital (acceptProposalAndCreateContract), alternância de tema Dark/White e proteção contra estouro de cota da Google Maps API.
-3. O que está parcialmente implementado	Camada de dados (src/services/supabaseClient.ts instancia @supabase/supabase-js, mas 100% dos métodos de DataService leem/gravam apenas no localStorage); Autenticação (AuthContext.tsx ignora senha e não usa JWT/Supabase Auth); Taxa configurável no AdminControlPage.tsx (salva no localStorage, mas acceptProposalAndCreateContract ignora o valor salvo e aplica 3.5% fixo); Atualização de status de contratos (ProposalsContractsPage.tsx altera apenas o useState local sem persistir); Checkout Mercado Pago (server.ts retorna ID mock MP-... e webhook não valida assinatura HMAC).
-4. O que existe apenas visualmente	Painel de Afiliados (PartnersPage.tsx exibe métricas estáticas 18, R$ 1.420,50, R$ 380,00 e link sem captura de ?ref=); Cards de KPIs e gráficos SVG nos Dashboards (CompanyDashboardPage.tsx e CarrierDashboardPage.tsx exibem números fixos 12, 38, 6, 24 e 217, 28, 5, 156); Logs de auditoria em AdminControlPage.tsx (3 linhas HTML estáticas); Upload de documentos em DocsPage.tsx (salva apenas o texto do nome do arquivo e aponta fileUrl para um PNG estático); Seletor de contas de demonstração no Header.tsx e AuthPage.tsx (permite trocar para SUPER_ADMIN sem senha).
-5. O que está ausente	Central Enterprise NexCarga Control com 12 módulos; NexCarga Impersonate (Acesso Assistido auditado com isolamento de sessão); NexCarga Partner Control completo (níveis PARTNER START, PRO, ELITE, MASTER, VIP, cargo PARTNER MANAGER, rastreamento real de cliques/indicações/conversões, máquina de 8 estados de comissão, livro-razão imutável affiliate_commission_ledger e fluxo de saques PIX); RBAC no backend (server.ts não possui middleware de autenticação); Políticas RLS (CREATE POLICY) para 9 tabelas no PostgreSQL; Google Cloud Storage para documentos privados; telemetria de cotas Google Maps no banco.
-6. O que deverá ser desenvolvido	Migração completa do DataService e AuthContext para Supabase Auth + PostgreSQL real com RLS; construção dos 12 módulos do NexCarga Control; implementação do NexCarga Impersonate; construção do ecossistema Partner Control (5 níveis comerciais + PARTNER MANAGER + Ledger imutável + Antifraude); integração real de Webhooks Mercado Pago com HMAC; e armazenamento seguro de documentos.
-A. ARQUITETURA ATUAL
-1. Estrutura de Pastas e Arquivos Relevantes
-Text
-/
-├── .env.example                                   # Variáveis de ambiente documentadas
-├── index.html                                     # Entrypoint HTML + Meta tags SEO + Fontes Inter/Space Grotesk/JetBrains Mono
-├── metadata.json                                  # Metadados da aplicação no Google AI Studio
-├── package.json                                   # Dependências e scripts (dev, build, start, lint)
-├── server.ts                                      # Backend Node.js + Express (API routes + Vite middleware / SPA static)
-├── tsconfig.json                                  # Configuração TypeScript
-├── vite.config.ts                                 # Configuração Vite + Tailwind v4 + dedupe React + injection VITE_GOOGLE_MAPS_API_KEY
-├── public/
-│   ├── manifest.webmanifest                       # Configuração PWA
-│   ├── sw.js                                      # Service Worker PWA
-│   └── assets/                                    # Imagens extraídas dos pacotes oficiais e referências V2.0
-├── supabase/
-│   ├── schema.sql                                 # DDL inicial com 13 tabelas, 6 ENUMs, índices e triggers
-│   ├── seed.sql                                   # Seed SQL básico de configuração
-│   └── migrations/
-│       └── 20261107_v2_evolution.sql              # Migration V2.0 (colunas de custo/lucro e tabela route_cache)
-└── src/
-    ├── App.tsx                                    # Roteamento client-side baseado em estado + GoogleMapsProvider condicional
-    ├── main.tsx                                   # Bootstrap React + interceptador global de erros de cota Google Maps
-    ├── index.css                                  # Design tokens e utilitários Tailwind CSS v4
-    ├── types/index.ts                             # Interfaces TypeScript e tipagens globais google.maps
-    ├── contexts/
-    │   ├── AuthContext.tsx                        # Contexto de sessão de usuário (baseado em localStorage)
-    │   └── ThemeContext.tsx                       # Contexto de tema Dark / White
-    ├── components/common/
-    │   ├── Header.tsx                             # Cabeçalho global, navegação, notificações e seletor de perfil demo
-    │   ├── Footer.tsx                             # Rodapé institucional
-    │   └── VerifiedBadge.tsx                      # Componente oficial do Selo Azul Verificado
-    ├── services/
-    │   ├── supabaseClient.ts                      # Cliente Supabase + Seed local + DataService (localStorage)
-    │   ├── domainServices.ts                      # Facade modular (FreightService, ProposalService, etc.)
-    │   ├── mapsService.ts                         # Geocoding, Reverse Geocoding e Places Autocomplete (New)
-    │   └── routeService.ts                        # Cálculo de rotas via Google Routes API + cache local de 24h
-    ├── utils/
-    │   ├── logistics.ts                           # Motor matemático (Haversine, taxas 3,5%, CNPJ, custos e lucro líquido)
-    │   └── logistics.test.ts                      # Suíte de 7 testes unitários automatizados (node:test)
-    └── pages/
-        ├── HomePage.tsx                           # Landing Page SaaS B2B LogTech V2.0
-        ├── AuthPage.tsx                           # Login e Cadastro multi-perfil (4 etapas)
-        ├── CompanyDashboardPage.tsx               # Painel da Empresa / Embarcador
-        ├── CarrierDashboardPage.tsx               # Painel da Transportadora / Motorista Autônomo
-        ├── RadarFretesPage.tsx                    # NexRadar com Google Maps vetorial + Simulador de Rentabilidade
-        ├── ProposalsContractsPage.tsx             # Gestão de Propostas e Contratos Digitais
-        ├── DocsPage.tsx                           # NexCarga Docs (gestão documental)
-        ├── NexIAPage.tsx                          # Assistente operacional inteligente com Gemini
-        ├── NexIAVerifyPage.tsx                    # Validação documental e concessão do Selo Azul
-        ├── SubscriptionsPage.tsx                  # Planos de Assinatura + Modal Checkout
-        ├── AdminControlPage.tsx                   # NexCarga Control (versão inicial simplificada)
-        └── PartnersPage.tsx                       # NexCarga Partners (versão inicial visual)
-2. Fluxo Atual de Dados e Separação Frontend / Backend
-Roteamento Client-Side (src/App.tsx): A aplicação não utiliza react-router-dom; o roteamento é controlado pelo estado currentPage em App.tsx (home, auth, company-dashboard, carrier-dashboard, radar, proposals, docs, nexia, verify, subscriptions, admin, partners).
-Persistência Client-Side (src/services/supabaseClient.ts): Apesar de instanciar createClient(supabaseUrl, supabaseAnonKey) nas linhas 28–30, todos os métodos de DataService (linhas 476–733) operam exclusivamente sobre window.localStorage (STORAGE_KEYS). Não há chamadas await supabase.from(...) implementadas no código atual.
-Backend (server.ts): Servidor Express na porta 3000 fornecendo 5 rotas de API (/api/health, /api/gemini/nexia, /api/gemini/verify, /api/mercadopago/checkout, /api/mercadopago/webhook) e servindo o frontend via vite.middlewares (desenvolvimento) ou dist/ (produção).
-B. MAPA DE PÁGINAS E MÓDULOS
-ID da Rota (currentPage)	Arquivo Principal	Perfis que Acessam Atualmente	Status Real na Auditoria
-home	src/pages/HomePage.tsx	Público / Todos	Funcional (V2.0): Hero LogTech, busca rápida integrada ao RadarFretesPage, vitrine de fretes reais do DataService, 4 cards de ecossistema e estatísticas.
-auth	src/pages/AuthPage.tsx	Público / Todos	Parcial: Cadastro em 4 etapas cria perfil no localStorage; Login valida apenas e-mail/CPF/CNPJ ignorando a senha (_pass); possui botões de acesso rápido demo.
-company-dashboard	src/pages/CompanyDashboardPage.tsx	COMPANY (mas acessível via menu sem bloqueio de rota)	Misto (Funcional + Visual): Publicação de frete real com Autocomplete Google Places e aceite de propostas funcionais; porém os 4 KPIs superiores (12, 38, 6, 24) e gráficos SVG são estáticos.
-carrier-dashboard	src/pages/CarrierDashboardPage.tsx	CARRIER, DRIVER	Misto (Funcional + Visual): Envio de proposta/contra-proposta e cadastro de veículo funcionais no localStorage; porém os 4 KPIs superiores (217, 28, 5, 156) e barras do gráfico são estáticos.
-radar	src/pages/RadarFretesPage.tsx	Todos	Funcional (V2.0): Mapa Google Maps real (DEMO_MAP_ID), marcadores avançados, cálculo de rota real (Route.computeRoutes), filtros multi-critério e Simulador de Custos e Lucro Líquido.
-proposals	src/pages/ProposalsContractsPage.tsx	Todos	Parcial: Listagem de propostas, aceite e criação de contrato funcionam e persistem no localStorage; porém a atualização de status do contrato (EM_TRANSITO, ENTREGUE) altera apenas o estado local do React e se perde ao recarregar.
-docs	src/pages/DocsPage.tsx	Todos	Parcial / Visual: Filtra documentos por perfil e cria registros no localStorage, mas não faz upload de arquivo binário (usa URL de imagem estática).
-nexia	src/pages/NexIAPage.tsx	Todos	Funcional: Chat operacional integrado ao endpoint POST /api/gemini/nexia com contexto em tempo real de fretes e contratos.
-verify	src/pages/NexIAVerifyPage.tsx	Todos	Funcional (Local): Analisa documentos do usuário via POST /api/gemini/verify e concede o Selo Azul (verified: true) quando CNH/CRLV/ANTT/CNPJ estão aprovados.
-subscriptions	src/pages/SubscriptionsPage.tsx	Todos	Parcial: Carrossel de planos fiel às referências e cálculo de descontos (mensal/trimestral/semestral/anual), mas o checkout coleta cartão em estado React e recebe ID mock do backend.
-admin	src/pages/AdminControlPage.tsx	Todos (link NexControl exposto no Header)	Parcial / Inicial: Aprova/revoga Selo Azul e documentos no localStorage; possui slider de taxa e tabela de auditoria estática; faltam os 12 módulos Enterprise.
-partners	src/pages/PartnersPage.tsx	Todos	Somente Visual: Exibe link de indicação e 3 métricas fixas hardcoded (18, R$ 1.420,50, R$ 380,00).
-C. FUNCIONALIDADES COMPROVADAMENTE OPERACIONAIS
-Motor de Cálculos Logísticos e Financeiros (src/utils/logistics.ts & src/utils/logistics.test.ts):
-Cálculo geodésico Haversine com fator rodoviário 1.28 (calculateRoadDistanceKm).
-Rateio simétrico da taxa de manutenção da plataforma (calculatePlatformFee: padrão 3,5% dividido em 1,75% contratante e 1,75% transportador).
-Validação algorítmica de dígitos verificadores de CNPJ (isValidCNPJ).
-Motor de Custos Operacionais e Rentabilidade Líquida V2.0 (calculateOperationalMetrics): consumo de diesel por número de eixos, custo de combustível, estimativa de pedágio por eixo/km, lucro líquido estimado, margem percentual e classificação de viabilidade (ALTA, MEDIA, BAIXA).
-Comprovado por 7 de 7 testes unitários automatizados passando via node:test.
-Integração Google Maps Platform & Routes API (src/pages/RadarFretesPage.tsx, src/services/routeService.ts, src/services/mapsService.ts):
-Renderização de mapa vetorial com <Map mapId="DEMO_MAP_ID">, <AdvancedMarker>, <Pin> e <InfoWindow>.
-Traçado de polilinha rodoviária real com google.maps.routes.Route.computeRoutes() e fallback gracioso para linha geodésica em caso de indisponibilidade da API.
-Cache de rotas de 24 horas em localStorage (nexcarga_route_cache_v2) para economia de cota.
-Autocomplete de cidades/endereços brasileiros com google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions() na publicação de fretes (CompanyDashboardPage.tsx, linhas 78–112).
-Defesa em 2 camadas contra erro OverQuotaMapError (src/main.tsx linhas 11–37 e src/App.tsx linhas 22–53), garantindo carregamento sob demanda apenas na rota radar.
-Inteligência Artificial com Google Gemini (server.ts, linhas 51–148):
-POST /api/gemini/nexia: assistente logístico alimentado pelo modelo gemini-2.5-flash via @google/genai, com fallback determinístico caso GEMINI_API_KEY não esteja configurada.
-POST /api/gemini/verify: auditoria automatizada de documentos logísticos retornando JSON estruturado (approved, confidenceScore, technicalOpinion, missingRequirements).
-Fluxo Transacional Local de Fretes, Propostas e Contratos (src/services/supabaseClient.ts):
-Criação de frete (createFreight), envio de proposta (createProposal) e aceite com geração de código contratual NXC-YYYY-XXXXXX (acceptProposalAndCreateContract) funcionam de ponta a ponta na sessão do navegador.
-D. FUNCIONALIDADES PARCIALMENTE IMPLEMENTADAS
-Persistência Supabase PostgreSQL (src/services/supabaseClient.ts):
-Evidência: Linhas 23–30 criam o cliente supabase, mas todas as funções de DataService (linhas 476–733) utilizam exclusivamente getFromStorage e saveToStorage no localStorage.
-Autenticação de Usuários (src/contexts/AuthContext.tsx):
-Evidência: Na linha 43, const login = async (identifier: string, _pass: string) ignora completamente o parâmetro _pass, buscando apenas se o e-mail, CPF ou CNPJ existe na lista local de perfis.
-Configuração Dinâmica da Taxa da Plataforma (src/pages/AdminControlPage.tsx vs. src/services/supabaseClient.ts):
-Evidência: AdminControlPage.tsx (linhas 50–61) salva a nova taxa via DataService.updatePlatformFeeConfig(...). Contudo, quando uma proposta é aceita em DataService.acceptProposalAndCreateContract (src/services/supabaseClient.ts, linhas 582 e 595), o código chama calculatePlatformFee(proposal.proposedPrice) sem passar a taxa configurada e grava platformFeePercent: 3.5 hardcoded no contrato.
-Atualização de Status Operacional de Contratos (src/pages/ProposalsContractsPage.tsx):
-Evidência: Nas linhas 35–44, handleUpdateStatus atualiza apenas o array em memória do componente (setContracts(list)), sem chamar nenhum método de persistência em DataService. Ao navegar para outra página e voltar, o status retorna a GERADO.
-Integração de Pagamentos Mercado Pago (server.ts & src/pages/SubscriptionsPage.tsx):
-Evidência: POST /api/mercadopago/checkout (server.ts, linhas 151–167) apenas gera um ID simulado MP-${Date.now()} sem chamar a API oficial do Mercado Pago (https://api.mercadopago.com/checkout/preferences ou /preapproval). O webhook POST /api/mercadopago/webhook (linhas 169–174) apenas executa console.log sem validar assinatura x-signature nem atualizar assinaturas ou comissões.
-E. FUNCIONALIDADES SOMENTE VISUAIS (MOCK / HARDCODED)
-Painel de Parceiros e Afiliados (src/pages/PartnersPage.tsx):
-Evidência: Linhas 88–98 exibem valores fixos no JSX (18 indicados ativos, R$ 1.420,50 comissões pagas, R$ 380,00 saldo disponível PIX). O código de indicação gerado na linha 14 (?ref=NXC-...) não é lido em AuthPage.tsx nem em App.tsx.
-Cards Superiores de KPIs e Gráficos nos Dashboards (src/pages/CompanyDashboardPage.tsx & src/pages/CarrierDashboardPage.tsx):
-Evidência: Em CompanyDashboardPage.tsx (linhas 328–375), os 4 indicadores principais exibem valores estáticos (12 Fretes Ativos, 38 Propostas Recebidas, 6 Em Negociação, 24 Contratos Fechados) em vez de derivar de myFreights, proposals e contracts. Em CarrierDashboardPage.tsx (linhas 309–356), os 4 cards também são estáticos (217 Fretes Disponíveis, 28 Propostas Enviadas, 5 Fretes em Andamento, 156 Concluídos).
-Offsets Inflados nas Estatísticas Globais (src/services/supabaseClient.ts):
-Evidência: Nas linhas 724–730, getPlatformStats() soma constantes fixas aos dados reais (5000 + profiles.length, 12000 + freights.length, 1200 + companies, 462850 + totalMovedValue).
-Logs de Auditoria no Painel Admin (src/pages/AdminControlPage.tsx):
-Evidência: Linhas 141–157 renderizam 3 linhas <tr> estáticas fixas no HTML, sem tabela ou estado de auditoria real.
-Upload de Documentos (src/pages/DocsPage.tsx):
-Evidência: Linha 70 grava fixa a URL /assets/references/design_pack/07-selo-verificado-uso-funcional.png para qualquer documento enviado, sem leitura de arquivo real (<input type="file">) nem envio para Storage.
-F. FUNCIONALIDADES AUSENTES
-Central de Comando Enterprise (NexCarga Control) com 12 Módulos.
-Sistema de Acesso Assistido (NexCarga Impersonate) com isolamento de sessão, justificativa obrigatória, bloqueio de ações sensíveis e trilha de auditoria.
-Sistema Completo de Afiliados (NexCarga Partner Control) com os 5 níveis comerciais (PARTNER START, PRO, ELITE, MASTER, VIP), cargo PARTNER MANAGER, atribuição de links/cupons, máquina de estados de comissões (8 status), livro-razão imutável (affiliate_commission_ledger), regras antifraude e saques PIX (affiliate_payouts).
-Middleware Backend de Autenticação e Autorização RBAC validando JWT e permissões por módulo em server.ts.
-Políticas RLS (CREATE POLICY) completas no PostgreSQL para todas as tabelas operacionais e administrativas.
-Integração Google Cloud Storage com Signed URLs temporárias para documentos sensíveis (CNH, CRLV, RNTRC/ANTT, Contrato Social).
-Módulo de Governança e Monitoramento de Cotas Google Maps no painel administrativo.
-G. AUDITORIA DO NEXCARGA CONTROL (ATUAL VS. ARQUITETURA DOS 12 MÓDULOS)
-Estado Atual (src/pages/AdminControlPage.tsx — 314 linhas)
-Atualmente, o AdminControlPage.tsx é uma tela única simplificada contendo apenas:
-4 cards de resumo no topo;
-1 controle deslizante (slider) para ajuste da taxa da plataforma (que não reflete no fechamento real de contratos) e 3 linhas fixas de log;
-1 fila de documentos pendentes para aprovar/rejeitar;
-1 tabela de usuários para conceder/revogar o Selo Azul.
-Arquitetura Planejada dos 12 Módulos Oficiais do NexCarga Control
-Para transformar o NexCarga Control na Central de Comando Enterprise V3.0, ele será estruturado em layout com Sidebar Administrativa Dedicada + Topbar de Contexto Global + 12 Módulos Especializados:
-#	Módulo Oficial	Escopo Funcional Completo
-1	Dashboard Executivo	KPIs reais em tempo real (sem offsets fictícios): GMV transacionado, receita líquida da taxa de plataforma (3,5%), MRR de assinaturas, CAC via afiliados, funil de conversão de fretes, alertas de segurança e saúde das integrações.
-2	Clientes e Contas	Diretório completo de Empresas (COMPANY), Transportadoras (CARRIER) e Motoristas (DRIVER), visão 360º do cliente, histórico operacional, bloqueio/suspensão cautelar e botão de acionamento do Acesso Assistido (Impersonate).
-3	Verificação e Documentos	Fila de homologação documental (CNPJ, CNH com EAR, CRLV, RNTRC/ANTT), visualizador seguro via Signed URL, parecer técnico da NexIA Verify, concessão/revogação motivada do Selo Azul Verificado e controle de vencimentos.
-4	Fretes e Operações	Monitoramento em tempo real de todos os fretes publicados, em negociação, em trânsito, entregues ou cancelados; intervenção administrativa em disputas operacionais e auditoria de rotas/custos.
-5	Propostas e Contratos	Auditoria de todas as propostas, contra-propostas e contratos digitais (NXC-YYYY-XXXXXX), histórico imutável de status, valores acordados e taxas retidas de contratante e transportador.
-6	Planos e Assinaturas	Gestão de assinaturas ativas, em período de teste (Trial 15 dias), inadimplentes ou canceladas; configuração dinâmica de preços e ciclos (Mensal, Trimestral, Semestral, Anual) por perfil.
-7	Financeiro e Taxas	Conciliação de recebíveis (Assinaturas + Taxas de Manutenção de Contratos), parametrização real da taxa da plataforma com vigência imediata nos novos contratos, estornos, chargebacks e fluxo de caixa.
-8	Partner Control (Afiliados)	Gestão integral do programa de parceiros: aprovação de afiliados, progressão entre os 5 níveis (START a VIP), alocação de PARTNER MANAGER, auditoria de indicações/conversões, aprovação de comissões e liberação de saques PIX.
-9	Integrações e APIs	Painel de controle técnico de Google Maps Platform (controle de cotas e cache de rotas), Google Gemini AI (status, latência e modelo ativo), Supabase (conexão e banco) e Mercado Pago (webhooks e conciliação).
-10	Equipe e Permissões	Gestão de operadores internos (SUPER_ADMIN, ADMIN_OPERACIONAL, FINANCEIRO, SUPORTE, AUDITOR, PARTNER_MANAGER), matriz RBAC granular por módulo/ação e revogação imediata de sessões.
-11	Logs e Auditoria	Trilha de auditoria imutável (audit_logs) registrando actor_id, role, action, target_entity, before_state, after_state, ip_address, user_agent e sessões de Impersonate.
-12	Configurações Globais	Feature flags, regras de automação do Selo Azul, parâmetros padrão do motor de custos (preço médio do diesel, fator de pedágio por eixo), termos de uso e políticas de segurança.
-H. AUDITORIA DO SUPER ADMIN
-Estado Atual
-O papel SUPER_ADMIN está listado no enum UserRole (src/types/index.ts, linha 7) e atribuído ao perfil seed user-admin-1 (src/services/supabaseClient.ts, linha 82).
-Não existe separação de poderes nem validação de permissão no backend (server.ts).
-Matriz Oficial de Governança: Operações via Painel vs. Intervenção Técnica
-Operação	Executável Diretamente pelo SUPER ADMIN no Painel (NexCarga Control)	Exige Intervenção Técnica / Pipeline DevOps / Cloud Console
-Gerenciar clientes, aprovar/revogar Selo Azul e auditar documentos	SIM	Não
-Iniciar sessão de Acesso Assistido (NexCarga Impersonate)	SIM	Não
-Ajustar percentual da Taxa de Manutenção (ex.: 3,5%) e preços de planos	SIM	Não
-Gerenciar afiliados, alterar nível comercial (START a VIP), aprovar comissões e saques	SIM	Não
-Atribuir/revogar cargos administrativos (ADMIN_OPERACIONAL, FINANCEIRO, PARTNER_MANAGER, etc.)	SIM	Não
-Configurar limites internos de cota diária de APIs (Maps/Gemini) e limpar cache de rotas	SIM	Não
-Visualizar status de conexão das integrações (mascarado) e reprocessar Webhooks	SIM	Não
-Alterar código-fonte TypeScript/React ou lógica de rotas Express	Não	SIM (Desenvolvimento / Git)
-Executar migrations DDL (ALTER TABLE, CREATE INDEX) no PostgreSQL	Não	SIM (Pipeline de Banco de Dados)
-Modificar políticas estruturais de ROW LEVEL SECURITY (CREATE/ALTER POLICY)	Não	SIM (DBA / Migration Segura)
-Rotacionar chaves privadas mestras (SUPABASE_SERVICE_ROLE_KEY, MERCADO_PAGO_ACCESS_TOKEN)	Não	SIM (Google Cloud / AI Studio Secrets)
-I. AUDITORIA DO ACESSO ASSISTIDO (NEXCARGA IMPERSONATE)
-Estado Atual
-Inexistente como recurso de segurança. Atualmente existe apenas um seletor de demonstração (switchDemoUser em AuthContext.tsx, linha 115, exposto no Header.tsx, linhas 394–402), que substitui diretamente o usuário logado no localStorage sem autenticação, sem justificativa e sem registro de auditoria.
-Arquitetura Planejada para o NexCarga Impersonate (10 Passos Obrigatórios)
-Elegibilidade Estrita: Apenas SUPER_ADMIN (e SUPORTE com permissão explícita impersonate:start) podem iniciar o Acesso Assistido; é proibido impersonar outro SUPER_ADMIN.
-Modal de Justificativa Obrigatória: O administrador deve informar o motivo do acesso (ex.: ticket de suporte #1042 ou investigação operacional) antes de abrir a sessão.
-Token de Impersonação Isolado: Geração de registro na tabela impersonation_sessions contendo admin_user_id, target_user_id, reason, started_at, expires_at (TTL máximo de 30 minutos) e status = 'ACTIVE'.
-Preservação da Sessão Original: A sessão do SUPER_ADMIN permanece intacta em camada superior (impersonatorSession), permitindo retorno instantâneo em 1 clique sem novo login.
-Banner Global Fixo de Segurança (Topbar de Alerta): Exibição ininterrupta no topo da tela: "MODO DE ACESSO ASSISTIDO ATIVO — Visualizando como [Nome do Cliente / Perfil] | Operador: [Nome do Admin] | Tempo restante: [MM:SS] | [Encerrar Acesso Assistido]".
-Escopo de Ações Permitidas: Visualizar exatamente o painel do cliente, simular filtros no NexRadar, verificar propostas/contratos, diagnosticar erros de documentos e auxiliar no preenchimento operacional.
-Bloqueio Hardcoded de Ações Sensíveis: Durante o Impersonate, ficam bloqueados no frontend e no backend:
-Alterar senha, e-mail ou dados bancários/PIX do usuário;
-Contratar assinaturas pagas ou utilizar cartões salvos;
-Solicitar saques de comissões de afiliado;
-Excluir a conta ou assinar termos jurídicos em nome do cliente sem flag de assistência.
-Marcação Dupla em Todas as Ações (Dual Attribution): Qualquer registro criado/editado durante a sessão grava user_id = target_user_id e acted_by_admin_id = admin_user_id + impersonation_session_id.
-Auditoria em Tempo Real: Cada navegação e ação relevante dentro do modo assistido gera um evento vinculado ao impersonation_session_id em audit_logs.
-Encerramento Automático ou Manual: Ao clicar em "Encerrar Acesso Assistido" ou atingir o TTL de 30 minutos, a sessão grava ended_at, restaura o contexto do NexCarga Control e exibe o resumo das ações realizadas.
-J. AUDITORIA DO PARTNER CONTROL
-Estado Atual (src/pages/PartnersPage.tsx — 106 linhas)
-A página atual possui apenas 106 linhas com layout estático.
-Não possui tabela de afiliados, não possui aprovação cadastral de parceiros, não rastreia cliques, não vincula novos cadastros ao afiliado indicador e não integra com o AdminControlPage.tsx.
-Na tabela supabase/schema.sql (linhas 237–253), existe apenas uma tabela embrionária partners com referral_code, commission_percent, referred_count, total_earned, available_balance e pix_key, sem histórico de indicações, sem ledger e sem níveis comerciais.
-K. AUDITORIA DOS CARGOS E NÍVEIS COMERCIAIS DE AFILIADOS
-Estado Atual
-O enum UserRole (src/types/index.ts, linha 7) define apenas um papel genérico 'PARTNER', misturado aos papéis de acesso do sistema (COMPANY, CARRIER, DRIVER, ADMIN, SUPER_ADMIN).
-Os 5 níveis comerciais (PARTNER START, PARTNER PRO, PARTNER ELITE, PARTNER MASTER, PARTNER VIP) não existem no código nem no banco de dados.
-Arquitetura Planejada — Separação Obrigatória entre RBAC Administrativo e Níveis Comerciais
-Regra Arquitetural Crítica: Níveis comerciais de afiliados (affiliate_tier) definem regras de comissionamento, metas e benefícios comerciais e JAMAIS concedem permissões administrativas no NexCarga Control.
-Nível Comercial (affiliate_tier)	Critério de Elegibilidade (Indicações Ativas Pagantes)	Comissão sobre 1ª Mensalidade	Comissão Recorrente (Renovações)	Benefícios e Recursos Exclusivos
-PARTNER START	0 a 9 clientes ativos	20%	5% (por 6 meses)	Link único de indicação, painel básico de acompanhamento e saque PIX (mínimo R$ 100,00).
-PARTNER PRO	10 a 29 clientes ativos	25%	8% (por 12 meses)	Cupom personalizado com desconto de 5% para o indicado, kit de mídia oficial e suporte prioritário.
-PARTNER ELITE	30 a 74 clientes ativos	30%	10% (vitalício enquanto ativo)	Gerente de contas dedicado (PARTNER MANAGER), landing page co-branded e janela de saque reduzida.
-PARTNER MASTER	75 a 199 clientes ativos	35%	12% (vitalício enquanto ativo)	Bônus trimestral de performance, relatórios avançados de BI/conversão e API de integração de leads.
-PARTNER VIP	200+ clientes ativos ou parceiro estratégico homologado pelo SUPER_ADMIN	40% (ou taxa customizada)	15% (ou customizada)	Condições comerciais sob medida, participação em campanhas oficiais NexCarga e liquidação PIX expressa.
-L. AUDITORIA DO PARTNER MANAGER
-Estado Atual
-Ausente no código e no banco de dados.
-Especificação Funcional do Cargo PARTNER MANAGER
-O PARTNER MANAGER é um cargo administrativo interno (membro da equipe comercial/parcerias da NexCarga) com acesso restrito ao módulo Partner Control dentro do NexCarga Control:
-O que PODE fazer:
-Analisar e aprovar/recusar cadastros de novos afiliados;
-Acompanhar métricas de cliques, cadastros, períodos de teste (Trial) e conversões da sua carteira de afiliados;
-Criar campanhas promocionais e materiais de apoio;
-Solicitar revisão de comissões em análise (EM_ANALISE) e encaminhar lotes de saque para aprovação financeira;
-Atender afiliados da sua carteira.
-O que NÃO PODE fazer (Exclusivo do SUPER_ADMIN / FINANCEIRO):
-Não pode alterar taxas globais da plataforma (3,5%);
-Não pode executar liberação final de pagamento PIX (PAGA) sem aprovação financeira;
-Não pode conceder o nível PARTNER VIP ou taxas manuais acima do teto sem aprovação do SUPER_ADMIN;
-Não pode acessar módulos de Infraestrutura, Chaves de API ou Equipe Interna.
-M. AUDITORIA DAS COMISSÕES, LEDGER IMUTÁVEL E SAQUES
-Estado Atual
-Ausente. Não há cálculo de comissão sobre assinaturas nem registro de transações de afiliados.
-Arquitetura Planejada — Máquina de 8 Estados e Livro-Razão Imutável (affiliate_commission_ledger)
-1. Máquina de Estados Oficial da Comissão (commission_status)
-Text
-[GERADA] ──► [PENDENTE] ──► [EM_ANALISE] ──► [APROVADA] ──► [DISPONIVEL] ──► [SOLICITADA_SAQUE] ──► [PAGA]
-   │             │               │               │
-   └─────────────┴───────────────┴───────────────┴──► [CANCELADA] (Estorno / Chargeback / Fraude / Cancelamento no Trial)
-Status	Gatilho de Transição	Impacto no Saldo do Afiliado
-GERADA	Indicado cria conta e inicia checkout ou Trial de 15 dias.	Saldo Futuro / Expectativa (R$ 0 liberado).
-PENDENTE	Pagamento da assinatura confirmado via Webhook Mercado Pago; inicia período de carência (15 dias anti-chargeback).	Entra em pending_balance.
-EM_ANALISE	Retida automaticamente por alerta antifraude ou valor acima do limite de auditoria.	Permanece bloqueada em pending_balance.
-APROVADA	Validada pela regra antifraude após confirmação financeira.	Aguardando fim do prazo de maturação (D+15).
-DISPONIVEL	Prazo de maturação cumprido sem estorno/cancelamento; lançada a crédito (CREDIT) no Ledger.	Soma em available_balance para saque PIX.
-SOLICITADA_SAQUE	Afiliado solicita resgate PIX (affiliate_payouts); valor é reservado (HOLD no Ledger).	Deduz de available_balance e move para locked_withdrawal_balance.
-PAGA	Transferência PIX liquidada com comprovante registrado pelo Financeiro/Super Admin (DEBIT definitivo).	Soma em total_paid_balance.
-CANCELADA	Pagamento estornado, chargeback, autoindicação detectada ou assinatura cancelada antes da confirmação.	Estorno contábil (REVERSAL) registrado no Ledger.
-2. Livro-Razão Imutável (affiliate_commission_ledger)
-Nenhuma coluna numérica de saldo (available_balance) será editada por UPDATE solto sem lastro.
-Toda movimentação financeira de afiliado gera uma linha append-only (imutável, proibida de UPDATE ou DELETE via trigger PostgreSQL) contendo: id, affiliate_id, commission_id, payout_id, entry_type (CREDIT, DEBIT, HOLD, RELEASE, REVERSAL, ADJUSTMENT), amount, balance_before, balance_after, description, created_by e created_at.
-N. AUDITORIA DAS INDICAÇÕES, CONVERSÕES E REGRAS ANTIFRAUDE
-Estado Atual
-src/types/index.ts (linhas 187–199) declara a interface PartnerReferral, mas ela não é importada nem utilizada em nenhum arquivo do projeto.
-Arquitetura Planejada de Rastreamento (Attribution Engine) e Antifraude
-Captura Multi-Canal (?ref=CODIGO ou Cupom):
-Ao acessar qualquer URL com ?ref=NXC-XXXX, o sistema grava um cookie/storage de atribuição com validade de 30 dias (First-Touch ou Last-Touch configurável no NexCarga Control, padrão Last-Touch 30 dias) e registra o clique em affiliate_clicks (hash de IP, User-Agent, UTM source/medium/campaign, landing page).
-Funil de Conversão Auditado (5 Etapas):
-CLICK (Acesso ao link) ➔ SIGNUP (Conta criada vinculada ao referred_by_affiliate_id) ➔ TRIAL_STARTED (Ativou os 15 dias grátis) ➔ SUBSCRIPTION_PAID (1ª fatura liquidada no Mercado Pago) ➔ ACTIVE_RETENTION (Renovações mensais/anuais).
-Travamento de Atribuição (Attribution Lock):
-Uma vez que um user_id é vinculado a um affiliate_id no momento do cadastro, esse vínculo é imutável pelo usuário final (somente SUPER_ADMIN pode auditar/corrigir mediante log).
-Motor Antifraude de Afiliados (Bloqueio Automático):
-Proibição de Autoindicação (Self-Referral): Bloqueia comissão se o indicado possuir o mesmo CPF, mesmo CNPJ raiz (8 primeiros dígitos), mesmo e-mail, mesmo telefone, mesma chave PIX ou mesmo fingerprint/IP recorrente do afiliado.
-Proibição de Reciclagem de Contas: Se o CNPJ/CPF do indicado já teve conta na NexCarga nos últimos 180 dias, a indicação é marcada como EM_ANALISE (DUPLICATE_DOCUMENT_ALERT).
-O. AUDITORIA DO BANCO DE DADOS (supabase/schema.sql, seed.sql e 20261107_v2_evolution.sql)
-1. O que foi encontrado nos arquivos SQL
-supabase/schema.sql (304 linhas) define 6 ENUMs e 13 tabelas: profiles, companies, carriers, vehicles, freights, proposals, contracts, documents, subscriptions, partners, notifications, platform_settings e ai_verification_logs.
-supabase/migrations/20261107_v2_evolution.sql (63 linhas) adiciona colunas de inteligência de rota e custo em freights e cria a tabela route_cache (totalizando 14 tabelas definidas em SQL).
-2. Problemas Técnicos e Bugs Encontrados nos Scripts SQL Atuais
-BUG CRÍTICO DE SINTAXE/COLUNA EM supabase/migrations/20261107_v2_evolution.sql (Linhas 45–46):
-Evidência:
-SQL
-CREATE INDEX IF NOT EXISTS idx_freights_dest_coords ON freights (dest_lat, dest_lng);
-CREATE INDEX IF NOT EXISTS idx_freights_status_state ON freights (status, origin_state, dest_state);
-Problema: Na tabela freights (supabase/schema.sql, linhas 140–145), as colunas reais chamam-se destination_lat, destination_lng e destination_state (e não dest_lat, dest_lng, dest_state). A execução dessa migration no PostgreSQL falha com ERROR: column "dest_lat" does not exist.
-BLOQUEIO TOTAL POR FALTA DE POLÍTICAS RLS (supabase/schema.sql, Linhas 277–289):
-Evidência: O script executa ALTER TABLE ... ENABLE ROW LEVEL SECURITY em 11 tabelas (profiles, companies, carriers, vehicles, freights, proposals, contracts, documents, subscriptions, notifications, ai_verification_logs), mas cria políticas (CREATE POLICY) apenas para profiles e freights (linhas 292–303).
-Impacto: No PostgreSQL/Supabase, habilitar RLS em uma tabela sem criar nenhuma POLICY resulta em negação total (Deny All) para todas as operações via anon ou authenticated key. Assim, proposals, contracts, documents, vehicles, companies, carriers, subscriptions e notifications ficam inacessíveis pelo cliente Supabase até que as políticas sejam criadas.
-TABELA partners SEM RLS (supabase/schema.sql, Linha 237):
-A tabela partners sequer teve ENABLE ROW LEVEL SECURITY ativado.
-P. AUDITORIA DAS APIS E BACKEND (server.ts)
-1. Rotas Atualmente Implementadas em server.ts (216 linhas)
-Método e Rota	Linhas em server.ts	Status Real	Problemas Identificados
-GET /api/health	39–48	Funcional	Expõe booleans de configuração de serviços sem autenticação (aceitável para healthcheck básico, mas não deve expor metadados sensíveis).
-POST /api/gemini/nexia	51–95	Funcional	Sem autenticação JWT e sem rate-limiting por usuário/IP (qualquer cliente externo pode consumir a cota Gemini).
-POST /api/gemini/verify	98–148	Funcional	Sem autenticação JWT; recebe metadados do documento mas não valida o binário real no Storage.
-POST /api/mercadopago/checkout	151–167	Mock / Parcial	Retorna apenas preferenceId: "MP-..." sem comunicar com a API do Mercado Pago.
-POST /api/mercadopago/webhook	169–174	Incompleto	Apenas faz console.log('Mercado Pago Webhook received:', req.body) e retorna 200 OK, sem validar header x-signature nem atualizar o banco de dados.
-Q. AUDITORIA GOOGLE MAPS CONTROL
-Estado Atual
-A integração de mapas no frontend (src/pages/RadarFretesPage.tsx, src/services/mapsService.ts, src/services/routeService.ts) é de alta qualidade técnica, utilizando a arquitetura moderna do Google Maps (@vis.gl/react-google-maps, Route.computeRoutes, AutocompleteSuggestion.fetchAutocompleteSuggestions) e cache local de 24h (nexcarga_route_cache_v2).
-O que falta para o padrão Enterprise V3.0:
-Persistir o cache de rotas compartilhado na tabela route_cache do PostgreSQL (já criada na migration V2.0, mas ainda não consultada pelo routeService.ts), permitindo que uma rota calculada por um usuário economize chamadas de API para todos os demais usuários da plataforma.
-Criar o sub-módulo Google Maps Control dentro de Integrações e APIs no NexCarga Control, exibindo: contador diário de chamadas por SKU (Dynamic Maps, Routes API ComputeRoutes, Places Autocomplete, Geocoding), taxa de acerto do cache (Cache Hit Ratio %), botão de limpeza de cache expirado e chave de contingência (Kill Switch / Modo Econômico Geodésico) acionável pelo SUPER_ADMIN.
-R. AUDITORIA FINANCEIRA E MERCADO PAGO
-Estado Atual (src/pages/SubscriptionsPage.tsx & server.ts)
-Risco Crítico de PCI-DSS no Frontend (src/pages/SubscriptionsPage.tsx, linhas 39–43 e 421–487):
-O modal de checkout captura cardNumber (PAN), cardName, cardExpiry e cardCvv diretamente em variáveis useState do React, sem tokenização via SDK oficial do Mercado Pago (@mercadopago/sdk-react / CardPayment Brick ou Checkout Pro Redirect).
-Ausência de Conciliação de Receita de Contratos + Assinaturas + Comissões de Afiliados:
-Atualmente não há tabela de transações financeiras (financial_transactions) que consolide:
-Receita de Assinaturas (SUBSCRIPTION_REVENUE);
-Receita da Taxa de Manutenção de 3,5% dos Contratos (CONTRACT_FEE_REVENUE);
-Despesa de Comissões de Afiliados (AFFILIATE_COMMISSION_EXPENSE);
-Liquidação de Saques PIX (AFFILIATE_PAYOUT).
-S. AUDITORIA DE SEGURANÇA — MATRIZ ESTRUTURADA DE VULNERABILIDADES E PROBLEMAS
-#	Módulo	Arquivo(s)	Evidência (Linhas)	Problema Encontrado	Impacto	Prioridade	Recomendação Técnica	Dependências
-S1	Autenticação & Acesso Admin	src/components/common/Header.tsx, src/pages/AuthPage.tsx, src/contexts/AuthContext.tsx	Header.tsx: 51, 394–402; AuthPage.tsx: 489–519; AuthContext.tsx: 43, 115	Botão NexControl visível para todos, seletor de conta demo permitindo assumir SUPER_ADMIN em 1 clique e função login() ignorando a senha (_pass).	Crítico: Qualquer visitante acessa o painel administrativo e assume qualquer identidade.	P0 (Imediata)	Integrar supabase.auth.signInWithPassword, validar sessão JWT real, proteger rotas com <ProtectedRoute allowedRoles={[...]} /> e remover o switcher demo em produção (substituindo pelo NexCarga Impersonate autenticado).	Supabase Auth configurado
-S2	Pagamentos / PCI-DSS	src/pages/SubscriptionsPage.tsx	Linhas 39–43, 421–487	Coleta direta de número de cartão de crédito (cardNumber) e cardCvv em inputs HTML controlados pelo React sem tokenização client-side do gateway.	Crítico: Violação de conformidade PCI-DSS se transmitido ao backend.	P0 (Imediata)	Utilizar Mercado Pago Checkout Pro (redirect/modal oficial) ou Mercado Pago Payment Brick (tokenização client-side direta com chave pública) + PIX QR Code dinâmico.	MERCADO_PAGO_PUBLIC_KEY e ACCESS_TOKEN
-S3	Banco de Dados & RLS	supabase/schema.sql, supabase/migrations/20261107_v2_evolution.sql	schema.sql: 279–303; 20261107_v2_evolution.sql: 45–46	9 tabelas com RLS ativo sem nenhuma POLICY (bloqueando queries legítimas), tabela partners sem RLS e índice SQL referenciando coluna inexistente (dest_lat).	Alto: Falha na execução da migration V2.0 e bloqueio de leitura/escrita quando conectado ao Supabase real.	P0 (Imediata)	Corrigir nomes das colunas nos índices para destination_lat/lng/state e criar as políticas RLS granulares para todas as tabelas.	Banco PostgreSQL Supabase
-S4	Backend APIs	server.ts	Linhas 51–174	Rotas /api/gemini/* e /api/mercadopago/* não exigem token Bearer JWT, não possuem rate limiting e o webhook não valida assinatura HMAC x-signature.	Alto: Consumo indevido de cota de IA por terceiros e risco de falsificação de confirmação de pagamento via webhook forjado.	P0 (Imediata)	Criar middleware requireAuth e requireRole validando JWT do Supabase no server.ts, aplicar rate-limit e validar x-signature do Mercado Pago.	Supabase Service Role / JWT
-S5	Integridade Financeira de Taxas	src/services/supabaseClient.ts	Linhas 582 e 595	acceptProposalAndCreateContract ignora a taxa configurada pelo Admin e aplica 3.5% fixo.	Médio: Alterações de taxa feitas pelo SUPER_ADMIN no painel não surtem efeito financeiro nos contratos gerados.	P1 (Alta)	Ler getPlatformFeeConfig().totalPercent dinamicamente no momento de gerar o contrato e gravar o snapshot da taxa no contrato.	Nenhuma
-S6	Persistência de Contratos	src/pages/ProposalsContractsPage.tsx	Linhas 35–44	handleUpdateStatus altera o status do contrato (EM_TRANSITO, ENTREGUE) apenas na memória local do componente React.	Médio: Perda de rastreabilidade operacional ao atualizar ou trocar de página.	P1 (Alta)	Criar e invocar DataService.updateContractStatus(contractId, newStatus, actorId) persistindo no banco e no statusHistory.	Nenhuma
-S7	Privacidade Documental (LGPD)	src/pages/DocsPage.tsx	Linha 70	Documentos sensíveis (CNH, CRLV, ANTT) não possuem upload real e usam caminho público estático.	Médio: Impossibilidade de auditoria documental real e risco de exposição se armazenados em bucket público.	P1 (Alta)	Armazenar documentos em bucket privado (Supabase Storage / Google Cloud Storage) com acesso exclusivo via Signed URLs temporárias (TTL 15 min).	Bucket privado configurado
-T. ARQUITETURA RECOMENDADA V3.0 (ENTERPRISE COMMAND CENTER)
-Text
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                  FRONTEND (React 19 + TypeScript + Vite)                        │
-├───────────────────────────┬───────────────────────────────────┬─────────────────────────────────┤
-│   ECOSISTEMA OPERACIONAL  │     NEXCARGA PARTNER CONTROL      │   NEXCARGA CONTROL (ENTERPRISE) │
-│ • Home V2.0 + NexRadar    │ • Dashboard do Afiliado           │ • 12 Módulos Administrativos    │
-│ • Painel Empresa          │ • Progressão (START ➔ VIP)        │ • Gestão de Equipe e RBAC       │
-│ • Painel Transportador    │ • Gerador de Links (?ref) & Cupom │ • NexCarga Impersonate (Banner) │
-│ • Propostas & Contratos   │ • Extrato Ledger Imutável         │ • Google Maps Quota Control     │
-│ • NexCarga Docs & Verify  │ • Solicitação de Saque PIX        │ • Conciliação Financeira & Logs │
-└─────────────┬─────────────┴─────────────────┬─────────────────┴────────────────┬────────────────┘
-              │                               │                                  │
-              ▼                               ▼                                  ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                        CAMADA DE SERVIÇOS & SEGURANÇA (server.ts + Middlewares)                 │
-│ • Middleware JWT Auth (Supabase)   • Middleware RBAC & Permissions   • Impersonation Guard      │
-│ • Attribution & Anti-Fraud Engine  • Commission Ledger Engine        • Webhook HMAC Validator   │
-└─────────────┬───────────────────────────────┬──────────────────────────────────┬────────────────┘
-              │                               │                                  │
-              ▼                               ▼                                  ▼
-┌───────────────────────────┐   ┌───────────────────────────┐   ┌─────────────────────────────────┐
-│   SUPABASE POSTGRESQL     │   │    GOOGLE CLOUD / APIs    │   │         MERCADO PAGO            │
-│ • Tabelas Operacionais    │   │ • Maps JS API v3 + Routes │   │ • Checkout / PIX / Assinaturas  │
-│ • Tabelas Admin & Audit   │   │ • Places API (New)        │   │ • Webhooks Assinados (HMAC)     │
-│ • Tabelas Affiliate/Ledger│   │ • Gemini 2.5 Flash API    │   │ • Conciliação de Recebíveis     │
-│ • RLS Ativo em 100%       │   │ • Private Storage (Docs)  │   │                                 │
-└───────────────────────────┘   └───────────────────────────┘   └─────────────────────────────────┘
-U. ESTRUTURA DE PERMISSÕES (RBAC ADMINISTRATIVO VS. NÍVEIS COMERCIAIS)
-1. Papéis Administrativos e Operacionais (UserRole / RBAC)
-Papel (role)	Natureza	Escopo de Acesso
-SUPER_ADMIN	Administrativo Master	Acesso irrestrito aos 12 módulos do NexCarga Control, Impersonate, aprovação final de taxas, nomeação de administradores e níveis VIP.
-ADMIN_OPERACIONAL	Administrativo Interno	Acesso aos módulos de Clientes, Verificação Documental (Selo Azul), Fretes, Propostas/Contratos e Acesso Assistido (Impersonate supervisionado).
-FINANCEIRO	Administrativo Interno	Acesso aos módulos de Planos/Assinaturas, Financeiro/Taxas, conciliação Mercado Pago e liquidação de saques PIX de afiliados (affiliate_payouts).
-AUDITOR	Administrativo Leitura	Acesso somente leitura aos 12 módulos, Logs de Auditoria, sessões de Impersonate e Ledger de comissões para compliance.
-SUPORTE	Atendimento Interno	Acesso a Clientes, Documentos, Fretes e Impersonate para suporte técnico ao usuário, sem permissão de alterar taxas ou aprovar saques.
-PARTNER_MANAGER	Comercial Interno	Acesso dedicado ao módulo Partner Control (gestão de afiliados, campanhas, análise de conversões e pré-aprovação de comissões).
-COMPANY	Cliente Externo	Painel da Empresa (publicação de cargas, gestão de propostas, contratos, documentos e assinatura).
-CARRIER	Cliente Externo	Painel da Transportadora (gestão de frota, busca no NexRadar, propostas, contratos, documentos e assinatura).
-DRIVER	Cliente Externo	Painel do Motorista Autônomo (veículo, busca no NexRadar, propostas, contratos, documentos e assinatura).
-PARTNER	Parceiro Comercial Externo	Painel do Afiliado (PartnersPage: links de indicação, funil de indicados, extrato do Ledger e solicitação de saque PIX). Zero acesso ao NexCarga Control.
-V. ESTRUTURA DE TABELAS NECESSÁRIAS (MAPEAMENTO SEM DUPLICAÇÃO)
-Para evitar qualquer duplicação com as 14 tabelas já existentes em supabase/schema.sql e supabase/migrations/20261107_v2_evolution.sql, adotaremos a seguinte estratégia de Preservação + Evolução (ALTER TABLE) + Novas Tabelas Enterprise:
-Tabela Solicitada na Arquitetura V3.0	Equivalente Atual no Projeto	Ação Planejada (Sem Duplicação)
-users / profiles	profiles (schema.sql L52)	Preservar e evoluir profiles (adicionar suporte aos novos papéis administrativos e coluna referred_by_affiliate_id).
-roles & permissions & admin_users	(Ausentes)	Criar tabelas admin_roles_permissions e user_role_assignments para RBAC granular por módulo/ação.
-companies, carriers, drivers, vehicles	companies, carriers, vehicles (schema.sql L77–128)	Preservar tabelas existentes (drivers e carriers compartilham a estrutura de transportador com distinção por role e cpf/cnpj) e adicionar políticas RLS faltantes.
-freights, proposals, contracts	freights, proposals, contracts (schema.sql L132–201)	Preservar tabelas existentes, corrigir os 2 índices da migration V2.0 (destination_lat/lng/state) e adicionar políticas RLS.
-documents & verifications	documents & ai_verification_logs (schema.sql L205, L269)	Preservar ambas, adicionando storage_bucket_path em documents e políticas RLS restritas ao proprietário e administradores.
-subscriptions & payments	subscriptions (schema.sql L220)	Preservar subscriptions e criar payment_transactions para registrar cada cobrança, webhook Mercado Pago e conciliação.
-platform_fees & system_settings	platform_settings (schema.sql L263)	Preservar platform_settings (JSONB flexível) e adicionar histórico de vigência de taxas.
-affiliates & affiliate_levels	partners (schema.sql L237)	Evoluir partners (ou mapear via view/migração limpa) adicionando affiliate_tier (PARTNER_START a PARTNER_VIP), manager_id (PARTNER_MANAGER), status, custom_commission_rate e criar tabela de configuração affiliate_levels.
-affiliate_links, affiliate_clicks, affiliate_referrals, affiliate_conversions	(Ausentes)	Criar tabelas para rastreamento completo de cliques, atribuição de cadastros (referrals) e conversões pagas (conversions).
-affiliate_commissions & affiliate_commission_ledger	(Ausentes)	Criar affiliate_commissions (com os 8 status oficiais) e affiliate_commission_ledger (livro-razão imutável append-only).
-affiliate_payouts & affiliate_campaigns & affiliate_managers	(Ausentes)	Criar affiliate_payouts (solicitações e comprovantes PIX), affiliate_campaigns e vínculo de carteira de gerentes.
-impersonation_sessions & audit_logs	(Ausentes)	Criar impersonation_sessions (controle de Acesso Assistido com TTL e motivo) e audit_logs (trilha imutável de auditoria).
-api_integrations_status & maps_usage_logs	route_cache (20261107_v2_evolution.sql L49)	Preservar route_cache e criar maps_usage_logs para telemetria diária de cotas e status das integrações.
-W. ENDPOINTS EXISTENTES E AUSENTES
-1. Endpoints Existentes (server.ts)
-GET /api/health — Operacional (requer enriquecimento para painel Admin).
-POST /api/gemini/nexia — Operacional (requer middleware de autenticação).
-POST /api/gemini/verify — Operacional (requer middleware de autenticação).
-POST /api/mercadopago/checkout — Parcial/Mock (requer integração real com API Mercado Pago).
-POST /api/mercadopago/webhook — Esqueleto (requer validação HMAC e processamento de assinatura + geração automática de comissão de afiliado).
-2. Endpoints Ausentes que Deverão Ser Criados
-Governança & Impersonate:
-POST /api/admin/impersonate/start (valida permissão, exige justificativa, cria sessão com TTL de 30 min e registra log).
-POST /api/admin/impersonate/stop (encerra sessão assistida e registra resumo).
-GET /api/admin/audit-logs (consulta paginada e filtrável da trilha de auditoria).
-Partner Control, Ledger & Saques:
-POST /api/affiliates/track-click (registra clique de ?ref= com deduplicação por IP/janela).
-POST /api/affiliates/register-referral (vincula novo usuário ao afiliado no signup e executa verificação antifraude).
-GET /api/affiliates/dashboard (retorna funil real, nível atual, progresso para o próximo nível e extrato do Ledger).
-POST /api/affiliates/payouts/request (valida saldo DISPONIVEL, cria HOLD no Ledger e abre solicitação de saque PIX).
-POST /api/admin/affiliates/:id/tier (altera nível comercial ou atribui PARTNER_MANAGER).
-POST /api/admin/affiliates/commissions/:id/status (transiciona status na máquina de 8 estados com lançamento automático no Ledger).
-POST /api/admin/affiliates/payouts/:id/approve (confirma pagamento PIX e lança DEBIT definitivo no Ledger).
-Documentos & Telemetria de Mapas:
-POST /api/documents/signed-url (gera URL temporária assinada para upload/leitura segura de CNH/CRLV/ANTT).
-GET /api/admin/maps/usage e POST /api/admin/maps/config (monitoramento de cota e controle de cache/contingência).
-X. RISCOS E DEPENDÊNCIAS
-Dependência de Credenciais Externas (.env / AI Studio Secrets):
-Enquanto VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY não estiverem preenchidos no ambiente, a aplicação precisa manter um adaptador híbrido resiliente (Supabase + Fallback Local Persistente Sincronizado), garantindo que todas as novas tabelas (impersonation_sessions, audit_logs, affiliate_commissions, affiliate_commission_ledger, affiliate_payouts, etc.) funcionem 100% tanto com um cluster Supabase PostgreSQL conectado quanto no ambiente de preview do AI Studio.
-Migração Sem Quebra de Compatibilidade (Zero Regression):
-A Home V2.0, o NexRadar com Google Maps/Routes API e o motor de custos operacionais (src/utils/logistics.ts) já estão aprovados e validados; nenhuma alteração da V3.0 pode regredir essas conquistas.
-Proteção de Cota Google Maps:
-O GoogleMapsProvider deve continuar sendo instanciado exclusivamente sob demanda na rota radar (e no sub-módulo de diagnóstico de mapas do Admin apenas se solicitado pelo operador), preservando a blindagem contra OverQuotaMapError.
-Y. PLANO COMPLETO DE IMPLEMENTAÇÃO FUTURA (16 FASES OFICIAIS)
-A implementação seguirá rigorosamente as 16 fases sequenciais abaixo após a sua aprovação:
-FASE 1 — Auditoria Completa do Sistema
-Status: CONCLUÍDA NESTE RELATÓRIO (100% Read-Only).
-FASE 2 — Modelagem Completa do Banco de Dados e Correção de Migrations
-Pré-requisitos: Aprovação deste relatório.
-Arquivos Envolvidos: supabase/schema.sql, supabase/migrations/20261107_v2_evolution.sql, nova migration supabase/migrations/20261108_v3_enterprise_command_center.sql e src/types/index.ts.
-Alterações no Banco: Correção dos índices destination_lat/lng/state; criação das tabelas Enterprise (admin_roles_permissions, impersonation_sessions, audit_logs, affiliate_levels, affiliate_clicks, affiliate_referrals, affiliate_commissions, affiliate_commission_ledger, affiliate_payouts, affiliate_campaigns, payment_transactions, maps_usage_logs) e triggers de imutabilidade do Ledger.
-Critério de Conclusão e Testes: Scripts SQL 100% válidos sem erros de referência e interfaces TypeScript completas em src/types/index.ts.
-FASE 3 — Implementação de Roles, Permissões (RBAC) e Políticas RLS
-Pré-requisitos: Fase 2.
-Arquivos Envolvidos: supabase/migrations/20261108_v3_enterprise_command_center.sql, src/utils/rbac.ts, src/contexts/AuthContext.tsx, server.ts.
-Alterações: Criação de todas as políticas CREATE POLICY faltantes no PostgreSQL; implementação da matriz RBAC (SUPER_ADMIN, ADMIN_OPERACIONAL, FINANCEIRO, AUDITOR, SUPORTE, PARTNER_MANAGER, COMPANY, CARRIER, DRIVER, PARTNER) separada dos níveis comerciais (affiliate_tier); validação real de senha no login e proteção de rotas.
-Testes: Testes unitários da matriz RBAC (rbac.test.ts) comprovando isolamento entre cargos administrativos e níveis comerciais de afiliados.
-FASE 4 — Estruturação do Novo NexCarga Control (Arquitetura de 12 Módulos)
-Pré-requisitos: Fase 3.
-Arquivos Envolvidos: src/pages/AdminControlPage.tsx (refatorado em layout Enterprise com Sidebar colapsável, Topbar de status, busca global e navegação entre os 12 módulos), src/components/common/Header.tsx.
-Alterações: Ocultação do botão NexControl para usuários não-administradores; criação do shell do NexCarga Control e do Módulo 1 (Dashboard Executivo) com KPIs 100% reais (remoção dos offsets fictícios de +5000 / +12000 no painel administrativo).
-Testes: Verificação de controle de acesso e precisão matemática dos KPIs executivos.
-FASE 5 — Módulo de Clientes, Contas e Operações (Módulos 2, 4 e 5)
-Pré-requisitos: Fase 4.
-Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/pages/ProposalsContractsPage.tsx, src/pages/CompanyDashboardPage.tsx, src/pages/CarrierDashboardPage.tsx, src/services/supabaseClient.ts.
-Alterações: Implementação dos módulos Clientes e Contas, Fretes e Operações e Propostas e Contratos no NexCarga Control; correção da persistência de mudança de status de contratos em ProposalsContractsPage.tsx; substituição dos números hardcoded nos cards dos Dashboards de Empresa e Transportador pelos totais reais calculados.
-Testes: Persistência de status de contrato (GERADO ➔ EM_TRANSITO ➔ ENTREGUE) após reload da página.
-FASE 6 — Implementação do Acesso Assistido (NexCarga Impersonate)
-Pré-requisitos: Fase 5.
-Arquivos Envolvidos: src/contexts/AuthContext.tsx, src/components/common/Header.tsx, src/pages/AdminControlPage.tsx, server.ts.
-Alterações: Implementação completa dos 10 passos do NexCarga Impersonate: modal de justificativa obrigatória, preservação da sessão original do SUPER_ADMIN, Banner Fixo de Alerta no topo com cronômetro regressivo (30 min), bloqueio de ações sensíveis (saques, senhas, cartões), atribuição dupla (acted_by_admin_id) e botão de encerramento imediato.
-Testes: Iniciar sessão assistida em uma conta COMPANY ou CARRIER, verificar banner de segurança, testar bloqueio de ação sensível, encerrar sessão e validar registro no Log de Auditoria.
-FASE 7 — Módulo de Verificação Documental, Storage Seguro e Selo Azul (Módulo 3)
-Pré-requisitos: Fase 5.
-Arquivos Envolvidos: src/pages/DocsPage.tsx, src/pages/NexIAVerifyPage.tsx, src/pages/AdminControlPage.tsx, server.ts.
-Alterações: Upload real de arquivos (FileReader / Multipart / Signed URL Storage), visualização segura de documentos no Módulo 3 (Verificação e Documentos), parecer da NexIA Verify e histórico de concessão/revogação do Selo Azul Verificado.
-Testes: Upload de documento real, análise via NexIA Verify e aprovação pelo Admin com ativação imediata do VerifiedBadge.
-FASE 8 — Módulo Financeiro, Planos, Assinaturas e Taxas Dinâmicas (Módulos 6 e 7)
-Pré-requisitos: Fase 5.
-Arquivos Envolvidos: src/pages/SubscriptionsPage.tsx, src/pages/AdminControlPage.tsx, src/services/supabaseClient.ts, server.ts.
-Alterações: Correção do bug em acceptProposalAndCreateContract para aplicar dinamicamente a taxa configurada pelo SUPER_ADMIN em platform_settings; refatoração do checkout em SubscriptionsPage.tsx (removendo coleta insegura de PAN/CVV em estado puro e implementando fluxo seguro Mercado Pago / PIX dinâmico); validação HMAC no webhook /api/mercadopago/webhook; implementação dos Módulos 6 (Planos e Assinaturas) e 7 (Financeiro e Taxas).
-Testes: Alterar taxa da plataforma no Admin (ex.: de 3,5% para 4,0%), fechar um contrato e comprovar que a nova taxa foi aplicada e registrada no financeiro.
-FASE 9 — Criação do Partner Control e Estrutura de Afiliados (Módulo 8 — Parte 1)
-Pré-requisitos: Fase 8.
-Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/pages/PartnersPage.tsx, src/services/supabaseClient.ts.
-Alterações: Construção do Módulo 8 (Partner Control) dentro do NexCarga Control para o SUPER_ADMIN e PARTNER_MANAGER; cadastro e homologação de afiliados; geração de links parametrizados (?ref=) e cupons de desconto.
-Testes: Aprovar afiliado, alocar um PARTNER_MANAGER e gerar link/cupom ativo.
-FASE 10 — Implementação dos 5 Níveis de Afiliados (START a VIP) e PARTNER MANAGER
-Pré-requisitos: Fase 9.
-Arquivos Envolvidos: src/utils/affiliateEngine.ts, src/pages/PartnersPage.tsx, src/pages/AdminControlPage.tsx.
-Alterações: Implementação das regras automáticas e manuais dos níveis PARTNER START (20%/5%), PARTNER PRO (25%/8%), PARTNER ELITE (30%/10%), PARTNER MASTER (35%/12%) e PARTNER VIP (40%/15% ou customizado); visão dedicada do PARTNER_MANAGER restrita à sua carteira.
-Testes: Testes unitários (affiliateEngine.test.ts) validando cálculo de comissões por nível, progressão automática por metas e restrições de alçada do PARTNER_MANAGER.
-FASE 11 — Rastreamento de Cliques, Indicações, Conversões e Motor Antifraude
-Pré-requisitos: Fase 10.
-Arquivos Envolvidos: src/App.tsx, src/pages/AuthPage.tsx, src/utils/affiliateEngine.ts, server.ts.
-Alterações: Captura automática de ?ref= na entrada do app (App.tsx) com persistência de atribuição por 30 dias; vínculo automático no cadastro (AuthPage.tsx); travamento de atribuição (Attribution Lock); motor antifraude bloqueando autoindicação (mesmo CPF, raiz de CNPJ, e-mail, telefone ou chave PIX).
-Testes: Simular acesso via ?ref=, criar nova conta, verificar vínculo no funil do afiliado e testar bloqueio automático de autoindicação.
-FASE 12 — Máquina de Estados de Comissões (8 Status) e Livro-Razão Imutável (Ledger)
-Pré-requisitos: Fase 11.
-Arquivos Envolvidos: src/utils/affiliateEngine.ts, src/services/supabaseClient.ts, src/pages/PartnersPage.tsx, src/pages/AdminControlPage.tsx.
-Alterações: Implementação dos 8 status (GERADA, PENDENTE, EM_ANALISE, APROVADA, DISPONIVEL, SOLICITADA_SAQUE, PAGA, CANCELADA) e do livro-razão affiliate_commission_ledger (com lançamentos CREDIT, DEBIT, HOLD, RELEASE, REVERSAL, ADJUSTMENT e saldo anterior/posterior auditável).
-Testes: Testes unitários e de integração validando transições de estado, estorno em caso de cancelamento (CANCELADA) e integridade matemática do Ledger.
-FASE 13 — Fluxo de Saques PIX (affiliate_payouts) e Painel Definitivo do Afiliado
-Pré-requisitos: Fase 12.
-Arquivos Envolvidos: src/pages/PartnersPage.tsx, src/pages/AdminControlPage.tsx.
-Alterações: Reconstrução completa de PartnersPage.tsx com dados 100% reais: barra de progressão de nível (START ➔ VIP), funil de cliques/cadastros/conversões, tabela de indicados, extrato contábil do Ledger e solicitação de saque PIX com reserva imediata de saldo (HOLD) e liquidação pelo Financeiro/Super Admin (PAGA).
-Testes: Solicitar saque PIX como afiliado, aprovar no NexCarga Control e verificar atualização de saldos e comprovante.
-FASE 14 — Monitoramento de Integrações, Google Maps Control, Equipe e Configs (Módulos 9, 10 e 12)
-Pré-requisitos: Fase 8.
-Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/services/routeService.ts, server.ts.
-Alterações: Implementação do Módulo 9 (Integrações e APIs + Google Maps Control) com telemetria de uso de mapas, taxa de acerto do cache (route_cache) e chave de contingência; Módulo 10 (Equipe e Permissões); e Módulo 12 (Configurações Globais).
-Testes: Verificar painel de saúde das integrações, estatísticas do cache de rotas e edição de parâmetros globais.
-FASE 15 — Trilha Imutável de Auditoria e Hardening de Segurança (Módulo 11)
-Pré-requisitos: Fases 6, 13 e 14.
-Arquivos Envolvidos: src/pages/AdminControlPage.tsx, src/services/supabaseClient.ts, server.ts.
-Alterações: Implementação do Módulo 11 (Logs e Auditoria) exibindo todos os eventos reais de segurança, alterações de taxas, aprovações de documentos, movimentações do Ledger e sessões de Impersonate com filtros por operador, data e entidade; revisão final de middlewares de segurança no server.ts.
-Testes: Auditar todas as operações administrativas realizadas e confirmar gravação de before_state e after_state.
-FASE 16 — Testes Automatizados Completos e Validação para Produção
-Pré-requisitos: Fases 1 a 15 concluídas.
-Arquivos Envolvidos: src/utils/logistics.test.ts, src/utils/affiliateEngine.test.ts, src/utils/rbac.test.ts e verificação E2E via navegador real (playwright-cli).
-Critérios de Conclusão:
-100% dos testes unitários de logística, taxas, RBAC, antifraude e Ledger passando via node:test;
-compile_applet (TypeScript + Vite build) e lint_applet com zero erros;
-Inspeção visual e funcional em navegador real (playwright-cli) validando todos os 12 módulos do NexCarga Control, o fluxo de Impersonate, o Partner Control completo e a preservação integral da Home V2.0 e do NexRadar.
-AGUARDANDO AUTORIZAÇÃO DO PROPRIETÁRIO DO PROJETO
-A auditoria técnica Full Stack V3.0 e o plano arquitetural de 16 fases estão concluídos em modo 100% somente leitura.
-Deseja autorizar o início da implementação seguindo o plano estruturado acima (a partir da Fase 2 até a Fase 16), ou gostaria de ajustar alguma regra de negócio (como percentuais dos níveis PARTNER START a VIP, tempo de maturação de comissões ou escopo dos 12 módulos do NexCarga Control) antes de iniciarmos a codificação?
+Read 1 file: package.json from line 0 to line 43
+Thought for 48 seconds
+Edited 8 files
+package.json
+tsconfig.json
+vite.config.ts
+src/lib/firebase.ts
+src/lib/firebase-admin.ts
+src/db/schema.ts
+src/db/drizzle.config.ts
+src/db/index.ts
+Called tool
+Thought for 15 seconds
+Called tool
+Thought for 21 seconds
+Called tool
+Thought for 1 minute 18 seconds
+Edited 5 files
+public/icon.svg
+shared/types/index.ts
+shared/constants/index.ts
+shared/validators/smartData.ts
+shared/validators/smartData.test.ts
+Thought for 1 minute 49 seconds
+Edited 7 files
+src/db/users.ts
+backend/src/middleware/auth.ts
+backend/src/middleware/security.ts
+backend/src/services/googleIntegrations.ts
+backend/src/services/dataService.ts
+backend/src/routes/api.ts
+server.ts
+Thought for 1 minute 6 seconds
+Edited 4 files
+src/index.css
+src/theme/ThemeContext.tsx
+src/components/brand/NexColetasLogo.tsx
+src/hooks/usePWAInstall.ts
+Thought for 1 minute 34 seconds
+Edited 2 files
+public/assets/brand/README.md
+src/components/ui/DesignSystem.tsx
+Thought for 1 minute 1 second
+Edited 3 files
+src/services/apiClient.ts
+src/app/TenantAuthContext.tsx
+src/components/layout/NexControlLayout.tsx
+Thought for 1 minute 48 seconds
+Edited 2 files
+src/features/dashboard/DashboardView.tsx
+src/features/pickups/PickupsView.tsx
+Thought for 2 minutes 51 seconds
+Edited 5 files
+src/features/companies/CompaniesView.tsx
+src/features/operations/EcosystemModulesView.tsx
+src/features/settings/SettingsView.tsx
+src/App.tsx
+README.md
+Thought for 16 seconds
+Ran command
+node -e ' const fs = require("fs"); const zlib = require("zlib"); function createSolidPng(width, height, r, g, b) { const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]); function crc32(buf) { let c = -1; for (let i = 0; i < buf.length; i++) { c = (c >>> 8) ^ crcTable[(c ^ buf[i]) & 0xff]; } return (c ^ -1) >>> 0; } const crcTable = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crcTable[n] = c; } function chunk(type, data) { const len = Buffer.alloc(4); len.writeUInt32BE(data.length, 0); const t = Buffer.from(type); const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(Buffer.concat([t, data])), 0); return Buffer.concat([len, t, data, crc]); } const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(width, 0); ihdr.writeUInt32BE(height, 4); ihdr[8] = 8; ihdr[9] = 2; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0; const rowSize = width * 3 + 1; const raw = Buffer.alloc(rowSize * height); for (let y = 0; y < height; y++) { const rowStart = y * rowSize; raw[rowStart] = 0; for (let x = 0; x < width; x++) { const px = rowStart + 1 + x * 3; const inCenter = x > width * 0.22 && x < width * 0.78 && y > height * 0.22 && y < height * 0.78; raw[px] = inCenter ? 34 : r; raw[px + 1] = inCenter ? 197 : g; raw[px + 2] = inCenter ? 94 : b; } } const idat = zlib.deflateSync(raw); return Buffer.concat([signature, chunk("IHDR", ihdr), chunk("IDAT", idat), chunk("IEND", Buffer.alloc(0))]); } fs.writeFileSync("public/pwa-192x192.png", createSolidPng(192, 192, 11, 46, 30)); fs.writeFileSync("public/pwa-512x512.png", createSolidPng(512, 512, 11, 46, 30)); fs.writeFileSync("public/pwa-maskable-512x512.png", createSolidPng(512, 512, 11, 46, 30)); fs.writeFileSync("public/apple-touch-icon.png", createSolidPng(180, 180, 11, 46, 30)); console.log("PWA PNG icons generated successfully."); ' && npx --yes tsx --test shared/validators/smartData.test.ts
+PWA PNG icons generated successfully.TAP version 13# Subtest: NexColetas Smart Data — Validação e máscara de CPFok 1 - NexColetas Smart Data — Validação e máscara de CPF  ---  duration_ms: 1.328152  type: 'test'  ...# Subtest: NexColetas Smart Data — Validação e máscara de CNPJok 2 - NexColetas Smart Data — Validação e máscara de CNPJ  ---  duration_ms: 0.474679  type: 'test'  ...# Subtest: NexColetas Smart Data — Validação de Telefone e DDD (Manhuaçu 33)ok 3 - NexColetas Smart Data — Validação de Telefone e DDD (Manhuaçu 33)  ---  duration_ms: 0.303954  type: 'test'  ...# Subtest: NexColetas Smart Data — Validação de CEP, E-mail, Data e Moeda BRLok 4 - NexColetas Smart Data — Validação de CEP, E-mail, Data e Moeda BRL  ---  duration_ms: 55.369139  type: 'test'  ...1..4# tests 4# suites 0# pass 4# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 436.619114
+Thought for 9 seconds
+Built
+Ran quality control
+Restarted dev server
+Thought for 10 seconds
+Used browser, took 1 screenshot
+
+trap 'playwright-cli close' EXIT mkdir -p .playwright-cli && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/r1-desktop-green.png && \ playwright-cli snapshot --depth=4 && \ playwright-cli console
+### Browser `default` opened with pid 349.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot- [Snapshot](.playwright-cli/page-2026-11-22T23-21-17-978Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-22T23-21-15-305Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Result- [Screenshot of viewport](.playwright-cli/r1-desktop-green.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r1-desktop-green.pngawait page.screenshot({  path: '.playwright-cli/r1-desktop-green.png',  scale: 'css',  type: 'png'});```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot```yaml- generic [ref=e3]:  - complementary "Barra lateral de navegação desktop" [ref=e4]:    - generic [ref=e5]:      - generic [ref=e6]:        - generic [ref=e7]        - generic [ref=e32]        - navigation "Menu principal NexColetas Control" [ref=e38]      - generic [ref=e114]:        - generic [ref=e115]        - button "Entrar com Conta Google" [ref=e124] [cursor=pointer]  - generic [ref=e129]:    - banner [ref=e130]:      - navigation "Localização na plataforma" [ref=e132]:        - button "NexColetas Control" [ref=e133] [cursor=pointer]        - generic [aria-hidden] [ref=e134]: /        - generic [ref=e135]: Operação Urbana        - generic [aria-hidden] [ref=e136]: /        - generic [ref=e137]: Visão Geral      - group "Seletor de tema NexColetas" [ref=e139]:        - button "Tema Verde" [pressed] [ref=e140] [cursor=pointer]        - button "Tema Branco" [ref=e148] [cursor=pointer]        - button "Tema Noite" [ref=e156] [cursor=pointer]      - button "Nova Coleta" [ref=e161] [cursor=pointer]    - main [ref=e164]:      - generic [ref=e165]:        - generic [ref=e166]        - generic [ref=e191]        - region "Indicadores principais do dia" [ref=e195]        - generic [ref=e279]        - generic [ref=e357]    - contentinfo [ref=e442]:      - generic [ref=e443]: "NexColetas — Logística de Coletas Urbanas · Base Operacional: Manhuaçu - MG · Fuso: America/Sao_Paulo"      - generic [ref=e444]:        - generic [ref=e445]: Arquitetura Multi-Tenant Isolada        - generic [aria-hidden] [ref=e446]: ·        - button "Preferências & Tema" [ref=e447] [cursor=pointer]```### ResultTotal messages: 3 (Errors: 0, Warnings: 0)Returning 1 messages for level "info"[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a0c75178:15801Browser 'default' closed
+
+### Latest snapshot (.playwright-cli/page-2026-11-22T23-21-17-978Z.yml)
+```yaml
+- generic [ref=e3]:
+  - complementary "Barra lateral de navegação desktop" [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - button [ref=e8] [cursor=pointer]:
+            - generic "NexColetas — Logística de Coletas Urbanas" [ref=e9]:
+              - generic [ref=e21]:
+                - generic [ref=e22]:
+                  - generic [ref=e23]: Nex
+                  - generic [ref=e24]: Coletas
+                - generic [ref=e28]: Logística de Coletas Urbanas
+          - button "Recolher menu lateral" [ref=e29] [cursor=pointer]
+        - generic [ref=e32]:
+          - generic [ref=e33]: Ambiente Multi-Tenant (Isolado)
+          - combobox "Ambiente Multi-Tenant (Isolado)" [ref=e34]:
+            - option "NexColetas Admin — Visão Global (Manhuaçu - MG)"
+            - option "Empresa A — Hub Manhuaçu Centro (DEMONSTRAÇÃO)" [selected]
+            - option "Empresa B — Polo BR-262 Leste MG (DEMONSTRAÇÃO)"
+          - generic [ref=e35]:
+            - generic [ref=e36]: Proprietário da Empresa
+            - generic [ref=e37]: Manhuaçu - MG
+        - navigation "Menu principal NexColetas Control" [ref=e38]:
+          - button "Visão Geral" [ref=e39] [cursor=pointer]
+          - button "Coletas" [ref=e47] [cursor=pointer]
+          - button "Mapa Operacional" [ref=e55] [cursor=pointer]
+          - button "Empresas" [ref=e61] [cursor=pointer]
+          - button "Operadores" [ref=e68] [cursor=pointer]
+          - button "Motoboys" [ref=e76] [cursor=pointer]
+          - button "Parceiros" [ref=e84] [cursor=pointer]
+          - button "Financeiro" [ref=e92] [cursor=pointer]
+          - button "Atendimento" [ref=e98] [cursor=pointer]
+          - button "Relatórios" [ref=e103] [cursor=pointer]
+          - button "Configurações" [ref=e108] [cursor=pointer]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: Base Regional
+            - generic [ref=e118]: Manhuaçu - MG
+          - generic [ref=e119]: "Tenant: 12.345.678/0001-95"
+        - button "Entrar com Conta Google" [ref=e124] [cursor=pointer]
+  - generic [ref=e129]:
+    - banner [ref=e130]:
+      - navigation "Localização na plataforma" [ref=e132]:
+        - button "NexColetas Control" [ref=e133] [cursor=pointer]
+        - generic [aria-hidden] [ref=e134]: /
+        - generic [ref=e135]: Operação Urbana
+        - generic [aria-hidden] [ref=e136]: /
+        - generic [ref=e137]: Visão Geral
+      - group "Seletor de tema NexColetas" [ref=e139]:
+        - button "Tema Verde" [pressed] [ref=e140] [cursor=pointer]
+        - button "Tema Branco" [ref=e148] [cursor=pointer]
+        - button "Tema Noite" [ref=e156] [cursor=pointer]
+      - button "Nova Coleta" [ref=e161] [cursor=pointer]
+    - main [ref=e164]:
+      - generic [ref=e165]:
+        - generic [ref=e166]:
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - generic [ref=e169]: Manhuaçu — MG
+              - generic [aria-hidden] [ref=e170]: ·
+              - generic [ref=e171]: "Tenant Ativo: Empresa A — Hub Manhuaçu Centro (DEMONSTRAÇÃO)"
+              - generic [aria-hidden] [ref=e172]: ·
+              - generic [ref=e173]: DADOS DE DEMONSTRAÇÃO
+            - heading "Painel de Controle — Logística de Coletas Urbanas" [level=1] [ref=e174]
+          - generic [ref=e175]:
+            - group "Simulador de estados de dados" [ref=e176]:
+              - button "Dados Disponíveis" [ref=e177] [cursor=pointer]
+              - button "Sem Dados" [ref=e178] [cursor=pointer]
+              - button "Carregando" [ref=e179] [cursor=pointer]
+              - button "Estado de Erro" [ref=e180] [cursor=pointer]
+            - button "Sincronizar" [ref=e181] [cursor=pointer]
+        - generic [ref=e191]:
+          - generic [ref=e192]: Modo Demonstração Operacional Ativo — Manhuaçu - MG
+          - generic [ref=e193]:
+            - text: Os registros iniciais identificados com a tag
+            - strong [ref=e194]: DEMONSTRAÇÃO
+            - text: são dados de referência para validação de fluxos em Manhuaçu - MG. Ao cadastrar novas coletas ou empresas, elas são gravadas no banco de dados relacional real do seu Tenant.
+        - region "Indicadores principais do dia" [ref=e195]:
+          - generic [ref=e196]:
+            - generic [ref=e197]: Coletas hoje
+            - generic [ref=e204]: "4"
+            - generic [ref=e205]: Base Manhuaçu - MG · DEMONSTRAÇÃO
+          - generic [ref=e207]:
+            - generic [ref=e208]: Coletas pendentes
+            - generic [ref=e214]: "1"
+            - generic [ref=e215]: Aguardando triagem ou motoboy
+          - generic [ref=e217]:
+            - generic [ref=e218]: Coletas em andamento
+            - generic [ref=e226]: "1"
+            - generic [ref=e227]: Em deslocamento urbano ativo
+          - generic [ref=e229]:
+            - generic [ref=e230]: Coletas concluídas
+            - generic [ref=e236]: "2"
+            - generic [ref=e237]: Comprovante digital validado
+          - generic [ref=e239]:
+            - generic [ref=e240]: Empresas cadastradas
+            - generic [ref=e247]: "2"
+            - generic [ref=e248]: Isoladas no escopo do Tenant
+          - generic [ref=e250]:
+            - generic [ref=e251]: Operadores ativos
+            - generic [ref=e256]: "2"
+            - generic [ref=e257]: Hubs regionais em operação
+          - generic [ref=e259]:
+            - generic [ref=e260]: Receita estimada
+            - generic [ref=e266]: R$ 93,40
+            - generic [ref=e267]: Volume bruto das coletas listadas
+          - generic [ref=e269]:
+            - generic [ref=e270]: Taxa de conclusão
+            - generic [ref=e276]: 50%
+            - generic [ref=e277]: Eficiência operacional do período
+        - generic [ref=e279]:
+          - generic [ref=e280]:
+            - generic [ref=e281]:
+              - generic [ref=e282]:
+                - heading "Últimas Coletas — Manhuaçu e Região" [level=2] [ref=e283]
+                - paragraph [ref=e284]: Acompanhamento em tempo real por protocolo e bairro (Itens marcados como DEMONSTRAÇÃO quando aplicável)
+              - generic [ref=e286]:
+                - button "Ver Todas" [ref=e287] [cursor=pointer]
+                - button "Nova Coleta" [ref=e289] [cursor=pointer]
+            - table [ref=e294]:
+              - rowgroup [ref=e295]:
+                - row [ref=e296]:
+                  - columnheader "Protocolo" [ref=e297]
+                  - columnheader "Empresa Solicitante" [ref=e298]
+                  - columnheader "Trajeto Urbano (Manhuaçu)" [ref=e299]
+                  - columnheader "Valor / Peso" [ref=e300]
+                  - columnheader "Status" [ref=e301]
+                  - columnheader "Ação Rápida" [ref=e302]
+              - rowgroup
+          - generic [ref=e303]:
+            - generic [ref=e305]:
+              - heading "Resumo Operacional Regional" [level=2] [ref=e306]
+              - paragraph [ref=e307]: Desempenho por corredor urbano de Manhuaçu - MG
+            - generic [ref=e308]:
+              - generic [ref=e309]:
+                - 'button "Centro / Comercial 2 coletas SLA médio: 18 min · -4.2 kg CO₂ (Rota Otimizada)" [ref=e310] [cursor=pointer]':
+                  - generic [ref=e311]:
+                    - generic [ref=e312]: Centro / Comercial
+                    - generic [ref=e313]: 2 coletas
+                  - generic [ref=e314]:
+                    - generic [ref=e315]: "SLA médio: 18 min"
+                    - generic [ref=e316]: ·
+                    - generic [ref=e317]: "-4.2 kg CO₂ (Rota Otimizada)"
+                - 'button "Coqueiro Rural / BR-262 1 coletas SLA médio: 24 min · -3.1 kg CO₂ (Rota Otimizada)" [ref=e321] [cursor=pointer]':
+                  - generic [ref=e322]:
+                    - generic [ref=e323]: Coqueiro Rural / BR-262
+                    - generic [ref=e324]: 1 coletas
+                  - generic [ref=e325]:
+                    - generic [ref=e326]: "SLA médio: 24 min"
+                    - generic [ref=e327]: ·
+                    - generic [ref=e328]: "-3.1 kg CO₂ (Rota Otimizada)"
+                - 'button "Baixada / Santa Luzia 1 coletas SLA médio: 16 min · -2.8 kg CO₂ (Rota Otimizada)" [ref=e332] [cursor=pointer]':
+                  - generic [ref=e333]:
+                    - generic [ref=e334]: Baixada / Santa Luzia
+                    - generic [ref=e335]: 1 coletas
+                  - generic [ref=e336]:
+                    - generic [ref=e337]: "SLA médio: 16 min"
+                    - generic [ref=e338]: ·
+                    - generic [ref=e339]: "-2.8 kg CO₂ (Rota Otimizada)"
+                - 'button "Ponte da Aldeia / Alfa Sul 1 coletas SLA médio: 27 min · -5.4 kg CO₂ (Rota Otimizada)" [ref=e343] [cursor=pointer]':
+                  - generic [ref=e344]:
+                    - generic [ref=e345]: Ponte da Aldeia / Alfa Sul
+                    - generic [ref=e346]: 1 coletas
+                  - generic [ref=e347]:
+                    - generic [ref=e348]: "SLA médio: 27 min"
+                    - generic [ref=e349]: ·
+                    - generic [ref=e350]: "-5.4 kg CO₂ (Rota Otimizada)"
+              - generic [ref=e354]:
+                - generic [ref=e355]: "Empresas ativas no Tenant:"
+                - generic [ref=e356]: 0 empresas
+        - generic [ref=e357]:
+          - generic [ref=e358]:
+            - generic [ref=e359]:
+              - generic [ref=e360]:
+                - heading "Mapa Operacional — Manhuaçu - MG" [level=2] [ref=e361]
+                - paragraph [ref=e362]: Malha urbana preparada para Google Maps JS & Routes API
+              - button "Expandir Mapa" [ref=e364] [cursor=pointer]
+            - generic [ref=e369]:
+              - generic [ref=e370]:
+                - generic [ref=e377]:
+                  - generic [ref=e378]: Eixo BR-262 / Centro Manhuaçu
+                  - generic [ref=e382]: "-20.2572, -42.0336"
+                - generic [ref=e383]:
+                  - generic [ref=e384]: "Corredor em foco: Centro"
+                  - generic [ref=e385]:
+                    - text: Camada Google Maps Platform configurável via
+                    - code [ref=e386]: VITE_GOOGLE_MAPS_API_KEY
+              - generic [ref=e387]:
+                - generic [ref=e388]:
+                  - generic [ref=e389]: Raio Urbano
+                  - generic [ref=e390]: 14,5 km
+                - generic [ref=e391]:
+                  - generic [ref=e392]: Pontos de Coleta
+                  - generic [ref=e393]: 0 ativos
+          - generic [ref=e394]:
+            - generic [ref=e396]:
+              - heading "Distribuição de Coletas por Status" [level=2] [ref=e397]
+              - paragraph [ref=e398]: Proporção operacional calculada a partir do banco do Tenant
+            - generic [ref=e399]:
+              - generic [ref=e401]:
+                - generic [ref=e402]: Concluídas no Prazo
+                - generic [ref=e403]: 2 (50%)
+              - generic [ref=e407]:
+                - generic [ref=e408]: Em Andamento (Motoboys)
+                - generic [ref=e409]: 1 (25%)
+              - generic [ref=e413]:
+                - generic [ref=e414]: Pendentes de Despacho
+                - generic [ref=e415]: 1 (25%)
+              - generic [ref=e418]:
+                - generic [ref=e419]: Capacidade Diária do Hub
+                - generic [ref=e420]: 94,2% disponível
+          - generic [ref=e421]:
+            - generic [ref=e423]:
+              - heading "Alertas & Atividades Recentes" [level=2] [ref=e424]
+              - paragraph [ref=e425]: Monitoramento operacional e auditoria multi-tenant
+            - generic [ref=e426]:
+              - generic [ref=e430]:
+                - generic [ref=e431]: Alerta Preventivo — Tráfego BR-262 (Trevo Ponte da Aldeia)
+                - paragraph [ref=e432]: Recomendado priorizar motoboys urbanos via Av. Getúlio Vargas para coletas urgentes.
+              - generic [ref=e436]:
+                - generic [ref=e437]: Isolamento Multi-Tenant Ativo
+                - paragraph [ref=e438]:
+                  - text: Escopo atual restrito a
+                  - strong [ref=e439]: tenant_manhuacu_hq
+                  - text: . Dados de outras empresas estão bloqueados no backend.
+              - generic [ref=e440]: Últimos Eventos Auditados
+    - contentinfo [ref=e442]:
+      - generic [ref=e443]: "NexColetas — Logística de Coletas Urbanas · Base Operacional: Manhuaçu - MG · Fuso: America/Sao_Paulo"
+      - generic [ref=e444]:
+        - generic [ref=e445]: Arquitetura Multi-Tenant Isolada
+        - generic [aria-hidden] [ref=e446]: ·
+        - button "Preferências & Tema" [ref=e447] [cursor=pointer]
+```
+
+### Log (.playwright-cli/console-2026-11-22T23-21-15-305Z.log#L1-L1)
+```
+[     878ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a0c75178:15801
+```
+Thought for 11 seconds
+Used browser, took 3 screenshots
+
+
+
+trap 'playwright-cli close' EXIT playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 1440 900 && \ sleep 1 && \ playwright-cli click e156 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/r1-desktop-night.png && \ playwright-cli click e108 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/r1-settings-night.png && \ playwright-cli resize 390 844 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/r1-mobile-night.png && \ playwright-cli console
+### Browser `default` opened with pid 502.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot- [Snapshot](.playwright-cli/page-2026-11-22T23-21-42-767Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-22T23-21-41-858Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Ran Playwright code```jsawait page.getByRole('button', { name: 'Tema Noite' }).click();```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot- [Snapshot](.playwright-cli/page-2026-11-22T23-21-46-333Z.yml)### Result- [Screenshot of viewport](.playwright-cli/r1-desktop-night.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r1-desktop-night.pngawait page.screenshot({  path: '.playwright-cli/r1-desktop-night.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.getByRole('button', { name: 'Configurações' }).click();```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot- [Snapshot](.playwright-cli/page-2026-11-22T23-21-51-103Z.yml)### Result- [Screenshot of viewport](.playwright-cli/r1-settings-night.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r1-settings-night.pngawait page.screenshot({  path: '.playwright-cli/r1-settings-night.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.setViewportSize({ width: 390, height: 844 });```### Result- [Screenshot of viewport](.playwright-cli/r1-mobile-night.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r1-mobile-night.pngawait page.screenshot({  path: '.playwright-cli/r1-mobile-night.png',  scale: 'css',  type: 'png'});```### ResultTotal messages: 3 (Errors: 0, Warnings: 0)Returning 1 messages for level "info"[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a0c75178:15801Browser 'default' closed
+
+### Latest snapshot (.playwright-cli/page-2026-11-22T23-21-51-103Z.yml)
+```yaml
+- generic [ref=e3]:
+  - complementary "Barra lateral de navegação desktop" [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - button [ref=e8] [cursor=pointer]:
+            - generic "NexColetas — Logística de Coletas Urbanas" [ref=e9]:
+              - generic [ref=e21]:
+                - generic [ref=e22]:
+                  - generic [ref=e23]: Nex
+                  - generic [ref=e24]: Coletas
+                - generic [ref=e28]: Logística de Coletas Urbanas
+          - button "Recolher menu lateral" [ref=e29] [cursor=pointer]
+        - generic [ref=e32]:
+          - generic [ref=e33]: Ambiente Multi-Tenant (Isolado)
+          - combobox "Ambiente Multi-Tenant (Isolado)" [ref=e34]:
+            - option "NexColetas Admin — Visão Global (Manhuaçu - MG)"
+            - option "Empresa A — Hub Manhuaçu Centro (DEMONSTRAÇÃO)" [selected]
+            - option "Empresa B — Polo BR-262 Leste MG (DEMONSTRAÇÃO)"
+          - generic [ref=e35]:
+            - generic [ref=e36]: Proprietário da Empresa
+            - generic [ref=e37]: Manhuaçu - MG
+        - navigation "Menu principal NexColetas Control" [ref=e38]:
+          - button "Visão Geral" [ref=e39] [cursor=pointer]
+          - button "Coletas" [ref=e47] [cursor=pointer]
+          - button "Mapa Operacional" [ref=e55] [cursor=pointer]
+          - button "Empresas" [ref=e61] [cursor=pointer]
+          - button "Operadores" [ref=e68] [cursor=pointer]
+          - button "Motoboys" [ref=e76] [cursor=pointer]
+          - button "Parceiros" [ref=e84] [cursor=pointer]
+          - button "Financeiro" [ref=e92] [cursor=pointer]
+          - button "Atendimento" [ref=e98] [cursor=pointer]
+          - button "Relatórios" [ref=e103] [cursor=pointer]
+          - button "Configurações" [active] [ref=e108] [cursor=pointer]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: Base Regional
+            - generic [ref=e118]: Manhuaçu - MG
+          - generic [ref=e119]: "Tenant: 12.345.678/0001-95"
+        - button "Entrar com Conta Google" [ref=e124] [cursor=pointer]
+  - generic [ref=e129]:
+    - banner [ref=e130]:
+      - navigation "Localização na plataforma" [ref=e132]:
+        - button "NexColetas Control" [ref=e133] [cursor=pointer]
+        - generic [aria-hidden] [ref=e523]: /
+        - generic [ref=e524]: Gestão & Plataforma
+        - generic [aria-hidden] [ref=e525]: /
+        - generic [ref=e526]: Configurações
+      - group "Seletor de tema NexColetas" [ref=e139]:
+        - button "Tema Verde" [ref=e140] [cursor=pointer]
+        - button "Tema Branco" [ref=e148] [cursor=pointer]
+        - button "Tema Noite" [pressed] [ref=e156] [cursor=pointer]
+      - button "Nova Coleta" [ref=e161] [cursor=pointer]
+    - main [ref=e164]:
+      - generic [ref=e527]:
+        - generic [ref=e528]:
+          - heading "Configurações da Plataforma & Conta" [level=1] [ref=e529]
+          - paragraph [ref=e530]: Gerencie aparência (3 temas globais), preferências regionais pt-BR, identidade visual e segurança multi-tenant
+        - generic [ref=e531]:
+          - generic [ref=e533]:
+            - heading "1. Aparência — Sistema Global de Temas" [level=2] [ref=e534]
+            - paragraph [ref=e535]: A seleção é aplicada imediatamente via tokens CSS e persistida localmente sem flash no carregamento
+          - generic [ref=e536]:
+            - 'button "THEME GREEN — Tema Verde Tema padrão oficial NexColetas (#F1FDF4 / #166534) Bg: #F1FDF4 Primária" [ref=e537] [cursor=pointer]':
+              - generic [ref=e538]:
+                - generic [ref=e539]: THEME GREEN — Tema Verde
+                - paragraph [ref=e547]: "Tema padrão oficial NexColetas (#F1FDF4 / #166534)"
+              - generic [ref=e548]:
+                - generic [ref=e549]: "Bg: #F1FDF4"
+                - generic [ref=e550]: Primária
+            - 'button "THEME WHITE — Tema Branco Interface corporativa clean (#FFFFFF / #F8FAFC) Bg: #FFFFFF Primária" [ref=e551] [cursor=pointer]':
+              - generic [ref=e552]:
+                - generic [ref=e553]: THEME WHITE — Tema Branco
+                - paragraph [ref=e561]: "Interface corporativa clean (#FFFFFF / #F8FAFC)"
+              - generic [ref=e562]:
+                - generic [ref=e563]: "Bg: #FFFFFF"
+                - generic [ref=e564]: Primária
+            - 'button "THEME NIGHT — Tema Noite Tema escuro premium (#030712 / #111827 / #22C55E) Bg: #030712 Primária" [pressed] [ref=e565] [cursor=pointer]':
+              - generic [ref=e566]:
+                - generic [ref=e567]: THEME NIGHT — Tema Noite
+                - paragraph [ref=e574]: "Tema escuro premium (#030712 / #111827 / #22C55E)"
+              - generic [ref=e575]:
+                - generic [ref=e576]: "Bg: #030712"
+                - generic [ref=e577]: Primária
+          - generic [ref=e578]:
+            - generic [ref=e579]:
+              - generic [ref=e580]:
+                - heading "Identidade Visual Oficial & Variantes de Logo Preparadas" [level=3] [ref=e581]
+                - paragraph [ref=e582]: Estrutura preparada para os 4 arquivos individuais de logo sem distorção de proporções
+              - button "Ver Prancha do Manual de Marca" [ref=e583] [cursor=pointer]
+            - generic [ref=e585]:
+              - generic [ref=e586]:
+                - generic [ref=e587]: 1. Logo Principal Horizontal
+                - generic "NexColetas — Logística de Coletas Urbanas" [ref=e588]:
+                  - generic [ref=e600]:
+                    - generic [ref=e601]:
+                      - generic [ref=e602]: Nex
+                      - generic [ref=e603]: Coletas
+                    - generic [ref=e607]: Logística de Coletas Urbanas
+              - generic [ref=e608]:
+                - generic [ref=e609]: 2. Logo Reduzida / Símbolo
+                - generic "NexColetas — Logística de Coletas Urbanas" [ref=e610]
+              - generic [ref=e622]:
+                - generic [ref=e623]: 3. Logo para Fundo Claro
+                - generic "NexColetas — Logística de Coletas Urbanas" [ref=e624]:
+                  - generic [ref=e636]:
+                    - generic [ref=e637]:
+                      - generic [ref=e638]: Nex
+                      - generic [ref=e639]: Coletas
+                    - generic [ref=e643]: Logística de Coletas Urbanas
+              - generic [ref=e644]:
+                - generic [ref=e645]: 4. Logo para Fundo Escuro
+                - generic "NexColetas — Logística de Coletas Urbanas" [ref=e646]:
+                  - generic [ref=e658]:
+                    - generic [ref=e659]:
+                      - generic [ref=e660]: Nex
+                      - generic [ref=e661]: Coletas
+                    - generic [ref=e665]: Logística de Coletas Urbanas
+            - generic [ref=e666]:
+              - generic [ref=e669]:
+                - generic [ref=e670]: Verde Floresta
+                - generic [ref=e671]: "#0B2E1E"
+              - generic [ref=e674]:
+                - generic [ref=e675]: Verde Principal
+                - generic [ref=e676]: "#166534"
+              - generic [ref=e679]:
+                - generic [ref=e680]: Verde Vivo
+                - generic [ref=e681]: "#22C55E"
+              - generic [ref=e684]:
+                - generic [ref=e685]: Verde Limão
+                - generic [ref=e686]: "#84CC16"
+              - generic [ref=e689]:
+                - generic [ref=e690]: Verde Claro
+                - generic [ref=e691]: "#F1FDF4"
+              - generic [ref=e694]:
+                - generic [ref=e695]: Grafite
+                - generic [ref=e696]: "#111827"
+        - generic [ref=e697]:
+          - generic [ref=e698]:
+            - generic [ref=e700]:
+              - heading "2. Preferências & Padrão Brasileiro" [level=2] [ref=e701]
+              - paragraph [ref=e702]: Configurações regionais de idioma, notificações e interface
+            - generic [ref=e703]:
+              - generic [ref=e704]:
+                - generic [ref=e705]: Idioma e Formatação Regional
+                - generic [ref=e710]: Português Brasileiro (pt-BR) · R$ · DD/MM/AAAA
+              - generic [ref=e711]:
+                - generic [ref=e712]:
+                  - generic [ref=e713]: Notificações Operacionais de Coletas
+                  - generic [ref=e714]: Receber alertas de novas coletas e mudanças de status em Manhuaçu - MG
+                - switch "Notificações Operacionais de Coletas" [checked] [ref=e715] [cursor=pointer]
+              - generic [ref=e716]:
+                - generic [ref=e717]:
+                  - generic [ref=e718]: Alertas Sonoros de Despacho Urgente
+                  - generic [ref=e719]: Emitir aviso sonoro quando uma coleta entrar em alerta operacional
+                - switch "Alertas Sonoros de Despacho Urgente" [checked] [ref=e720] [cursor=pointer]
+              - generic [ref=e721]:
+                - generic [ref=e722]:
+                  - generic [ref=e723]: Modo de Tabelas de Alta Densidade
+                  - generic [ref=e724]: Otimizar espaçamento vertical para monitores operacionais amplos (1440px+)
+                - switch "Modo de Tabelas de Alta Densidade" [ref=e725] [cursor=pointer]
+          - generic [ref=e726]:
+            - generic [ref=e728]:
+              - heading "3. Conta, Segurança & Isolamento Multi-Tenant" [level=2] [ref=e729]
+              - paragraph [ref=e730]: Controle de acesso baseado em função (RBAC) e sessão Firebase Auth
+            - generic [ref=e731]:
+              - generic [ref=e732]:
+                - generic [ref=e733]:
+                  - generic [ref=e734]: Sessão e Perfil Ativo
+                  - generic [ref=e739]: RBAC Ativo
+                - generic [ref=e740]:
+                  - text: "Usuário:"
+                  - strong [ref=e741]: Operador Local Manhuaçu (Modo Demonstração)
+                - generic [ref=e742]:
+                  - text: "Role Atual:"
+                  - strong [ref=e743]: COMPANY_OWNER — Proprietário da Empresa
+                - generic [ref=e744]:
+                  - text: "Tenant ID:"
+                  - code [ref=e745]: tenant_manhuacu_hq
+              - generic [ref=e746]:
+                - generic [ref=e747]: Alternar Empresa / Tenant para Teste de Isolamento
+                - combobox "Alternar Empresa / Tenant para Teste de Isolamento" [ref=e748]:
+                  - option "NexColetas Admin — Visão Global (Manhuaçu - MG) (SUPER_ADMIN)"
+                  - option "Empresa A — Hub Manhuaçu Centro (DEMONSTRAÇÃO) (COMPANY_OWNER)" [selected]
+                  - option "Empresa B — Polo BR-262 Leste MG (DEMONSTRAÇÃO) (COMPANY_ADMIN)"
+              - generic [ref=e749]:
+                - button "Autenticar com Google (Firebase Auth)" [ref=e750] [cursor=pointer]
+                - generic [ref=e752]: Tokens armazenados apenas em memória
+        - generic [ref=e756]:
+          - generic [ref=e757]:
+            - generic [ref=e759]:
+              - heading "Laboratório NexColetas Smart Data (Validação Brasileira)" [level=2] [ref=e760]
+              - paragraph [ref=e761]: Teste em tempo real as máscaras e algoritmos de CPF, CNPJ, CEP, Telefone e Data
+            - generic [ref=e762]:
+              - generic [ref=e763]:
+                - generic [ref=e764]: Teste de CPF
+                - textbox "Teste de CPF" [ref=e765]: 529.982.247-25
+                - generic [ref=e766]: CPF matematicamente válido
+              - generic [ref=e767]:
+                - generic [ref=e768]: Teste de CNPJ
+                - textbox "Teste de CNPJ" [ref=e769]: 11.444.777/0001-61
+                - generic [ref=e770]: CNPJ matematicamente válido
+              - generic [ref=e771]:
+                - generic [ref=e772]: "Teste de CEP (Manhuaçu: 36900-000)"
+                - 'textbox "Teste de CEP (Manhuaçu: 36900-000)" [ref=e773]': 36900-000
+                - generic [ref=e774]: Formato de CEP válido
+              - generic [ref=e775]:
+                - generic [ref=e776]: Teste de Telefone com DDD
+                - textbox "Teste de Telefone com DDD" [ref=e777]: (33) 98812-4410
+                - generic [ref=e778]: DDD e celular válidos no Brasil
+            - generic [ref=e780]:
+              - generic [ref=e781]: Teste de Data Real (DD/MM/AAAA)
+              - textbox "Teste de Data Real (DD/MM/AAAA)" [ref=e782]: 22/11/2026
+              - generic [ref=e783]: Data válida no calendário (22/11/2026)
+          - generic [ref=e784]:
+            - generic [ref=e786]:
+              - heading "Camada de Integrações & Banco de Dados" [level=2] [ref=e787]
+              - paragraph [ref=e788]: Status de preparação sem uso de chaves fictícias
+            - generic [ref=e789]:
+              - generic [ref=e790]:
+                - generic [ref=e791]:
+                  - generic [ref=e792]: Banco de Dados Relacional + Drizzle ORM
+                  - generic [ref=e793]: 8 tabelas base provisionadas (users, companies, pickups, audit_logs...)
+                - generic [ref=e794]: Conectado
+              - generic [ref=e795]:
+                - generic [ref=e796]:
+                  - generic [ref=e797]: Firebase Auth & Push Notifications PWA
+                  - generic [ref=e798]: "Projeto: winter-grammar-kzp2g"
+                - generic [ref=e799]: Configurado
+              - generic [ref=e800]:
+                - generic [ref=e801]:
+                  - generic [ref=e802]: Google Maps Platform (Maps, Places, Routes)
+                  - generic [ref=e803]: "Variável: VITE_GOOGLE_MAPS_API_KEY"
+                - generic [ref=e804]: Preparado (.env)
+              - generic [ref=e805]:
+                - generic [ref=e806]:
+                  - generic [ref=e807]: Google Gemini AI (Assistente & Triagem)
+                  - generic [ref=e808]: "Variável server-side: GEMINI_API_KEY"
+                - generic [ref=e809]: Ativo no Backend
+    - contentinfo [ref=e442]:
+      - generic [ref=e443]: "NexColetas — Logística de Coletas Urbanas · Base Operacional: Manhuaçu - MG · Fuso: America/Sao_Paulo"
+      - generic [ref=e444]:
+        - generic [ref=e445]: Arquitetura Multi-Tenant Isolada
+        - generic [aria-hidden] [ref=e446]: ·
+        - button "Preferências & Tema" [ref=e447] [cursor=pointer]
+```
+
+### Log (.playwright-cli/console-2026-11-22T23-21-41-858Z.log#L1-L1)
+```
+[     479ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a0c75178:15801
+```
+Thought for 28 seconds
+Edited 2 files
+src/components/layout/NexControlLayout.tsx
+src/App.tsx
+Thought for 10 seconds
+Built
+Ran quality control
+Thought for 11 seconds
+Restarted dev server
+Thought for 11 seconds
+Used browser, took 1 screenshot
+
+trap 'playwright-cli close' EXIT npx --yes tsx --test shared/validators/smartData.test.ts && \ playwright-cli open --browser=chromium http://localhost:3000 && \ playwright-cli resize 390 844 && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/r2-mobile-fixed.png && \ playwright-cli resize 1440 900 && \ playwright-cli click "text=Tema Branco" && \ playwright-cli click "text=Empresas" && \ sleep 1 && \ playwright-cli screenshot --filename=.playwright-cli/r2-desktop-white-companies.png && \ playwright-cli console
+TAP version 13# Subtest: NexColetas Smart Data — Validação e máscara de CPFok 1 - NexColetas Smart Data — Validação e máscara de CPF  ---  duration_ms: 1.146852  type: 'test'  ...# Subtest: NexColetas Smart Data — Validação e máscara de CNPJok 2 - NexColetas Smart Data — Validação e máscara de CNPJ  ---  duration_ms: 0.505842  type: 'test'  ...# Subtest: NexColetas Smart Data — Validação de Telefone e DDD (Manhuaçu 33)ok 3 - NexColetas Smart Data — Validação de Telefone e DDD (Manhuaçu 33)  ---  duration_ms: 0.267438  type: 'test'  ...# Subtest: NexColetas Smart Data — Validação de CEP, E-mail, Data e Moeda BRLok 4 - NexColetas Smart Data — Validação de CEP, E-mail, Data e Moeda BRL  ---  duration_ms: 24.891206  type: 'test'  ...1..4# tests 4# suites 0# pass 4# fail 0# cancelled 0# skipped 0# todo 0# duration_ms 276.983663### Browser `default` opened with pid 841.### Ran Playwright code```jsawait page.goto('http://localhost:3000');```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot- [Snapshot](.playwright-cli/page-2026-11-22T23-23-16-169Z.yml)### Events- New console entries: .playwright-cli/console-2026-11-22T23-23-13-691Z.log#L1### Ran Playwright code```jsawait page.setViewportSize({ width: 390, height: 844 });```### Result- [Screenshot of viewport](.playwright-cli/r2-mobile-fixed.png)### Ran Playwright code```js// Screenshot viewport and save it as .playwright-cli/r2-mobile-fixed.pngawait page.screenshot({  path: '.playwright-cli/r2-mobile-fixed.png',  scale: 'css',  type: 'png'});```### Ran Playwright code```jsawait page.setViewportSize({ width: 1440, height: 900 });```### Ran Playwright code```jsawait page.locator('text=Tema Branco').click();```### Page- Page URL: http://localhost:3000/- Page Title: NexColetas — Logística de Coletas Urbanas### Snapshot- [Snapshot](.playwright-cli/page-2026-11-22T23-23-21-121Z.yml)### ErrorError: Error: strict mode violation: locator('text=Empresas') resolved to 6 elements:    1) <span class="truncate whitespace-nowrap">Empresas</span> aka getByRole('button', { name: 'Empresas' })    2) <div class="text-[var(--nex-muted)]">…</div> aka getByText('Os registros iniciais')    3) <span class="text-xs font-medium text-[var(--nex-muted)]">Empresas cadastradas</span> aka getByText('Empresas cadastradas')    4) <span class="text-[var(--nex-muted)]">Empresas ativas no Tenant:</span> aka getByText('Empresas ativas no Tenant:')    5) <span class="font-semibold tabular-nums text-[var(--nex-text)]">2 empresas</span> aka getByText('2 empresas')    6) <p class="text-[var(--nex-muted)] mt-0.5">…</p> aka getByText('Escopo atual restrito a')Call log:  - waiting for locator('text=Empresas')Browser 'default' closed
+
+### Latest snapshot (.playwright-cli/page-2026-11-22T23-23-21-121Z.yml)
+```yaml
+- generic [ref=e3]:
+  - complementary "Barra lateral de navegação desktop" [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - generic [ref=e7]:
+          - button [ref=e8] [cursor=pointer]:
+            - generic "NexColetas — Logística de Coletas Urbanas" [ref=e9]:
+              - generic [ref=e21]:
+                - generic [ref=e22]:
+                  - generic [ref=e23]: Nex
+                  - generic [ref=e24]: Coletas
+                - generic [ref=e28]: Logística de Coletas Urbanas
+          - button "Recolher menu lateral" [ref=e29] [cursor=pointer]
+        - generic [ref=e32]:
+          - generic [ref=e33]: Ambiente Multi-Tenant (Isolado)
+          - combobox "Ambiente Multi-Tenant (Isolado)" [ref=e34]:
+            - option "NexColetas Admin — Visão Global (Manhuaçu - MG)"
+            - option "Empresa A — Hub Manhuaçu Centro (DEMONSTRAÇÃO)" [selected]
+            - option "Empresa B — Polo BR-262 Leste MG (DEMONSTRAÇÃO)"
+          - generic [ref=e35]:
+            - generic [ref=e36]: Proprietário da Empresa
+            - generic [ref=e37]: Manhuaçu - MG
+        - navigation "Menu principal NexColetas Control" [ref=e38]:
+          - button "Visão Geral" [ref=e39] [cursor=pointer]
+          - button "Coletas" [ref=e47] [cursor=pointer]
+          - button "Mapa Operacional" [ref=e55] [cursor=pointer]
+          - button "Empresas" [ref=e61] [cursor=pointer]
+          - button "Operadores" [ref=e68] [cursor=pointer]
+          - button "Motoboys" [ref=e76] [cursor=pointer]
+          - button "Parceiros" [ref=e84] [cursor=pointer]
+          - button "Financeiro" [ref=e92] [cursor=pointer]
+          - button "Atendimento" [ref=e98] [cursor=pointer]
+          - button "Relatórios" [ref=e103] [cursor=pointer]
+          - button "Configurações" [ref=e108] [cursor=pointer]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]:
+            - generic [ref=e117]: Base Regional
+            - generic [ref=e118]: Manhuaçu - MG
+          - generic [ref=e119]: "Tenant: 12.345.678/0001-95"
+        - button "Entrar com Conta Google" [ref=e124] [cursor=pointer]
+  - generic [ref=e129]:
+    - banner [ref=e130]:
+      - navigation "Localização na plataforma" [ref=e133]:
+        - button "NexColetas Control" [ref=e134] [cursor=pointer]
+        - generic [aria-hidden] [ref=e135]: /
+        - generic [ref=e136]: Operação Urbana
+        - generic [aria-hidden] [ref=e137]: /
+        - generic [ref=e138]: Visão Geral
+      - group "Seletor de tema NexColetas" [ref=e140]:
+        - button "Tema Verde" [ref=e141] [cursor=pointer]
+        - button "Tema Branco" [active] [pressed] [ref=e149] [cursor=pointer]
+        - button "Tema Noite" [ref=e157] [cursor=pointer]
+      - button "Nova Coleta" [ref=e162] [cursor=pointer]
+    - main [ref=e165]:
+      - generic [ref=e166]:
+        - generic [ref=e167]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - generic [ref=e170]: Manhuaçu — MG
+              - generic [aria-hidden] [ref=e171]: ·
+              - generic [ref=e172]: "Tenant Ativo: Empresa A — Hub Manhuaçu Centro (DEMONSTRAÇÃO)"
+              - generic [aria-hidden] [ref=e173]: ·
+              - generic [ref=e174]: DADOS DE DEMONSTRAÇÃO
+            - heading "Painel de Controle — Logística de Coletas Urbanas" [level=1] [ref=e175]
+          - generic [ref=e176]:
+            - group "Simulador de estados de dados" [ref=e177]:
+              - button "Dados Disponíveis" [ref=e178] [cursor=pointer]
+              - button "Sem Dados" [ref=e179] [cursor=pointer]
+              - button "Carregando" [ref=e180] [cursor=pointer]
+              - button "Estado de Erro" [ref=e181] [cursor=pointer]
+            - button "Sincronizar" [ref=e182] [cursor=pointer]
+        - generic [ref=e192]:
+          - generic [ref=e193]: Modo Demonstração Operacional Ativo — Manhuaçu - MG
+          - generic [ref=e194]:
+            - text: Os registros iniciais identificados com a tag
+            - strong [ref=e195]: DEMONSTRAÇÃO
+            - text: são dados de referência para validação de fluxos em Manhuaçu - MG. Ao cadastrar novas coletas ou empresas, elas são gravadas no banco de dados relacional real do seu Tenant.
+        - region "Indicadores principais do dia" [ref=e196]:
+          - generic [ref=e197]:
+            - generic [ref=e198]: Coletas hoje
+            - generic [ref=e205]: "4"
+            - generic [ref=e206]: Base Manhuaçu - MG · DEMONSTRAÇÃO
+          - generic [ref=e208]:
+            - generic [ref=e209]: Coletas pendentes
+            - generic [ref=e215]: "1"
+            - generic [ref=e216]: Aguardando triagem ou motoboy
+          - generic [ref=e218]:
+            - generic [ref=e219]: Coletas em andamento
+            - generic [ref=e227]: "1"
+            - generic [ref=e228]: Em deslocamento urbano ativo
+          - generic [ref=e230]:
+            - generic [ref=e231]: Coletas concluídas
+            - generic [ref=e237]: "2"
+            - generic [ref=e238]: Comprovante digital validado
+          - generic [ref=e240]:
+            - generic [ref=e241]: Empresas cadastradas
+            - generic [ref=e248]: "2"
+            - generic [ref=e249]: Isoladas no escopo do Tenant
+          - generic [ref=e251]:
+            - generic [ref=e252]: Operadores ativos
+            - generic [ref=e257]: "2"
+            - generic [ref=e258]: Hubs regionais em operação
+          - generic [ref=e260]:
+            - generic [ref=e261]: Receita estimada
+            - generic [ref=e267]: R$ 93,40
+            - generic [ref=e268]: Volume bruto das coletas listadas
+          - generic [ref=e270]:
+            - generic [ref=e271]: Taxa de conclusão
+            - generic [ref=e277]: 50%
+            - generic [ref=e278]: Eficiência operacional do período
+        - generic [ref=e280]:
+          - generic [ref=e281]:
+            - generic [ref=e282]:
+              - generic [ref=e283]:
+                - heading "Últimas Coletas — Manhuaçu e Região" [level=2] [ref=e284]
+                - paragraph [ref=e285]: Acompanhamento em tempo real por protocolo e bairro (Itens marcados como DEMONSTRAÇÃO quando aplicável)
+              - generic [ref=e287]:
+                - button "Ver Todas" [ref=e288] [cursor=pointer]
+                - button "Nova Coleta" [ref=e290] [cursor=pointer]
+            - table [ref=e295]:
+              - rowgroup [ref=e296]:
+                - row [ref=e297]:
+                  - columnheader "Protocolo" [ref=e298]
+                  - columnheader "Empresa Solicitante" [ref=e299]
+                  - columnheader "Trajeto Urbano (Manhuaçu)" [ref=e300]
+                  - columnheader "Valor / Peso" [ref=e301]
+                  - columnheader "Status" [ref=e302]
+                  - columnheader "Ação Rápida" [ref=e303]
+              - rowgroup [ref=e304]:
+                - row [ref=e490]:
+                  - cell "NX-2026-0104 DEMONSTRAÇÃO" [ref=e491]:
+                    - generic [ref=e492]:
+                      - generic [ref=e493]: NX-2026-0104
+                      - generic [ref=e494]: DEMONSTRAÇÃO
+                  - cell "Farmácia Central Alfa (DEMONSTRAÇÃO)" [ref=e495]
+                  - cell "Centro → Engenho da Serra" [ref=e497]
+                  - cell "R$ 22,00 2.1 kg · 6.3 km" [ref=e499]:
+                    - generic [ref=e500]:
+                      - generic [ref=e501]: R$ 22,00
+                      - generic [ref=e502]: 2.1 kg · 6.3 km
+                  - cell "Concluída" [ref=e503]
+                  - cell "Finalizada" [ref=e505]
+                - row [ref=e506]:
+                  - cell "NX-2026-0103 DEMONSTRAÇÃO" [ref=e507]:
+                    - generic [ref=e508]:
+                      - generic [ref=e509]: NX-2026-0103
+                      - generic [ref=e510]: DEMONSTRAÇÃO
+                  - cell "Café das Montanhas Manhuaçu (DEMONSTRAÇÃO)" [ref=e511]
+                  - cell "Bom Pastor → São Vicente" [ref=e513]
+                  - cell "R$ 32,00 8.0 kg · 4.1 km" [ref=e515]:
+                    - generic [ref=e516]:
+                      - generic [ref=e517]: R$ 32,00
+                      - generic [ref=e518]: 8.0 kg · 4.1 km
+                  - cell "Pendente" [ref=e519]
+                  - cell [ref=e521]:
+                    - button "Iniciar" [ref=e522] [cursor=pointer]
+                - row [ref=e524]:
+                  - cell "NX-2026-0102 DEMONSTRAÇÃO" [ref=e525]:
+                    - generic [ref=e526]:
+                      - generic [ref=e527]: NX-2026-0102
+                      - generic [ref=e528]: DEMONSTRAÇÃO
+                  - cell "Farmácia Central Alfa (DEMONSTRAÇÃO)" [ref=e529]
+                  - cell "Baixada → Santa Luzia" [ref=e531]
+                  - cell "R$ 14,50 1.2 kg · 2.4 km" [ref=e533]:
+                    - generic [ref=e534]:
+                      - generic [ref=e535]: R$ 14,50
+                      - generic [ref=e536]: 1.2 kg · 2.4 km
+                  - cell "Concluída" [ref=e537]
+                  - cell "Finalizada" [ref=e539]
+                - row [ref=e540]:
+                  - cell "NX-2026-0101 DEMONSTRAÇÃO" [ref=e541]:
+                    - generic [ref=e542]:
+                      - generic [ref=e543]: NX-2026-0101
+                      - generic [ref=e544]: DEMONSTRAÇÃO
+                  - cell "Café das Montanhas Manhuaçu (DEMONSTRAÇÃO)" [ref=e545]
+                  - cell "Centro → Coqueiro Rural" [ref=e547]
+                  - cell "R$ 24,90 4.5 kg · 5.8 km" [ref=e549]:
+                    - generic [ref=e550]:
+                      - generic [ref=e551]: R$ 24,90
+                      - generic [ref=e552]: 4.5 kg · 5.8 km
+                  - cell "Em Andamento" [ref=e553]
+                  - cell [ref=e555]:
+                    - button "Concluir" [ref=e556] [cursor=pointer]
+          - generic [ref=e339]:
+            - generic [ref=e341]:
+              - heading "Resumo Operacional Regional" [level=2] [ref=e342]
+              - paragraph [ref=e343]: Desempenho por corredor urbano de Manhuaçu - MG
+            - generic [ref=e344]:
+              - generic [ref=e345]:
+                - 'button "Centro / Comercial 2 coletas SLA médio: 18 min · -4.2 kg CO₂ (Rota Otimizada)" [ref=e558] [cursor=pointer]':
+                  - generic [ref=e347]:
+                    - generic [ref=e348]: Centro / Comercial
+                    - generic [ref=e349]: 2 coletas
+                  - generic [ref=e350]:
+                    - generic [ref=e351]: "SLA médio: 18 min"
+                    - generic [ref=e352]: ·
+                    - generic [ref=e353]: "-4.2 kg CO₂ (Rota Otimizada)"
+                - 'button "Coqueiro Rural / BR-262 1 coletas SLA médio: 24 min · -3.1 kg CO₂ (Rota Otimizada)" [ref=e357] [cursor=pointer]':
+                  - generic [ref=e358]:
+                    - generic [ref=e359]: Coqueiro Rural / BR-262
+                    - generic [ref=e360]: 1 coletas
+                  - generic [ref=e361]:
+                    - generic [ref=e362]: "SLA médio: 24 min"
+                    - generic [ref=e363]: ·
+                    - generic [ref=e364]: "-3.1 kg CO₂ (Rota Otimizada)"
+                - 'button "Baixada / Santa Luzia 1 coletas SLA médio: 16 min · -2.8 kg CO₂ (Rota Otimizada)" [ref=e368] [cursor=pointer]':
+                  - generic [ref=e369]:
+                    - generic [ref=e370]: Baixada / Santa Luzia
+                    - generic [ref=e371]: 1 coletas
+                  - generic [ref=e372]:
+                    - generic [ref=e373]: "SLA médio: 16 min"
+                    - generic [ref=e374]: ·
+                    - generic [ref=e375]: "-2.8 kg CO₂ (Rota Otimizada)"
+                - 'button "Ponte da Aldeia / Alfa Sul 1 coletas SLA médio: 27 min · -5.4 kg CO₂ (Rota Otimizada)" [ref=e379] [cursor=pointer]':
+                  - generic [ref=e380]:
+                    - generic [ref=e381]: Ponte da Aldeia / Alfa Sul
+                    - generic [ref=e382]: 1 coletas
+                  - generic [ref=e383]:
+                    - generic [ref=e384]: "SLA médio: 27 min"
+                    - generic [ref=e385]: ·
+                    - generic [ref=e386]: "-5.4 kg CO₂ (Rota Otimizada)"
+              - generic [ref=e390]:
+                - generic [ref=e391]: "Empresas ativas no Tenant:"
+                - generic [ref=e392]: 2 empresas
+        - generic [ref=e393]:
+          - generic [ref=e394]:
+            - generic [ref=e395]:
+              - generic [ref=e396]:
+                - heading "Mapa Operacional — Manhuaçu - MG" [level=2] [ref=e397]
+                - paragraph [ref=e398]: Malha urbana preparada para Google Maps JS & Routes API
+              - button "Expandir Mapa" [ref=e400] [cursor=pointer]
+            - generic [ref=e405]:
+              - generic [ref=e406]:
+                - generic [ref=e413]:
+                  - generic [ref=e414]: Eixo BR-262 / Centro Manhuaçu
+                  - generic [ref=e418]: "-20.2572, -42.0336"
+                - generic [ref=e419]:
+                  - generic [ref=e420]: "Corredor em foco: Centro"
+                  - generic [ref=e421]:
+                    - text: Camada Google Maps Platform configurável via
+                    - code [ref=e422]: VITE_GOOGLE_MAPS_API_KEY
+              - generic [ref=e423]:
+                - generic [ref=e424]:
+                  - generic [ref=e425]: Raio Urbano
+                  - generic [ref=e426]: 14,5 km
+                - generic [ref=e427]:
+                  - generic [ref=e428]: Pontos de Coleta
+                  - generic [ref=e429]: 4 ativos
+          - generic [ref=e430]:
+            - generic [ref=e432]:
+              - heading "Distribuição de Coletas por Status" [level=2] [ref=e433]
+              - paragraph [ref=e434]: Proporção operacional calculada a partir do banco do Tenant
+            - generic [ref=e435]:
+              - generic [ref=e437]:
+                - generic [ref=e438]: Concluídas no Prazo
+                - generic [ref=e439]: 2 (50%)
+              - generic [ref=e443]:
+                - generic [ref=e444]: Em Andamento (Motoboys)
+                - generic [ref=e445]: 1 (25%)
+              - generic [ref=e449]:
+                - generic [ref=e450]: Pendentes de Despacho
+                - generic [ref=e451]: 1 (25%)
+              - generic [ref=e454]:
+                - generic [ref=e455]: Capacidade Diária do Hub
+                - generic [ref=e456]: 94,2% disponível
+          - generic [ref=e457]:
+            - generic [ref=e459]:
+              - heading "Alertas & Atividades Recentes" [level=2] [ref=e460]
+              - paragraph [ref=e461]: Monitoramento operacional e auditoria multi-tenant
+            - generic [ref=e462]:
+              - generic [ref=e466]:
+                - generic [ref=e467]: Alerta Preventivo — Tráfego BR-262 (Trevo Ponte da Aldeia)
+                - paragraph [ref=e468]: Recomendado priorizar motoboys urbanos via Av. Getúlio Vargas para coletas urgentes.
+              - generic [ref=e472]:
+                - generic [ref=e473]: Isolamento Multi-Tenant Ativo
+                - paragraph [ref=e474]:
+                  - text: Escopo atual restrito a
+                  - strong [ref=e475]: tenant_manhuacu_hq
+                  - text: . Dados de outras empresas estão bloqueados no backend.
+              - generic [ref=e476]:
+                - generic [ref=e477]: Últimos Eventos Auditados
+                - generic [ref=e559]:
+                  - generic [ref=e560]: NX-2026-0104 · Centro
+                  - generic [ref=e561]: 22/11/2026, 20:08
+                - generic [ref=e562]:
+                  - generic [ref=e563]: NX-2026-0103 · Bom Pastor
+                  - generic [ref=e564]: 22/11/2026, 20:08
+    - contentinfo [ref=e484]:
+      - generic [ref=e485]: "NexColetas — Logística de Coletas Urbanas · Base Operacional: Manhuaçu - MG · Fuso: America/Sao_Paulo"
+      - generic [ref=e486]:
+        - generic [ref=e487]: Arquitetura Multi-Tenant Isolada
+        - generic [aria-hidden] [ref=e488]: ·
+        - button "Preferências & Tema" [ref=e489] [cursor=pointer]
+```
+
+### Log (.playwright-cli/console-2026-11-22T23-23-13-691Z.log#L1-L1)
+```
+[     727ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/node_modules/.vite/deps/react-dom_client.js?v=a1e888b3:15801
+```
+Thought for 13 seconds
+Edited 1 file
+src/features/dashboard/DashboardView.tsx
+Canceled
+Ran quality control
+Limites de cota excedidos
+Setting up OAuth with scopes: openid,email,profile
+Checkpoint
